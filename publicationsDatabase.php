@@ -1111,11 +1111,63 @@ class publicationsDatabase extends frontControllerApplication
 	}
 	
 	
-	# Helper function to match an author's name (basic implementation)
+	# Helper function to match an author's name; this attempts to deal with the situation where two names are similar, e.g. the current user is "J. Smith" but the publication has "J. Smith" and "A. Smith" and "A.J. Smith"; this routine would match only on "J. Smith"
 	private function isAuthorNameMatch ($surname, $initials, $user)
 	{
-		# Match the surname
-		return (trim (strtolower ($surname)) == trim (strtolower ($user['surname'])));
+		# Normalise the surname components
+		$surname = trim (strtolower ($surname));
+		$user['surname'] = trim (strtolower ($user['surname']));
+		
+		# End if the surname does match
+		if ($surname != $user['surname']) {
+			return false;
+		}
+		
+		# Normalise the initials components
+		$initials = $this->normaliseInitials ($initials);
+		$user['initials'] = $this->normaliseInitials ($user['initials'], $user['forename']);
+		
+		# Ensure the arrays are the same length, i.e. so that "A.B. Smith" is compared against "A. Smith" by the initials "A.B." being trimmed to "A."
+		$subjectLength = count ($initials);
+		$comparatorLength = count ($user['initials']);
+		if ($comparatorLength > $subjectLength) {
+			$user['initials'] = array_slice ($user['initials'], 0, $subjectLength);
+		}
+		if ($subjectLength > $comparatorLength) {
+			$initials = array_slice ($initials, 0, $comparatorLength);
+		}
+		
+		# Return whether the two arrays are exactly equal
+		return ($initials === $user['initials']);
+	}
+	
+	
+	# Helper function to normalise initials lists, e.g. "A.B.C." "AB.C." "ABC" "A B C1" each become array('A','B','C')
+	private function normaliseInitials ($initials, $forename = false)
+	{
+		# Trim and lower-case, and remove non-alphanumeric characters
+		$initials = preg_replace ('/[^a-z]/', '', trim (strtolower ($initials)));
+		
+		# If no initials, use the forname(s), if any
+		if ($forename) {
+			if (!strlen ($initials)) {
+				$forenames = preg_split ('/\s+/', $forename);
+				foreach ($forenames as $forename) {
+					$initials .= substr ($forename, 0, 1);
+				}
+			}
+		}
+		
+		# End if none
+		if (empty ($initials)) {
+			return array ();
+		}
+		
+		# Explode the initials into an array
+		$initials = str_split ($initials);
+		
+		# Return the list
+		return $initials;
 	}
 	
 	
