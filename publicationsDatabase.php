@@ -1098,7 +1098,7 @@ class publicationsDatabase extends frontControllerApplication
 				$publication['nameAppearsAs'] = ($nameAppearsAs ? $nameAppearsAs[0] : NULL);	// Convert the single item to a string, or the empty array to a database NULL
 				
 				# Create a compiled HTML version
-				$publication['html'] = $this->compilePublicationHtml ($publication, $user['displayName']);
+				$publication['html'] = $this->compilePublicationHtml ($publication, $publication['nameAppearsAs']);
 				
 				# Add this publication
 				$publications[$id] = $publication;
