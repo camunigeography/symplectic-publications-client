@@ -1,0 +1,1187 @@
+<?php
+
+# Class to create a publications database, implementing the Symplectic API
+# Version 1.0.0
+
+# Licence: GPL
+# (c) Martin Lucas-Smith, University of Cambridge
+# More info: https://github.com/camunigeog/publicationsdatabase
+
+
+require_once ('frontControllerApplication.php');
+class publicationsDatabase extends frontControllerApplication
+{
+	# Function to assign defaults additional to the general application defaults
+	public function defaults ()
+	{
+		# Specify available arguments as defaults or as NULL (to represent a required argument)
+		$defaults = array (
+			'div' => strtolower (__CLASS__),
+			'database' => 'publications',
+			'table' => 'publications',
+			'website' => NULL,
+			'apiHttp' => NULL,
+			'apiHttps' => NULL,
+			'administrators' => 'administrators',
+			'yearsConsideredRecent' => 5,
+			'yearsConsideredRecentMainListing' => 2,
+			'canSplitIfTotal' => 10,
+			'getUsersFunction' => NULL,
+			'getGroupsFunction' => NULL,
+			'getGroupMembers' => NULL,
+		);
+		
+		# Return the defaults
+		return $defaults;
+	}
+	
+	
+	# Function to assign additional actions
+	public function actions ()
+	{
+		# Specify additional actions
+		$actions = array (
+			'home' => array (
+				'description' => false,
+				'url' => '',
+				'icon' => 'house',
+				'tab' => 'Home',
+			),
+			'recent' => array (
+				'description' => 'Most recent publications',
+				'url' => 'recent/',
+				'icon' => 'new',
+				'tab' => 'Recent',
+			),
+			'people' => array (
+				'description' => 'People',
+				'url' => 'people/',
+				'icon' => 'user',
+				'tab' => 'People',
+			),
+			'person' => array (
+				'description' => 'Publications of person',
+				'url' => 'people/%1/',
+				'usetab' => 'people',
+			),
+			'groups' => array (
+				'description' => 'Research groups',
+				'url' => 'groups/',
+				'icon' => 'group',
+				'tab' => 'Research groups',
+			),
+			'group' => array (
+				'description' => 'Publications of research group',
+				'url' => 'groups/%1/',
+				'usetab' => 'groups',
+			),
+			'statistics' => array (
+				'description' => 'Statistics',
+				'url' => 'statistics/',
+				'icon' => 'application_view_columns',
+				'tab' => 'Statistics',
+				'administrator' => true,
+			),
+			'import' => array (
+				'description' => 'Import data from Symplectic',
+				'url' => 'import/',
+				'icon' => 'database_refresh',
+				'tab' => 'Import',
+				'administrator' => true,
+			),
+			'api' => array (
+				'description' => 'API',
+				'url' => '%/json',
+				'export' => true,
+			),
+			'data' => array (	// Used for e.g. AJAX calls, etc.
+				'description' => 'Data point',
+				'url' => 'data.json',
+				'export' => true,
+			),
+		);
+		
+		# Return the actions
+		return $actions;
+	}
+	
+	
+	# Database structure definition
+	public function _databaseStructure ()
+	{
+		return "
+			CREATE TABLE `administrators` (
+			  `crsid` varchar(10) COLLATE utf8_unicode_ci NOT NULL,
+			  `active` enum('Y','N') COLLATE utf8_unicode_ci NOT NULL DEFAULT 'Y',
+			  `name` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
+			  `email` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
+			  PRIMARY KEY (`crsid`)
+			) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Administrators';
+			
+			CREATE TABLE `instances` (
+			`id` int(11) NOT NULL COMMENT 'Automatic key',
+			  `username` varchar(10) COLLATE utf8_unicode_ci NOT NULL COMMENT 'Username',
+			  `publicationId` int(11) NOT NULL COMMENT 'Publication ID',
+			  `isFavourite` int(1) DEFAULT NULL COMMENT 'Favourite publication',
+			  `savedAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Automatic timestamp',
+			  PRIMARY KEY (`id`)
+			) ENGINE=MyISAM  DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Table of publications for each user';
+			
+			CREATE TABLE `publications` (
+			  `id` int(11) NOT NULL COMMENT 'ID in original datasource',
+			  `type` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL COMMENT 'Type',
+			  `lastModifiedWhen` int(11) NOT NULL COMMENT 'Last modified when (Unixtime)',
+			  `doi` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL COMMENT 'DOI',
+			  `title` text COLLATE utf8_unicode_ci NOT NULL COMMENT 'Title',
+			  `journal` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL COMMENT 'Journal',
+			  `publicationYear` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL COMMENT 'Publication year',
+			  `publicationMonth` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL COMMENT 'Publication month',
+			  `publicationDay` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL COMMENT 'Publication day',
+			  `volume` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL COMMENT 'Volume',
+			  `pagination` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL COMMENT 'Pagination',
+			  `number` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL COMMENT 'Number',
+			  `authors` text COLLATE utf8_unicode_ci COMMENT 'Authors',
+			  `html` text COLLATE utf8_unicode_ci NOT NULL COMMENT 'Compiled HTML representation of record',
+			  `savedAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Automatic timestamp',
+			  PRIMARY KEY (`id`)
+			) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Publications';
+			
+			CREATE TABLE `users` (
+			  `id` varchar(10) COLLATE utf8_unicode_ci NOT NULL COMMENT 'Username',
+			  `forename` varchar(255) COLLATE utf8_unicode_ci NOT NULL COMMENT 'Forename',
+			  `surname` varchar(255) COLLATE utf8_unicode_ci NOT NULL COMMENT 'Surname',
+			  `savedAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Automatic timestamp',
+			  PRIMARY KEY (`id`)
+			) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Table of data of users who have publications';
+		";
+	}
+	
+	
+	# Additional initialisation, prior to actions processing phase
+	protected function mainPreActions ()
+	{
+		# Switch to API mode if specified
+		$outputFormats = array ('json', 'html');
+		if (isSet ($_GET['api']) && in_array ($_GET['api'], $outputFormats)) {
+			$this->action = 'api';
+		}
+		
+	}
+	
+	
+	# Additional initiatialisation
+	protected function main ()
+	{
+		# Set the first year when publications are considered old
+		$this->firstOldYear = date ('Y') - $this->settings['yearsConsideredRecent'] - 1;	// e.g. 2014 gives 2008 as the old year
+		
+	}
+	
+	
+	# API controller
+	public function api ()
+	{
+		# Get the data, which may be an error
+		$data = $this->apiInner ($errorMessage);
+		
+		# Select the relevant rendering
+		$outputFormat = $_GET['api'];	// Already validated in mainPreActions
+		$data = $data[$outputFormat];
+		
+		# Determine output
+		switch ($outputFormat) {
+			
+			# JSON
+			case 'json':
+				$data = json_encode ($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
+				header ('Content-Type: application/json');
+				break;
+				
+			# HTML
+			case 'html':
+				//
+		}
+		
+		# Emit the data
+		echo $data;
+	}
+	
+	
+	# API controller (inner)
+	private function apiInner (&$errorMessage = '')
+	{
+		# Ensure an action is specified
+		if (!isSet ($_GET['action'])) {
+			return array ('error' => 'No method was specified');
+		}
+		$action = $_GET['action'];
+		
+		# Ensure the specified action exists
+		if (!isSet ($this->actions[$action])) {
+			return array ('error' => 'An unsupported method was specified');
+		}
+		
+		# Determine if an item is specified
+		$item = (isSet ($_GET['item']) ? $_GET['item'] : false);
+		
+		# Get the data
+		$data = $this->{$action} ($item);
+		
+		# Return the data
+		return $data;
+	}
+	
+	
+	# Welcome screen
+	public function home ()
+	{
+		# Introduction
+		$html  = "\n<div class=\"graybox\">";
+		$html .= "\n\t<p>This system contains data exported from the <a href=\"{$this->settings['website']}\" target=\"_blank\">Symplectic publications database portal</a>.</p>";
+		$html .= "\n</div>";
+		
+		# Recent
+		$html .= "\n<h3>Most recent</h3>";
+		$html .= "\n<p><a href=\"{$this->baseUrl}/recent/\" class=\"actions\">" . '<img src="/images/icons/new.png" alt="*" class="icon" />' . " <strong>Most recent publications</strong></a></p>";
+		
+		# People
+		$html .= "\n<h3>People</h3>";
+		$html .= "\n<p><a href=\"{$this->baseUrl}/people/\" class=\"actions\">" . '<img src="/images/icons/user.png" alt="*" class="icon" />' . " <strong>Publications by person</strong></a></p>";
+		
+		# Research groups
+		$html .= "\n<h3>Research groups</h3>";
+		$html .= "\n<p><a href=\"{$this->baseUrl}/groups/\" class=\"actions\">" . '<img src="/images/icons/group.png" alt="*" class="icon" />' . " <strong>Publications by group</strong></a></p>";
+		
+		# Statistics
+		$html .= "\n<h3>Statistics</h3>";
+		$data = $this->getStatistics ();
+		$html .= application::htmlTableKeyed ($data, array (), false, 'lines compressed');
+		
+		# Show the HTML
+		echo $html;
+	}
+	
+	
+	# People listing page
+	public function people ()
+	{
+		# Start the output HTML
+		$html = '';
+		
+		# Provide API links
+		$apiLinks = $this->apiLinks ();
+		
+		# Get the users from the local database
+		$users = $this->getPeople ();
+		
+		# End if none
+		if (!$users) {
+			$html .= "\n<p>There are no users.</p>";
+			if ($this->action == 'api') {return array ('json' => $users, 'html' => $html);}
+			echo $html;
+			return true;
+		}
+		
+		# Create a listing
+		$list = array ();
+		foreach ($users as $username => $user) {
+			$nameHtml = htmlspecialchars ($user['forename']) . ' <strong>' . htmlspecialchars ($user['surname']) . '</strong>';
+			$list[$username] = "<a href=\"{$this->baseUrl}/people/{$username}/\">{$nameHtml} ({$user['total']})" . ($user['favourites'] ? " ({$user['favourites']}<img src=\"/images/icons/star.png\" class=\"icon favourite\" />)" : '') . '</a>';
+		}
+		$html = application::htmlUl ($list);
+		
+		# API output
+		if ($this->action == 'api') {return array ('json' => $users, 'html' => $html);}
+		
+		# Render the page HTML
+		$pageHtml  = $apiLinks;
+		$pageHtml .= "\n<p>Please select a user:</p>";
+		$pageHtml .= $html;
+		
+		# Show the page HTML
+		echo $pageHtml;
+	}
+	
+	
+	# Publications for a person
+	public function person ($username = false)
+	{
+		# Start the output HTML
+		$html = '';
+		
+		# Ensure the person is present, or end
+		$users = $this->getPeople ();
+		if (!isSet ($users[$username])) {
+			$errorMessage = 'There is no such user.';
+			if ($this->action == 'api') {return array ('json' => array ('error' => $errorMessage), 'html' => $html);}
+			$html .= "\n<p>{$errorMessage}</p>";
+			echo $html;
+			return true;
+		}
+		$user = $users[$username];
+		
+		# Get the publications for that user
+		$publications = $this->getPerson ($username);
+		
+		# Render as a list
+		$html = $this->publicationsList ($publications);
+		
+		# API output
+		if ($this->action == 'api') {return array ('json' => $publications, 'html' => $html);}
+		
+		# Show publications
+		$nameHtml = htmlspecialchars ($user['forename']) . ' <strong>' . htmlspecialchars ($user['surname']) . '</strong>';
+		$total = number_format (count ($publications));
+		$pageHtml  = $this->apiLinks ();
+		$pageHtml .= "\n<p id=\"introduction\">Publications ({$total}) for {$nameHtml}:</p>";
+		$pageHtml .= "\n<hr />";
+		$pageHtml .= $html;
+		
+		# Show the page HTML
+		echo $pageHtml;
+	}
+	
+	
+	# Research group listings
+	public function groups ()
+	{
+		# Start the output HTML
+		$html = '';
+		
+		# Provide API links
+		$apiLinks = $this->apiLinks ();
+		
+		# Get the groups from the installation
+		$groups = $this->getGroupsUpstream ();
+		
+		# End if none
+		if (!$groups) {
+			$html .= "\n<p>There are no research groups.</p>";
+			if ($this->action == 'api') {return array ('json' => $groups, 'html' => $html);}
+			echo $html;
+			return true;
+		}
+		
+		# Create a listing
+		$list = array ();
+		foreach ($groups as $id => $group) {
+			$nameHtml = htmlspecialchars ($group['name']);
+			$list[$id] = "<a href=\"{$this->baseUrl}/groups/{$id}/\">{$nameHtml}</a>";
+		}
+		$html = application::htmlUl ($list);
+		
+		# API output
+		if ($this->action == 'api') {return array ('json' => $groups, 'html' => $html);}
+		
+		# Render the page HTML
+		$pageHtml  = $apiLinks;
+		$pageHtml .= "\n<p>Please select a research group:</p>";
+		$pageHtml .= $html;
+		
+		# Show the page HTML
+		echo $pageHtml;
+	}
+	
+	
+	# Publications for a research group
+	public function group ($moniker = false)
+	{
+		# Start the output HTML
+		$html = '';
+		
+		# Ensure the group is present, or end
+		$groups = $this->getGroupsUpstream ();
+		if (!isSet ($groups[$moniker])) {
+			$errorMessage = 'There is no such group.';
+			if ($this->action == 'api') {return array ('json' => array ('error' => $errorMessage), 'html' => $html);}
+			$html .= "\n<p>{$errorMessage}</p>";
+			echo $html;
+			return true;
+		}
+		$group = $groups[$moniker];
+		
+		# Get the members of the group
+		$users = $this->getGroupMembersUpstream ($group['url']);
+		$usernames = array_keys ($users);
+		
+		# Get the publications for that user
+		$publications = $this->getPeoplePublications ($usernames);
+		
+		# Render as a list
+		$html = $this->publicationsList ($publications);
+		
+		# API output
+		if ($this->action == 'api') {return array ('json' => $publications, 'html' => $html);}
+		
+		# Show publications
+		$nameHtml = htmlspecialchars ($group['name']);
+		$total = number_format (count ($publications));
+		$pageHtml  = $this->apiLinks ();
+		$pageHtml .= "\n<p id=\"introduction\">Recent publications ({$total}) of members of the <strong>{$nameHtml}</strong> research group:</p>";
+		$pageHtml .= "\n<hr />";
+		$pageHtml .= $html;
+		
+		# Show the page HTML
+		echo $pageHtml;
+	}
+	
+	
+	# Most recent publications
+	public function recent ()
+	{
+		# Start the output HTML
+		$html = '';
+		
+		# Get the most recent publications
+		$publications = $this->getRecent ($this->settings['yearsConsideredRecentMainListing']);
+		
+		# Render as a list
+		$html = $this->publicationsList ($publications);
+		
+		# API output
+		if ($this->action == 'api') {return array ('json' => $publications, 'html' => $html);}
+		
+		# Show publications
+		$total = number_format (count ($publications));
+		$pageHtml  = $this->apiLinks ();
+		$pageHtml .= "\n<p id=\"introduction\">Most recent publications involving members of the Department in the last {$this->settings['yearsConsideredRecentMainListing']} " . ($this->settings['yearsConsideredRecentMainListing'] == 1 ? 'year' : 'years') . ":</p>";
+		$pageHtml .= "\n<hr />";
+		$pageHtml .= $html;
+		
+		# Show the page HTML
+		echo $pageHtml;
+	}
+	
+	
+	
+	# Function to provide an API link to the data equivalent of the current page
+	private function apiLinks ()
+	{
+		# Construct the HTML
+		$html  = "\n" . '<p class="right faded"><a href="json"><img src="/images/icons/feed.png" alt="JSON output" border="0" /> JSON</a> | <a href="html"><img src="/images/icons/feed.png" alt="JSON output" border="0" /> HTML</a></p>';
+		
+		# Return the HTML
+		return $html;
+	}
+	
+	
+	# Function to get the list of users from the database
+	private function getPeople ()
+	{
+		# Get the data
+		$query = "SELECT
+				users.id,
+				users.forename,
+				users.surname,
+				COUNT(instances.username) AS total,
+				COUNT(instances.isFavourite) AS favourites
+			FROM users
+			LEFT JOIN instances ON users.id = instances.username
+			GROUP BY instances.username
+			HAVING total > 0
+			ORDER BY surname, forename
+		;";
+		$data = $this->databaseConnection->getData ($query, "{$this->settings['database']}.users", true);
+		
+		# Return the data
+		return $data;
+	}
+	
+	
+	# Function to get publications of a user from the database
+	private function getPerson ($username)
+	{
+		# Get the data
+		$query = "SELECT
+				publications.*,
+				instances.isFavourite
+			FROM instances
+			LEFT OUTER JOIN publications ON instances.publicationId = publications.id
+			WHERE username = :username
+			ORDER BY publicationYear DESC, authors
+		;";
+		$data = $this->databaseConnection->getData ($query, "{$this->settings['database']}.instances", true, array ('username' => $username));
+		
+		# Return the data
+		return $data;
+	}
+	
+	
+	# Function to get publications of a set of users from the database
+	private function getPeoplePublications ($usernames)
+	{
+		# Assemble the username list into a regexp
+		$usernames = '^(' . implode ('|', $usernames) . ')$';
+		
+		# Get the data
+		$query = "SELECT
+				publications.*,
+				instances.isFavourite
+			FROM instances
+			LEFT OUTER JOIN publications ON instances.publicationId = publications.id
+			WHERE
+				    username REGEXP :usernames
+				AND CAST(publicationYear AS UNSIGNED INT) > '{$this->firstOldYear}'
+			ORDER BY publicationYear DESC, authors
+		;";
+		$data = $this->databaseConnection->getData ($query, "{$this->settings['database']}.instances", true, array ('usernames' => $usernames));
+		
+		# Return the data
+		return $data;
+	}
+	
+	
+	# Function to get the most recent publications
+	private function getRecent ($years)
+	{
+		# Get the data
+		$firstOldYearMainListing = date ('Y') - $this->settings['yearsConsideredRecentMainListing'] - 1;
+		$query = "SELECT
+				publications.*,
+				instances.isFavourite
+			FROM instances
+			LEFT OUTER JOIN publications ON instances.publicationId = publications.id
+			WHERE CAST(publicationYear AS UNSIGNED INT) > '{$firstOldYearMainListing}'
+			ORDER BY publicationYear DESC, authors
+		;";
+		$data = $this->databaseConnection->getData ($query, "{$this->settings['database']}.instances");
+		
+		# Return the data
+		return $data;
+	}
+	
+	
+	# Statistics page
+	public function statistics ()
+	{
+		# Get the data
+		$data = $this->getStatistics ();
+		
+		# Render as a table
+		$html  = "\n<p>This page shows the data available in this system:</p>";
+		$html .= application::htmlTableKeyed ($data);
+		
+		# Show the HTML
+		echo $html;
+	}
+	
+	
+	# Function to get the statistics data
+	private function getStatistics ()
+	{
+		# Start an array of data
+		$data = array ();
+		
+		# Total users
+		$data['Users'] = $this->databaseConnection->getTotal ($this->settings['database'], 'users');
+		
+		# Total publications
+		$data['Publications'] = $this->getTotalPublications ();
+		
+		# Total favourited items
+		$data['Favourited'] = $this->databaseConnection->getTotal ($this->settings['database'], 'instances', 'WHERE isFavourite = 1');
+		
+		# Publication types
+		$query = "SELECT CONCAT('Type - ', type) AS type, COUNT(*) AS total FROM {$this->settings['table']} GROUP BY type ORDER BY type;";
+		$types = $this->databaseConnection->getPairs ($query);
+		$data += $types;
+		
+		# Apply number formatting decoration to each entry
+		foreach ($data as $key => $value) {
+			$data[$key] = number_format ($value);
+		}
+		
+		# Return the data
+		return $data;
+	}
+	
+	
+	# Function to get the total number of publications
+	private function getTotalPublications ()
+	{
+		# Return the count
+		return $this->databaseConnection->getTotal ($this->settings['database'], $this->settings['table']);
+	}
+	
+	
+	# Import
+	public function import ()
+	{
+		# Start the HTML
+		$html = '';
+		
+		# Show current statistics
+		$totalPublicationsCurrently = $this->getTotalPublications ();
+		$html .= "\n<p>There are currently {$totalPublicationsCurrently} publications imported.</p>";
+		
+		# Create the form
+		if (!$result = $this->runImportForm ($html)) {
+			echo $html;
+			return true;
+		}
+		
+		# Get the users from the local database
+		if (!$users = $this->getUsersUpstream ()) {
+			$html = "\n<p>There are no users.</p>";
+			echo $html;
+			return true;
+		}
+		
+		# Start a timer
+		$startTime = time ();
+		
+		# Clear existing data
+		$this->databaseConnection->truncate ($this->settings['database'], $this->settings['table'], true);
+		$this->databaseConnection->truncate ($this->settings['database'], 'instances', true);
+		$this->databaseConnection->truncate ($this->settings['database'], 'users', true);
+		
+		# Import the publications of each user
+		foreach ($users as $username => $user) {
+			
+			# Get the publications of this user, or skip
+			if (!$publications = $this->retrievePublicationsOfUser ($username)) {continue;}
+			
+			# Assemble the publications IDs for this user
+			$instances = array ();
+			foreach ($publications as $publicationId => $publication) {
+				$instances[] = array (
+					'username' => $username,
+					'publicationId' => $publicationId,
+					'isFavourite' => $publication['isFavourite'],	// This is a user-specific value
+				);
+				unset ($publications[$publicationId]['isFavourite']);	// Prevent leakage into the stored publication data
+			}
+			
+			# Add the instances to the database
+			$this->databaseConnection->insertMany ($this->settings['database'], 'instances', $instances, $chunking = false);
+			
+			# Add each publication to the database, replacing if it already exists
+			$this->databaseConnection->replaceMany ($this->settings['database'], $this->settings['table'], $publications, $chunking = 5);
+			
+			# Insert the user into the local database
+			$user['id'] = $user['username'];
+			unset ($user['username']);
+			$this->databaseConnection->insert ($this->settings['database'], 'users', $user);
+		}
+		
+		# Confirm outcome, replacing any previous HTML; note that an internal counter cannot be used as some publications will have appeared multiple times
+		$totalPublicationsCurrently = $this->getTotalPublications ();
+		$html  = "\n<p>{$this->tick} {$totalPublicationsCurrently} publications were imported.</p>";
+		
+#!# Move new table into place
+		
+		# Show how long the import took
+		$finishTime = time ();
+		$seconds = $finishTime - $startTime;
+		$html .= "\n<p>The import took: {$seconds} seconds.</p>";
+		
+		# Show the HTML
+		echo $html;
+		
+		# Signal success
+		return true;
+	}
+	
+	
+	# Function to create the run import form
+	private function runImportForm (&$html)
+	{
+		# Create the form
+		$form = new form (array (
+			'submitButtonText' => 'Begin import!',
+			'div' => 'graybox',
+			'name' => 'import',
+			'requiredFieldIndicator' => false,
+			'formCompleteText' => false,
+		));
+		#!# Bogus input needed only because ultimateForm currently can't be empty
+		$form->hidden (array (
+			'values'	=> array ('bogus' => true),
+			'name'		=> 'hidden',
+			'title'		=> '',
+		));
+		
+		# End if not submitted
+		$result = $form->process ($html);
+		
+		# Return the status
+		return $result;
+	}
+	
+	
+	# Function to create a formatted list of publications
+	# Desired format is:
+	// Batchelor, C.L., Dowdeswell, J.A. and Pietras, J.T., 2014. Evidence for multiple Quaternary ice advances and fan development from the Amundsen Gulf cross-shelf trough and slope, Canadian Beaufort Sea margin. Marine and Petroleum Geology, v. 52, p.125-143. doi:10.1016/j.marpetgeo.2013.11.005
+	public function publicationsList ($publications)
+	{
+		# Start the HTML
+		$html = '';
+		
+		# Featured publications
+		$favourites = array ();
+		foreach ($publications as $publicationId => $publication) {
+			if ($publication['isFavourite']) {
+				$favourites[$publicationId] = $publication['html'];
+				// $favourites[$id] = $this->compilePublicationHtml ($publication);	// Debug
+			}
+		}
+		if ($favourites) {
+			$html .= "\n<h3>Featured publications</h3>";
+			$html .= application::htmlUl ($favourites);
+		}
+		
+		# Extract the books first
+		$books = array ();
+		foreach ($publications as $publicationId => $publication) {
+			if ($publication['type'] == 'book') {
+				$books[$publicationId] = $publication['html'];
+				// $articles[$id] = $this->compilePublicationHtml ($publication);	// Debug
+				unset ($publications[$publicationId]);
+			}
+		}
+		if ($books) {
+			$html .= "\n<h3>Books</h3>";
+			$html .= application::htmlUl ($books);
+		}
+		
+		# Show articles
+		if ($publications) {
+			
+			# Regroup the remaining items by year
+			$publications = application::regroup ($publications, 'publicationYear', false);
+			
+			# Loop through each year
+			if ($books) {	// Show heading only if there were previously also books
+				$html .= "\n<h3>Articles</h3>";
+			}
+			if ($favourites) {
+				$html .= "<p class=\"small comment\"><em>Key publications are marked with a star.</em></p>";
+			}
+			$oldYearsOpened = false;
+			$canSplitIfTotal = $this->settings['canSplitIfTotal'];
+			foreach ($publications as $year => $publicationsThisYear) {
+				
+				# If the first old year, open a div for Javascript filtering purposes
+				if (!$oldYearsOpened && ($year <= $this->firstOldYear) && $canSplitIfTotal <= 0) {
+					$oldYearsOpened = true;
+					
+					# Add a show/hide link for the div
+					$html .= "\n\n<!-- Show/hide link -->";
+					$html .= "\n" . '<script src="//code.jquery.com/jquery-1.11.1.min.js"></script>';
+					$html .= "\n" . '<script type="text/javascript">
+						$(document).ready(function(){
+							$("#olderpublications").hide();
+							$("#olderpublications").before("<p id=\"showall\"><a href=\"#showall\">&#9660; Show earlier publications &hellip;</a></p>");
+							$("#showall a").click(function(e){
+								e.preventDefault();
+								$("#showall").hide();
+								$("#olderpublications").show();
+							});
+						});
+					</script>
+					';
+					
+					# Add the div
+					$html .= "\n\n<div id=\"olderpublications\">\n";
+				}
+				
+				# Loop through the publications in the year and add it to the list
+				$articles = array ();
+				foreach ($publicationsThisYear as $publicationId => $publication) {
+					$canSplitIfTotal--;
+					$articles[$publicationId] = $publication['html'];
+					// $articles[$id] = $this->compilePublicationHtml ($publication);	// Debug
+				}
+				
+				# Add the list for this year
+				$html .= "\n<h4>" . ($year ? $year : '[Unknown year]') . '</h4>';
+				$html .= application::htmlUl ($articles);
+			}
+			
+			# Close the old years div if it was created
+			if ($oldYearsOpened) {
+				$html .= "\n\n</div><!-- /#olderpublications -->\n";
+			}
+		}
+		
+		# Surround with a div
+		$html = "\n\n\n<div id=\"publicationslist\">" . "\n" . $html . "\n\n</div><!-- /#publicationslist -->\n\n";
+		
+		# Return the HTML
+		return $html;
+	}
+	
+	
+	# Get the users; the getUsersFunction callback function must return a datastructure like this:
+	/*
+		Array
+		(
+		    [spqr1] => Array (
+		            [id] => spqr1
+		            [name] => Sam Right
+		        ),
+		    [xyz123] => Array (
+		            [id] => abc123
+		            [name] => Xavier Yu
+		        ),
+			...
+		);
+	*/
+	private function getUsersUpstream ()
+	{
+		# Run callback function
+		$function = $this->settings['getUsersFunction'];
+		return $function ();
+	}
+	
+	
+	# Get the groups; the getGroupsFunction callback function must return a datastructure like this:
+	/*
+		Array
+		(
+		    [widgets] => Array (
+		            [id] => widgets
+		            [name] => Widgets research group
+		            [url] => http://www.example.com/research/widgets/
+		            [ordering] => 1
+		        ),
+		    [sprockets] => Array (
+		            [id] => sprockets
+		            [name] => Sprockets research group
+		            [url] => http://www.example.com/research/sprockets/
+		            [ordering] => 1
+		        ),
+			...
+		);
+	*/
+	private function getGroupsUpstream ()
+	{
+		# Run callback function
+		$function = $this->settings['getGroupsFunction'];
+		return $function ();
+	}
+	
+	
+	# Get the group members; the getGroupMembers callback function must return a datastructure like this:
+	/*
+		Array
+		(
+		    [spqr1] => Array (
+		            [id] => spqr1
+		            [name] => Sam Right
+		        ),
+		    [xyz123] => Array (
+		            [id] => abc123
+		            [name] => Xavier Yu
+		        ),
+			...
+		);
+	*/
+	private function getGroupMembersUpstream ($groupUrl)
+	{
+		# Run callback function
+		$function = $this->settings['getGroupMembers'];
+		return $function ($groupUrl);
+	}
+	
+	
+	# Raw data viewer (for development purposes)
+	public function data ()
+	{
+		# Obtain the data
+		$url = $this->settings['apiHttps'] . '/objects?categories=users&detail=ref&page=1&per-page=20&groups=27';
+		$url = '/publications?username=mvl22';
+		$url = '/publications/356384';
+		
+		
+		# Get details of a user
+		$data = $this->getUser ('jd16');
+		
+		# Get publications for a user
+		// $publications = $this->retrievePublicationsOfUser ('co200');
+		
+		# Get details of a publication
+		// $publication = $this->getPublication (356384);
+		
+		
+		
+		
+		# Emit the data
+		application::dumpData ($data);
+	}
+	
+	
+	# Function to get data from the Symplectic API
+	private function getData ($call, $format = 'xpathDom', $isFullUrl = false)
+	{
+		# Assemble the URL
+		$url = ($isFullUrl ? '' : $this->settings['apiHttp']) . $call;
+		
+		# Obtain the XML if required
+		require_once ('xml.php');
+		$data = @file_get_contents ($url);
+		
+		# Delay to prevent API overload
+		usleep (500000);	// 0.5 seconds is requested in documentation (page 16, "500ms")
+		
+		# If no data, check if the result was a 404, by checking the auto-created variable $http_response_header
+		if (!$data) {
+			
+			# Find the header which contains the HTTP response code (seemingly usually the first)
+			foreach ($http_response_header as $header) {
+				if (preg_match ('|^HTTP/1|i', $header)) {
+					break;	// The correct header has been found
+				}
+			}
+			
+			# If the response was anything other than 404, report the error
+			if (!substr_count ($header, ' 404 ')) {
+				echo "\n<p class=\"warning\">An empty response was received for <em>{$url}</em>, with header response: <em>{$header}</em>.</p>";
+				die;
+			}
+			
+			# Signal no data
+			return false;
+		}
+		
+		# Debug if required
+		// application::dumpData (xml::xml2arrayWithNamespaces ($data));
+		// header ('Content-Type: application/xml; charset=utf-8'); echo $data; die;
+		
+		# Convert the XML to an array, maintaining namespaced objects
+		if ($format == 'json' || $format == 'data') {
+			$data = xml::xml2arrayWithNamespaces ($data);
+		}
+		
+		# Convert the array to JSON
+		if ($format == 'json') {
+			header ('Content-Type: application/json');
+			$data = json_encode ($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
+		}
+		
+		# Send XML header if required
+		if ($format == 'xml') {
+			header ('Content-Type: application/xml; charset=utf-8');
+		}
+		
+		# Return an XPath DOM object if required; see: http://stackoverflow.com/a/20318801 and a good explanation of the default namespace at http://web.archive.org/web/20090414184326/http://people.ischool.berkeley.edu/~felix/xml/php-and-xmlns.html
+		if ($format == 'xpathDom') {
+			$dom = new DOMDocument ();
+			$dom->loadXml ($data);
+			$xpathDom = new DOMXpath ($dom);
+			$xpathDom->registerNamespace ('default', 'http://www.w3.org/2005/Atom');
+			$xpathDom->registerNamespace ('api', 'http://www.symplectic.co.uk/publications/api');
+			return $xpathDom;
+		}
+		
+		# Return the data
+		return $data;
+	}
+	
+	
+	# Function to enable XPath querying of the data
+	private function XPath ($xpathDom, $xpath, $contextnode = NULL)
+	{
+		# Evaluate the XPath and return it as a string
+		$string = $xpathDom->evaluate ('string(' . $xpath . ')', $contextnode);
+		
+		# Return the string
+		return $string;
+	}
+	
+	
+	# Get data for a user
+	private function getUser ($username, $returnOnlyField = false)
+	{
+		# Obtain the data
+		$call = '/users/username-' . $username . '?detail=full';
+		if (!$xpathDom = $this->getData ($call)) {return false;}
+		
+		# Assemble the data
+		$data = array (
+			'id'			=> $this->XPath ($xpathDom, '//default:feed/default:entry/api:object/@id'),
+			'is-academic'	=> $this->XPath ($xpathDom, '//default:feed/default:entry/api:object/api:is-academic'),
+			'title'			=> $this->XPath ($xpathDom, '//default:feed/default:entry/api:object/api:title'),
+			'surname'		=> $this->XPath ($xpathDom, '//default:feed/default:entry/api:object/api:last-name'),
+			'initials'		=> $this->XPath ($xpathDom, '//default:feed/default:entry/api:object/api:initials'),
+			'forename'		=> $this->XPath ($xpathDom, '//default:feed/default:entry/api:object/api:first-name'),
+			'email'			=> $this->XPath ($xpathDom, '//default:feed/default:entry/api:object/api:email-address'),
+		);
+		
+		# Add the display name as it appears in publications
+		$data['displayName'] = $this->formatAuthor ($data['surname'], $data['initials']);
+		
+		# Return only a single field if required
+		if ($returnOnlyField) {
+			$data = $data[$returnOnlyField];
+		}
+		
+		# Return the user ID
+		return $data;
+	}
+	
+	
+	# Get the publications for a user
+	private function retrievePublicationsOfUser ($username)
+	{
+		# Define the starting point for the call
+		$call = '/users/username-' . $username . '/publications?detail=full';
+		$resultsUrlPage = $this->settings['apiHttp'] . $call;
+		
+		# Get the user's details
+		$displayName = $this->getUser ($username, 'displayName');
+		
+		# Start an array of all publication data to return
+		$publications = array ();
+		
+		# Loop through each page of results
+		while ($resultsUrlPage) {
+			
+			# Obtain the data or continue to next
+			if (!$xpathDom = $this->getData ($resultsUrlPage, 'xpathDom', true)) {continue;}
+			
+			# Extract the user's name
+			$personName = $this->XPath ($xpathDom, '//default:feed/default:title');
+			$personName = $this->extractPersonName ($personName);
+			
+			# Loop through each entry in the data; see: http://stackoverflow.com/questions/11886176/ and http://stackoverflow.com/questions/5929263/
+			$publicationsNode = $xpathDom->query ('//default:feed/default:entry');
+			foreach ($publicationsNode as $index => $publicationNode) {
+				
+				# Get the ID
+				$id = $this->XPath ($xpathDom, './/api:object/@id', $publicationNode);
+				
+				# Ensure the publication is set to be visible
+				$isVisible = ($this->XPath ($xpathDom, './/api:is-visible', $publicationNode) == 'true');
+				if (!$isVisible) {continue;}
+				
+				# Add key details
+				$publication = array (
+					'id'					=> $id,
+					'type'					=> $this->XPath ($xpathDom, './/api:object/@type', $publicationNode),
+					'lastModifiedWhen'		=> strtotime ($this->XPath ($xpathDom, './/api:object/@last-modified-when', $publicationNode)),
+					'doi'					=> $this->XPath ($xpathDom, './/api:field[@name="doi"]/api:text', $publicationNode),
+					'title'					=> str_replace (array ("\n", ' '), ' ', $this->XPath ($xpathDom, './/api:field[@name="title"]/api:text', $publicationNode)),
+					'journal'				=> $this->XPath ($xpathDom, './/api:field[@name="journal"]/api:text', $publicationNode),
+					'publicationYear'		=> $this->XPath ($xpathDom, './/api:field[@name="publication-date"]/api:date/api:year', $publicationNode),
+					'publicationMonth'		=> $this->XPath ($xpathDom, './/api:field[@name="publication-date"]/api:date/api:month', $publicationNode),
+					'publicationDay'		=> $this->XPath ($xpathDom, './/api:field[@name="publication-date"]/api:date/api:day', $publicationNode),
+					'volume'				=> $this->XPath ($xpathDom, './/api:field[@name="volume"]/api:text', $publicationNode),
+					'pagination'			=> $this->formatPagination ($this->XPath ($xpathDom, './/api:field[@name="pagination"]/api:pagination/api:begin-page', $publicationNode), $this->XPath ($xpathDom, './/api:field[@name="pagination"]/api:pagination/api:end-page', $publicationNode)),
+					'number'				=> $this->XPath ($xpathDom, './/api:field[@name="number"]/api:text', $publicationNode),
+					'isFavourite'			=> ($this->XPath ($xpathDom, './/api:is-favourite', $publicationNode) == 'false' ? NULL : 1),
+				);
+				
+				# Get the authors
+				$authors = array ();
+				$authorsNode = $xpathDom->query ('.//api:record[@is-preferred-record="true"]//api:field[@name="authors"]/api:people/api:person', $publicationNode);
+				foreach ($authorsNode as $index => $authorNode) {
+					$surname	= $this->XPath ($xpathDom, './api:last-name', $authorNode);
+					$initials	= $this->XPath ($xpathDom, './api:initials', $authorNode);
+					$authors[] = $this->formatAuthor ($surname, $initials);
+				}
+				$publication['authors'] = implode ('|', $authors);
+				
+				# Create a compiled HTML version
+				$publication['html'] = $this->compilePublicationHtml ($publication, $displayName);
+				
+				# Add this publication
+				$publications[$id] = $publication;
+			}
+			
+			# Determine the next page, if any
+			$resultsUrlPage = $xpathDom->evaluate ('string(' . "//default:feed/api:pagination/api:page[@position='next']/@href" . ')');
+		}
+		
+		# Return the array of publications
+		return $publications;
+	}
+	
+	
+	# Helper function to create a compiled HTML version of a publication
+	private function compilePublicationHtml ($publication, $displayName)
+	{
+		# Convert each element to entities
+		foreach ($publication as $key => $value) {
+			$publication[$key] = htmlspecialchars ($value);
+			
+			# If the conversion failed, report
+			if (strlen ($value) && !strlen ($publication[$key])) {
+				echo "\n<p class=\"warning\">Invalid character(s) were found in publication #{$publication['id']} in the {$key} field; input text: {$value} .</p>";
+			}
+		}
+		
+		# Unpack the listing into "A, B and C" format
+		$publication['authors'] = application::commaAndListing (explode ('|', $publication['authors']));
+		$publication['authors'] = str_replace ($displayName, "<strong>{$displayName}</strong>", $publication['authors']);
+		
+		# Compile the HTML for this publication
+		$html  = '';
+		$html .= ($publication['isFavourite'] ? '<img src="/images/icons/star.png" class="icon favourite" /> ' : '');
+		$html .= $publication['authors'] . ($publication['publicationYear'] ? ', ' : '');
+		$html .= ($publication['publicationYear'] ? $publication['publicationYear'] : '') . '. ';
+		$html .= "{$publication['title']}.";
+		$html .= (strlen ($publication['journal']) ? " <em>{$publication['journal']}</em>," : '');
+		$html .= (strlen ($publication['volume']) ? " v. {$publication['volume']}," : '');
+		$html .= (strlen ($publication['pagination']) ? " {$publication['pagination']}." : '');
+		$html .= (strlen ($publication['doi']) ? " doi:{$publication['doi']}" : '');
+		
+		# Ensure ends with a dot
+		if (substr ($html, -1) == ',') {$html = substr ($html, 0, -1);}
+		if (substr ($html, -1) != '.') {$html .= '.';}
+		
+		# Return the HTML
+		return $html;
+	}
+	
+	
+	# Helper function to extract the person's name
+	private function extractPersonName ($personName)
+	{
+		# Remove prefix text
+		if (preg_match ('/^Publications related to the user: (.+)$/', $personName, $matches)) {
+			$personName = $matches[1];
+		}
+		
+		# Split into 
+		
+		# Return string
+		return $personName;
+	}
+	
+	
+	# Helper function to format pagination
+	private function formatPagination ($begin, $end)
+	{
+		# End if none
+		if (!$begin) {return '';}
+		
+		# Compile the string
+		return 'p.' . implode ('-', array ($begin, $end));
+	}
+	
+	
+	# Helper function to format an author
+	private function formatAuthor ($surname, $initials)
+	{
+		# Add dots after each initials
+		$initials = implode ('.', str_split ($initials)) . '.';
+		
+		# Return the string
+		return $surname . ', ' . $initials;
+	}
+	
+	
+	
+	# Get details of publication
+	private function getPublication ($publicationId)
+	{
+		$call = '/publications/' . $publicationId;
+		if (!$data = $this->getData ($call)) {return false;}
+		
+		# Return the data
+		return $data;
+	}
+}
+
+?>

@@ -1,0 +1,90 @@
+<?php
+
+# Define the settings
+$settings = array (
+	'hostname' => 'localhost',
+	'username' => 'the_username',
+	'password' => 'the_password',
+	'website' => 'https://publications.example.com/',
+	'apiHttp' => 'http://publications.example.com:8080/publications-api',
+	'apiHttps' => 'https://publications.example.com:8081/elements-api/v4.6',
+	'getUsersFunction' => 'getUsersUpstream',
+	'getGroupsFunction' => 'getGroupsUpstream',
+	'getGroupMembers' => 'getGroupMembersUpstream',
+);
+
+# Run the application with the specified settings
+require_once ('publicationsDatabase.php');
+new publicationsDatabase ($settings);
+
+
+# Define the users callback function
+function getUsersUpstream ()
+{
+	/*	
+		Must return a datastructure like this:
+		
+		Array
+		(
+		    [spqr1] => Array (
+		            [id] => spqr1
+		            [name] => Sam Right
+		        ),
+		    [xyz123] => Array (
+		            [id] => abc123
+		            [name] => Xavier Yu
+		        ),
+			...
+		);
+	*/
+}
+
+
+# Define the groups callback function
+function getGroupsUpstream ()
+{
+	/*	
+		Must return a datastructure like this:
+		
+		Array
+		(
+		    [widgets] => Array (
+		            [id] => widgets
+		            [name] => Widgets research group
+		            [url] => http://www.example.com/research/widgets/
+		            [ordering] => 1
+		        ),
+		    [sprockets] => Array (
+		            [id] => sprockets
+		            [name] => Sprockets research group
+		            [url] => http://www.example.com/research/sprockets/
+		            [ordering] => 1
+		        ),
+			...
+		);
+	*/
+}
+
+
+# Define the members callback function
+function getGroupMembersUpstream ($groupUrl)
+{
+	/*	
+		Must return a datastructure like this:
+		
+		Array
+		(
+		    [spqr1] => Array (
+		            [id] => spqr1
+		            [name] => Sam Right
+		        ),
+		    [xyz123] => Array (
+		            [id] => abc123
+		            [name] => Xavier Yu
+		        ),
+			...
+		);
+	*/
+}
+
+?>

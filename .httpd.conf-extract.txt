@@ -1,0 +1,32 @@
+# Apache httpd.conf extract providing URL routing and other directives
+
+#   Example usage in httpd.conf:
+#   
+#   # Publications database
+#   Include /path/to/publicationsdatabase/.httpd.conf-extract.txt
+#   Use MacroPublicationsDatabase "/research/publications" "/path/to/publicationsdatabase/:/path/to/php/libraries/"
+
+
+<Macro MacroPublicationsDatabase $applicationBaseUrl $includePath>
+	
+	<Location $applicationBaseUrl>
+		php_value include_path "$includePath"
+	</Location>
+	
+	Use MacroFrontControllerApplication "$applicationBaseUrl/" "Publications database"
+	
+	RewriteRule ^$applicationBaseUrl/(people|groups|recent|import|statistics)/(|json|html)$ $applicationBaseUrl/index.html?action=$1&api=$2 [L]
+	RedirectMatch permanent ^$applicationBaseUrl/(people|groups|recent|import|statistics)$ $applicationBaseUrl/$1/
+	RewriteRule ^$applicationBaseUrl/(people)/([a-z]+[0-9]+)/(|json|html)$ $applicationBaseUrl/index.html?action=person&item=$2&api=$3 [L]
+	RedirectMatch permanent ^$applicationBaseUrl/(people)/([a-z]+[0-9]+)$ $applicationBaseUrl/$1/$2/
+	RewriteRule ^$applicationBaseUrl/(group)s/([a-z0-9]+)/(|json|html)$ $applicationBaseUrl/index.html?action=$1&item=$2&api=$3 [L]
+	RedirectMatch permanent ^$applicationBaseUrl/(groups)/([a-z0-9]+)$ $applicationBaseUrl/$1/$2/
+	
+	# API output formats
+	<LocationMatch /(html|json)$>
+		php_value auto_prepend_file none
+		php_value auto_append_file none
+	</LocationMatch>
+	
+	
+</Macro>
