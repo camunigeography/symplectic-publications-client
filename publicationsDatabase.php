@@ -1142,7 +1142,7 @@ class publicationsDatabase extends frontControllerApplication
 	}
 	
 	
-	# Helper function to normalise initials lists, e.g. "A.B.C." "AB.C." "ABC" "A B C1" each become array('A','B','C')
+	# Helper function to normalise initials lists, e.g. "A.B.C." "AB.C." "ABC" "A B C1", or no initials but forename "Anthony Ben Calix", each become array('A','B','C')
 	private function normaliseInitials ($initials, $forename = false)
 	{
 		# Trim and lower-case, and remove non-alphanumeric characters
@@ -1151,7 +1151,7 @@ class publicationsDatabase extends frontControllerApplication
 		# If no initials, use the forname(s), if any
 		if ($forename) {
 			if (!strlen ($initials)) {
-				$forenames = preg_split ('/\s+/', $forename);
+				$forenames = preg_split ('/\s+/', strtolower ($forename));
 				foreach ($forenames as $forename) {
 					$initials .= substr ($forename, 0, 1);
 				}
