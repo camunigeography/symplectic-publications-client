@@ -1113,7 +1113,11 @@ class publicationsDatabase extends frontControllerApplication
 		
 		# Unpack the listing into "A, B and C" format
 		$publication['authors'] = application::commaAndListing (explode ('|', $publication['authors']));
-		$publication['authors'] = str_replace ($displayName, "<strong>{$displayName}</strong>", $publication['authors']);
+		
+		# Bold the author name, retaining the exact capitalisation
+		#!# Move to a registry pattern so that multiple authors can be replaced at runtime
+		$delimiter = '/';
+		$publication['authors'] = preg_replace ($delimiter . '(' . addcslashes ($displayName, $delimiter) . ')' . $delimiter . 'i', '<strong>\1</strong>', $publication['authors']);
 		
 		# Compile the HTML for this publication
 		$html  = '';
