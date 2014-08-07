@@ -946,7 +946,7 @@ class publicationsDatabase extends frontControllerApplication
 		
 		# Debug if required
 		// application::dumpData (xml::xml2arrayWithNamespaces ($data));
-		// header ('Content-Type: application/xml; charset=utf-8'); echo $data; die;
+		// echo $data; die;
 		
 		# Convert the XML to an array, maintaining namespaced objects
 		if ($format == 'json' || $format == 'data') {
