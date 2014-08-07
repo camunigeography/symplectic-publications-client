@@ -122,6 +122,7 @@ class publicationsDatabase extends frontControllerApplication
 			`id` int(11) NOT NULL COMMENT 'Automatic key',
 			  `username` varchar(10) COLLATE utf8_unicode_ci NOT NULL COMMENT 'Username',
 			  `publicationId` int(11) NOT NULL COMMENT 'Publication ID',
+			  `nameAppearsAs` varchar(255) COLLATE utf8_unicode_ci NOT NULL COMMENT 'The string appearing in the data for the name',
 			  `isFavourite` int(1) DEFAULT NULL COMMENT 'Favourite publication',
 			  `savedAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Automatic timestamp',
 			  PRIMARY KEY (`id`)
@@ -647,8 +648,10 @@ class publicationsDatabase extends frontControllerApplication
 				$instances[] = array (
 					'username' => $username,
 					'publicationId' => $publicationId,
+					'nameAppearsAs' => $publication['nameAppearsAs'],
 					'isFavourite' => $publication['isFavourite'],	// This is a user-specific value
 				);
+				unset ($publications[$publicationId]['nameAppearsAs']);	// Prevent leakage into the stored publication data
 				unset ($publications[$publicationId]['isFavourite']);	// Prevent leakage into the stored publication data
 			}
 			
@@ -991,7 +994,7 @@ class publicationsDatabase extends frontControllerApplication
 	
 	
 	# Get data for a user
-	private function getUser ($username, $returnOnlyField = false)
+	private function getUser ($username)
 	{
 		# Obtain the data
 		$call = '/users/username-' . $username . '?detail=full';
@@ -1011,11 +1014,6 @@ class publicationsDatabase extends frontControllerApplication
 		# Add the display name as it appears in publications
 		$data['displayName'] = $this->formatAuthor ($data['surname'], $data['initials']);
 		
-		# Return only a single field if required
-		if ($returnOnlyField) {
-			$data = $data[$returnOnlyField];
-		}
-		
 		# Return the user ID
 		return $data;
 	}
@@ -1029,7 +1027,7 @@ class publicationsDatabase extends frontControllerApplication
 		$resultsUrlPage = $this->settings['apiHttp'] . $call;
 		
 		# Get the user's details
-		$displayName = $this->getUser ($username, 'displayName');
+		$user = $this->getUser ($username);
 		
 		# Start an array of all publication data to return
 		$publications = array ();
@@ -1075,15 +1073,30 @@ class publicationsDatabase extends frontControllerApplication
 				# Get the authors
 				$authors = array ();
 				$authorsNode = $xpathDom->query ('.//api:record[@is-preferred-record="true"]//api:field[@name="authors"]/api:people/api:person', $publicationNode);
+				$nameAppearsAs = array ();
 				foreach ($authorsNode as $index => $authorNode) {
 					$surname	= $this->XPath ($xpathDom, './api:last-name', $authorNode);
 					$initials	= $this->XPath ($xpathDom, './api:initials', $authorNode);
-					$authors[] = $this->formatAuthor ($surname, $initials);
+					$authors[$index] = $this->formatAuthor ($surname, $initials);
+					
+					# If this author's name appears to match, register this as a possible name match; it is unfortunate that the API seems to provide no proper match indication
+					if ($this->isAuthorNameMatch ($surname, $initials, $user)) {
+						$nameAppearsAs[] = $authors[$index];
+					}
 				}
 				$publication['authors'] = implode ('|', $authors);
 				
+				# Register what the name is formatted as, reporting any errors detected
+				if (!$nameAppearsAs) {
+					echo "\n<p class=\"warning\">The authors list for publication #{$publication['id']} does not appear to contain a match for <em>{$user['displayName']}</em> even though that publication is registered to that user; the authors found were: <em>" . implode ('</em>, <em>', $authors) . "</em>.</p>";
+				}
+				if (count ($nameAppearsAs) > 1) {
+					echo "\n<p class=\"warning\">A single unique author match for publication #{$publication['id']} could not be made against <em>{$user['displayName']}</em>; the matches were: <em>" . implode ('</em>, <em>', $nameAppearsAs) . "</em>.</p>";
+				}
+				$publication['nameAppearsAs'] = implode ('|', $nameAppearsAs);
+				
 				# Create a compiled HTML version
-				$publication['html'] = $this->compilePublicationHtml ($publication, $displayName);
+				$publication['html'] = $this->compilePublicationHtml ($publication, $user['displayName']);
 				
 				# Add this publication
 				$publications[$id] = $publication;
@@ -1095,6 +1108,14 @@ class publicationsDatabase extends frontControllerApplication
 		
 		# Return the array of publications
 		return $publications;
+	}
+	
+	
+	# Helper function to match an author's name (basic implementation)
+	private function isAuthorNameMatch ($surname, $initials, $user)
+	{
+		# Match the surname
+		return (trim (strtolower ($surname)) == trim (strtolower ($user['surname'])));
 	}
 	
 	
