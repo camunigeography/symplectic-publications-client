@@ -122,7 +122,7 @@ class publicationsDatabase extends frontControllerApplication
 			`id` int(11) NOT NULL COMMENT 'Automatic key',
 			  `username` varchar(10) COLLATE utf8_unicode_ci NOT NULL COMMENT 'Username',
 			  `publicationId` int(11) NOT NULL COMMENT 'Publication ID',
-			  `nameAppearsAs` varchar(255) COLLATE utf8_unicode_ci NOT NULL COMMENT 'The string appearing in the data for the name',
+			  `nameAppearsAs` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL COMMENT 'The string appearing in the data for the name',
 			  `isFavourite` int(1) DEFAULT NULL COMMENT 'Favourite publication',
 			  `savedAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Automatic timestamp',
 			  PRIMARY KEY (`id`)
@@ -1089,11 +1089,13 @@ class publicationsDatabase extends frontControllerApplication
 				# Register what the name is formatted as, reporting any errors detected
 				if (!$nameAppearsAs) {
 					echo "\n<p class=\"warning\">The authors list for publication #{$publication['id']} does not appear to contain a match for <em>{$user['displayName']}</em> even though that publication is registered to that user; the authors found were: <em>" . implode ('</em>, <em>', $authors) . "</em>.</p>";
+					$nameAppearsAs = array ();
 				}
 				if (count ($nameAppearsAs) > 1) {
 					echo "\n<p class=\"warning\">A single unique author match for publication #{$publication['id']} could not be made against <em>{$user['displayName']}</em>; the matches were: <em>" . implode ('</em>, <em>', $nameAppearsAs) . "</em>.</p>";
+					$nameAppearsAs = array ();
 				}
-				$publication['nameAppearsAs'] = implode ('|', $nameAppearsAs);
+				$publication['nameAppearsAs'] = ($nameAppearsAs ? $nameAppearsAs[0] : NULL);	// Convert the single item to a string, or the empty array to a database NULL
 				
 				# Create a compiled HTML version
 				$publication['html'] = $this->compilePublicationHtml ($publication, $user['displayName']);
