@@ -23,7 +23,7 @@
 	RedirectMatch permanent ^$applicationBaseUrl/(groups)/([a-z0-9]+)$ $applicationBaseUrl/$1/$2/
 	
 	# API output formats
-	<LocationMatch /(html|json)$>
+	<LocationMatch ^$applicationBaseUrl/.+/(html|json)$>
 		php_value auto_prepend_file none
 		php_value auto_append_file none
 	</LocationMatch>
