@@ -495,13 +495,17 @@ class publicationsDatabase extends frontControllerApplication
 		# Get the data
 		$query = "SELECT
 				publications.*,
-				instances.isFavourite
+				instances.isFavourite,
+				instances.nameAppearsAs AS highlightAuthors
 			FROM instances
 			LEFT OUTER JOIN publications ON instances.publicationId = publications.id
 			WHERE username = :username
 			ORDER BY publicationYear DESC, authors
 		;";
 		$data = $this->databaseConnection->getData ($query, "{$this->settings['database']}.instances", true, array ('username' => $username));
+		
+		# Highlight the authors
+		$data = $this->highlightAuthors ($data);
 		
 		# Return the data
 		return $data;
@@ -514,18 +518,23 @@ class publicationsDatabase extends frontControllerApplication
 		# Assemble the username list into a regexp
 		$usernames = '^(' . implode ('|', $usernames) . ')$';
 		
-		# Get the data
+		# Get the data; uses GROUP_CONCAT method as described at http://www.mysqlperformanceblog.com/2013/10/22/the-power-of-mysqls-group_concat/
 		$query = "SELECT
 				publications.*,
-				instances.isFavourite
+				instances.isFavourite,
+				GROUP_CONCAT(DISTINCT instances.nameAppearsAs ORDER BY nameAppearsAs SEPARATOR '|') AS highlightAuthors
 			FROM instances
 			LEFT OUTER JOIN publications ON instances.publicationId = publications.id
 			WHERE
 				    username REGEXP :usernames
 				AND CAST(publicationYear AS UNSIGNED INT) > '{$this->firstOldYear}'
+			GROUP BY publications.id
 			ORDER BY publicationYear DESC, authors
 		;";
-		$data = $this->databaseConnection->getData ($query, "{$this->settings['database']}.instances", true, array ('usernames' => $usernames));
+		$data = $this->databaseConnection->getData ($query, false, "{$this->settings['database']}.{$this->settings['table']}", array ('usernames' => $usernames));
+		
+		# Highlight the authors
+		$data = $this->highlightAuthors ($data);
 		
 		# Return the data
 		return $data;
@@ -539,13 +548,52 @@ class publicationsDatabase extends frontControllerApplication
 		$firstOldYearMainListing = date ('Y') - $this->settings['yearsConsideredRecentMainListing'] - 1;
 		$query = "SELECT
 				publications.*,
-				instances.isFavourite
+				instances.isFavourite,
+				GROUP_CONCAT(DISTINCT instances.nameAppearsAs ORDER BY nameAppearsAs SEPARATOR '|') AS highlightAuthors
 			FROM instances
 			LEFT OUTER JOIN publications ON instances.publicationId = publications.id
 			WHERE CAST(publicationYear AS UNSIGNED INT) > '{$firstOldYearMainListing}'
+			GROUP BY publications.id
 			ORDER BY publicationYear DESC, authors
 		;";
 		$data = $this->databaseConnection->getData ($query, "{$this->settings['database']}.instances");
+		
+		# Highlight the authors
+		$data = $this->highlightAuthors ($data);
+		
+		# Return the data
+		return $data;
+	}
+	
+	
+	# Function to highlight the authors at runtime
+	private function highlightAuthors ($data)
+	{
+		# Loop through each publication
+		foreach ($data as $id => $publication) {
+			
+			# Convert the full list of authors and the list of authors to be highlighted into arrays
+			$authorsOriginal = explode ('|', $publication['authors']);
+			$highlightAuthors = explode ('|', $publication['highlightAuthors']);
+			
+			# Add bold to any author which is set to be highlighted
+			$authors = $authorsOriginal;
+			foreach ($authors as $index => $author) {
+				if (in_array ($author, $highlightAuthors, true)) {		// Strict matching applied
+					$authors[$index] = '<strong>' . $author . '</strong>';
+				}
+			}
+			
+			# Convert the original authors list and the highlighted versions into "A, B, and C" format, as per the original HTML
+			$authorsOriginal = application::commaAndListing ($authorsOriginal);
+			$authorsHighlighted = application::commaAndListing ($authors);
+			
+			# Substitute the authors listing at the start of the HTML with the new authors listing
+			$delimiter = '/';
+			$data[$id]['html'] = preg_replace ($delimiter . '^' . addcslashes ($authorsOriginal, $delimiter) . $delimiter, $authorsHighlighted, $publication['html']);
+		}
+		
+		// application::dumpData ($data);
 		
 		# Return the data
 		return $data;
@@ -725,7 +773,6 @@ class publicationsDatabase extends frontControllerApplication
 		foreach ($publications as $publicationId => $publication) {
 			if ($publication['isFavourite']) {
 				$favourites[$publicationId] = $publication['html'];
-				// $favourites[$id] = $this->compilePublicationHtml ($publication);	// Debug
 			}
 		}
 		if ($favourites) {
@@ -738,7 +785,6 @@ class publicationsDatabase extends frontControllerApplication
 		foreach ($publications as $publicationId => $publication) {
 			if ($publication['type'] == 'book') {
 				$books[$publicationId] = $publication['html'];
-				// $articles[$id] = $this->compilePublicationHtml ($publication);	// Debug
 				unset ($publications[$publicationId]);
 			}
 		}
@@ -793,7 +839,6 @@ class publicationsDatabase extends frontControllerApplication
 				foreach ($publicationsThisYear as $publicationId => $publication) {
 					$canSplitIfTotal--;
 					$articles[$publicationId] = $publication['html'];
-					// $articles[$id] = $this->compilePublicationHtml ($publication);	// Debug
 				}
 				
 				# Add the list for this year
@@ -1097,8 +1142,8 @@ class publicationsDatabase extends frontControllerApplication
 				}
 				$publication['nameAppearsAs'] = ($nameAppearsAs ? $nameAppearsAs[0] : NULL);	// Convert the single item to a string, or the empty array to a database NULL
 				
-				# Create a compiled HTML version
-				$publication['html'] = $this->compilePublicationHtml ($publication, $publication['nameAppearsAs']);
+				# Create a compiled HTML version; highlighting is not applied at this stage, as that has to be done at listing runtime depending on the listing context (person/group/all)
+				$publication['html'] = $this->compilePublicationHtml ($publication);
 				
 				# Add this publication
 				$publications[$id] = $publication;
@@ -1174,7 +1219,7 @@ class publicationsDatabase extends frontControllerApplication
 	
 	
 	# Helper function to create a compiled HTML version of a publication
-	private function compilePublicationHtml ($publication, $displayName)
+	private function compilePublicationHtml ($publication)
 	{
 		# Convert each element to entities
 		foreach ($publication as $key => $value) {
@@ -1186,18 +1231,13 @@ class publicationsDatabase extends frontControllerApplication
 			}
 		}
 		
-		# Unpack the listing into "A, B and C" format
-		$publication['authors'] = application::commaAndListing (explode ('|', $publication['authors']));
-		
-		# Bold the author name, retaining the exact capitalisation
-		#!# Move to a registry pattern so that multiple authors can be replaced at runtime
-		$delimiter = '/';
-		$publication['authors'] = preg_replace ($delimiter . '(' . addcslashes ($displayName, $delimiter) . ')' . $delimiter . 'i', '<strong>\1</strong>', $publication['authors']);
+		# Unpack the author listing into "A, B and C" format; the same routine is also used at runtime for higlighting
+		$authors = application::commaAndListing (explode ('|', $publication['authors']));
 		
 		# Compile the HTML for this publication
 		$html  = '';
 		$html .= ($publication['isFavourite'] ? '<img src="/images/icons/star.png" class="icon favourite" /> ' : '');
-		$html .= $publication['authors'] . ($publication['publicationYear'] ? ', ' : '');
+		$html .= $authors . ($publication['publicationYear'] ? ', ' : '');
 		$html .= ($publication['publicationYear'] ? $publication['publicationYear'] : '') . '. ';
 		$html .= "{$publication['title']}.";
 		$html .= (strlen ($publication['journal']) ? " <em>{$publication['journal']}</em>," : '');
@@ -1221,8 +1261,6 @@ class publicationsDatabase extends frontControllerApplication
 		if (preg_match ('/^Publications related to the user: (.+)$/', $personName, $matches)) {
 			$personName = $matches[1];
 		}
-		
-		# Split into 
 		
 		# Return string
 		return $personName;
