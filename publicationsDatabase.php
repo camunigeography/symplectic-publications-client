@@ -154,6 +154,10 @@ class publicationsDatabase extends frontControllerApplication
 			  `savedAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Automatic timestamp',
 			  PRIMARY KEY (`id`)
 			) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Table of data of users who have publications';
+			
+			CREATE TABLE `instances_import` LIKE `instances`;
+			CREATE TABLE `publications_import` LIKE `publications`;
+			CREATE TABLE `users_import` LIKE `users`;
 		";
 	}
 	
@@ -686,10 +690,11 @@ class publicationsDatabase extends frontControllerApplication
 		# Start a timer
 		$startTime = time ();
 		
-		# Clear existing data
-		$this->databaseConnection->truncate ($this->settings['database'], $this->settings['table'], true);
-		$this->databaseConnection->truncate ($this->settings['database'], 'instances', true);
-		$this->databaseConnection->truncate ($this->settings['database'], 'users', true);
+		# Clear any existing data from the import tables; this should have been done at the end of any previous import
+		$tables = array ($this->settings['table'], 'instances', 'users');
+		foreach ($tables as $table) {
+			$this->databaseConnection->truncate ($this->settings['database'], "{$table}_import", true);
+		}
 		
 		# Import the publications of each user
 		foreach ($users as $username => $user) {
@@ -711,22 +716,27 @@ class publicationsDatabase extends frontControllerApplication
 			}
 			
 			# Add the instances to the database
-			$this->databaseConnection->insertMany ($this->settings['database'], 'instances', $instances, $chunking = false);
+			$this->databaseConnection->insertMany ($this->settings['database'], 'instances' . '_import', $instances, $chunking = false);
 			
 			# Add each publication to the database, replacing if it already exists
-			$this->databaseConnection->replaceMany ($this->settings['database'], $this->settings['table'], $publications, $chunking = 5);
+			$this->databaseConnection->replaceMany ($this->settings['database'], $this->settings['table'] . '_import', $publications, $chunking = 5);
 			
 			# Insert the user into the local database
 			$user['id'] = $user['username'];
 			unset ($user['username']);
-			$this->databaseConnection->insert ($this->settings['database'], 'users', $user);
+			$this->databaseConnection->insert ($this->settings['database'], 'users' . '_import', $user);
 		}
 		
 		# Confirm outcome, replacing any previous HTML; note that an internal counter cannot be used as some publications will have appeared multiple times
 		$totalPublicationsCurrently = $this->getTotalPublications ();
 		$html  = "\n<p>{$this->tick} {$totalPublicationsCurrently} publications were imported.</p>";
 		
-#!# Move new table into place
+		# For each table, clear existing data from the live table, cross-insert the new data, and clear up the import table
+		foreach ($tables as $table) {
+			$this->databaseConnection->truncate ($this->settings['database'], $table, true);
+			$this->databaseConnection->query ("INSERT INTO {$table} SELECT * FROM {$table}_import;");
+			$this->databaseConnection->truncate ($this->settings['database'], "{$table}_import", true);
+		}
 		
 		# Show how long the import took
 		$finishTime = time ();
