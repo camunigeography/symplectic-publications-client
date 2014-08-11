@@ -504,8 +504,8 @@ class publicationsDatabase extends frontControllerApplication
 		;";
 		$data = $this->databaseConnection->getData ($query, "{$this->settings['database']}.instances", true, array ('username' => $username));
 		
-		# Highlight the authors
-		$data = $this->highlightAuthors ($data);
+		# Highlight the authors and add starring
+		$data = $this->decoratePublications ($data);
 		
 		# Return the data
 		return $data;
@@ -521,7 +521,7 @@ class publicationsDatabase extends frontControllerApplication
 		# Get the data; uses GROUP_CONCAT method as described at http://www.mysqlperformanceblog.com/2013/10/22/the-power-of-mysqls-group_concat/
 		$query = "SELECT
 				publications.*,
-				instances.isFavourite,
+				GROUP_CONCAT(DISTINCT instances.isFavourite) AS isFavourite,
 				GROUP_CONCAT(DISTINCT instances.nameAppearsAs ORDER BY nameAppearsAs SEPARATOR '|') AS highlightAuthors
 			FROM instances
 			LEFT OUTER JOIN publications ON instances.publicationId = publications.id
@@ -533,8 +533,8 @@ class publicationsDatabase extends frontControllerApplication
 		;";
 		$data = $this->databaseConnection->getData ($query, false, "{$this->settings['database']}.{$this->settings['table']}", array ('usernames' => $usernames));
 		
-		# Highlight the authors
-		$data = $this->highlightAuthors ($data);
+		# Highlight the authors and add starring
+		$data = $this->decoratePublications ($data);
 		
 		# Return the data
 		return $data;
@@ -548,7 +548,7 @@ class publicationsDatabase extends frontControllerApplication
 		$firstOldYearMainListing = date ('Y') - $this->settings['yearsConsideredRecentMainListing'] - 1;
 		$query = "SELECT
 				publications.*,
-				instances.isFavourite,
+				GROUP_CONCAT(DISTINCT instances.isFavourite) AS isFavourite,
 				GROUP_CONCAT(DISTINCT instances.nameAppearsAs ORDER BY nameAppearsAs SEPARATOR '|') AS highlightAuthors
 			FROM instances
 			LEFT OUTER JOIN publications ON instances.publicationId = publications.id
@@ -558,18 +558,18 @@ class publicationsDatabase extends frontControllerApplication
 		;";
 		$data = $this->databaseConnection->getData ($query, "{$this->settings['database']}.instances");
 		
-		# Highlight the authors
-		$data = $this->highlightAuthors ($data);
+		# Highlight the authors and add starring
+		$data = $this->decoratePublications ($data);
 		
 		# Return the data
 		return $data;
 	}
 	
 	
-	# Function to highlight the authors at runtime
-	private function highlightAuthors ($data)
+	# Function to highlight the authors and add stars at runtime
+	private function decoratePublications ($data)
 	{
-		# Loop through each publication
+		# Highlight authors
 		foreach ($data as $id => $publication) {
 			
 			# Convert the full list of authors and the list of authors to be highlighted into arrays
@@ -591,6 +591,13 @@ class publicationsDatabase extends frontControllerApplication
 			# Substitute the authors listing at the start of the HTML with the new authors listing
 			$delimiter = '/';
 			$data[$id]['html'] = preg_replace ($delimiter . '^' . addcslashes ($authorsOriginal, $delimiter) . $delimiter, $authorsHighlighted, $publication['html']);
+		}
+		
+		# Add stars
+		foreach ($data as $id => $publication) {
+			if ($publication['isFavourite']) {
+				$data[$id]['html'] = '<img src="/images/icons/star.png" class="icon favourite" /> ' . $publication['html'];
+			}
 		}
 		
 		// application::dumpData ($data);
@@ -1236,7 +1243,6 @@ class publicationsDatabase extends frontControllerApplication
 		
 		# Compile the HTML for this publication
 		$html  = '';
-		$html .= ($publication['isFavourite'] ? '<img src="/images/icons/star.png" class="icon favourite" /> ' : '');
 		$html .= $authors . ($publication['publicationYear'] ? ', ' : '');
 		$html .= ($publication['publicationYear'] ? $publication['publicationYear'] : '') . '. ';
 		$html .= "{$publication['title']}.";
