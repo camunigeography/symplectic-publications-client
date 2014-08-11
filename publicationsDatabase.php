@@ -29,6 +29,7 @@ class publicationsDatabase extends frontControllerApplication
 			'getUsersFunction' => NULL,
 			'getGroupsFunction' => NULL,
 			'getGroupMembers' => NULL,
+			'cronUsername' => NULL,
 		);
 		
 		# Return the defaults
@@ -707,6 +708,15 @@ class publicationsDatabase extends frontControllerApplication
 		
 		# Show the HTML
 		echo $html;
+	}
+	
+	
+	# Define cron jobs; run using:
+	# 55 4,9,11,13,15,17,19,21 * * * wget -q -O - http://theusername:@example.com/baseUrl/cron/
+	protected function cronJobs ()
+	{
+		# Run the import
+		$this->doImport ();
 	}
 	
 	
