@@ -675,6 +675,13 @@ class publicationsDatabase extends frontControllerApplication
 		$totalPublicationsCurrently = $this->getTotalPublications ();
 		$html .= "\n<p>There are currently {$totalPublicationsCurrently} publications imported.</p>";
 		
+		# Ensure an import is not running
+		if ($importHtml = $this->importInProgress ()) {
+			$html .= $importHtml;
+			echo $html;
+			return false;
+		}
+		
 		# Create the form
 		if (!$result = $this->runImportForm ($html)) {
 			echo $html;
@@ -726,9 +733,19 @@ class publicationsDatabase extends frontControllerApplication
 		# Start the HTML
 		$html = '';
 		
+		# Ensure another import is not running
+		if ($importHtml = $this->importInProgress ()) {
+			$html .= $importHtml;
+			return $html;
+		}
+		
+		# Write the lockfile
+		file_put_contents ($this->lockfile, $_SERVER['REMOTE_USER'] . ' ' . date ('Y-m-d H:i:s'));
+		
 		# Get the users from the local database
 		if (!$users = $this->getUsersUpstream ()) {
 			$html .= "\n<p>There are no users.</p>";
+			unlink ($this->lockfile);
 			return false;
 		}
 		
@@ -778,6 +795,9 @@ class publicationsDatabase extends frontControllerApplication
 		
 		# Get the number of publications
 		$totalPublications = $this->getTotalPublications ();
+		
+		# Remove the lockfile
+		unlink ($this->lockfile);
 		
 		# Signal success by returning the number of publications
 		return $totalPublications;
