@@ -664,7 +664,7 @@ class publicationsDatabase extends frontControllerApplication
 	}
 	
 	
-	# Import
+	# Import page
 	public function import ()
 	{
 		# Start the HTML
@@ -679,16 +679,48 @@ class publicationsDatabase extends frontControllerApplication
 			echo $html;
 			return true;
 		}
-		
-		# Get the users from the local database
-		if (!$users = $this->getUsersUpstream ()) {
-			$html = "\n<p>There are no users.</p>";
-			echo $html;
-			return true;
-		}
+		$html = '';		// Reset the HTML
 		
 		# Start a timer
 		$startTime = time ();
+		
+		# Run the import
+		if (!$totalPublications = $this->doImport ($importOutputHtml)) {
+			$html .= $importOutputHtml;
+			echo $importOutputHtml;
+			return false;
+		}
+		
+		# Determine how long the import took
+		$finishTime = time ();
+		$seconds = $finishTime - $startTime;
+		
+		# Confirm success
+		$html .= "\n<div class=\"graybox\">";
+		$html .= "\n\t<p>{$this->tick} {$totalPublications} publications were imported.</p>";
+		$html .= "\n\t<p>The import took: {$seconds} seconds.</p>";
+		$html .= "\n</div>";
+		
+		# Show output from the import
+		$html .= "\n<p>The following warnings were found during the import process, and should be fixed in the source data:</p>";
+		$html .= $importOutputHtml;
+		
+		# Show the HTML
+		echo $html;
+	}
+	
+	
+	# Function to run the import
+	private function doImport (&$html = '')
+	{
+		# Start the HTML
+		$html = '';
+		
+		# Get the users from the local database
+		if (!$users = $this->getUsersUpstream ()) {
+			$html .= "\n<p>There are no users.</p>";
+			return false;
+		}
 		
 		# Clear any existing data from the import tables; this should have been done at the end of any previous import
 		$tables = array ($this->settings['table'], 'instances', 'users');
@@ -700,7 +732,7 @@ class publicationsDatabase extends frontControllerApplication
 		foreach ($users as $username => $user) {
 			
 			# Get the publications of this user, or skip
-			if (!$publications = $this->retrievePublicationsOfUser ($username)) {continue;}
+			if (!$publications = $this->retrievePublicationsOfUser ($username, $html)) {continue;}
 			
 			# Assemble the publications IDs for this user
 			$instances = array ();
@@ -727,10 +759,6 @@ class publicationsDatabase extends frontControllerApplication
 			$this->databaseConnection->insert ($this->settings['database'], 'users' . '_import', $user);
 		}
 		
-		# Confirm outcome, replacing any previous HTML; note that an internal counter cannot be used as some publications will have appeared multiple times
-		$totalPublicationsCurrently = $this->getTotalPublications ();
-		$html  = "\n<p>{$this->tick} {$totalPublicationsCurrently} publications were imported.</p>";
-		
 		# For each table, clear existing data from the live table, cross-insert the new data, and clear up the import table
 		foreach ($tables as $table) {
 			$this->databaseConnection->truncate ($this->settings['database'], $table, true);
@@ -738,16 +766,11 @@ class publicationsDatabase extends frontControllerApplication
 			$this->databaseConnection->truncate ($this->settings['database'], "{$table}_import", true);
 		}
 		
-		# Show how long the import took
-		$finishTime = time ();
-		$seconds = $finishTime - $startTime;
-		$html .= "\n<p>The import took: {$seconds} seconds.</p>";
+		# Get the number of publications
+		$totalPublications = $this->getTotalPublications ();
 		
-		# Show the HTML
-		echo $html;
-		
-		# Signal success
-		return true;
+		# Signal success by returning the number of publications
+		return $totalPublications;
 	}
 	
 	
@@ -1082,7 +1105,7 @@ class publicationsDatabase extends frontControllerApplication
 	
 	
 	# Get the publications for a user
-	private function retrievePublicationsOfUser ($username)
+	private function retrievePublicationsOfUser ($username, &$errorHtml = '')
 	{
 		# Define the starting point for the call
 		$call = '/users/username-' . $username . '/publications?detail=full';
@@ -1150,17 +1173,17 @@ class publicationsDatabase extends frontControllerApplication
 				
 				# Register what the name is formatted as, reporting any errors detected
 				if (!$nameAppearsAs) {
-					echo "\n<p class=\"warning\">The authors list for publication #{$publication['id']} does not appear to contain a match for <em>{$user['displayName']}</em> even though that publication is registered to that user; the authors found were: <em>" . implode ('</em>, <em>', $authors) . "</em>.</p>";
+					$errorHtml .= "\n<p class=\"warning\">The authors list for publication #{$publication['id']} does not appear to contain a match for <em>{$user['displayName']}</em> even though that publication is registered to that user; the authors found were: <em>" . implode ('</em>, <em>', $authors) . "</em>.</p>";
 					$nameAppearsAs = array ();
 				}
 				if (count ($nameAppearsAs) > 1) {
-					echo "\n<p class=\"warning\">A single unique author match for publication #{$publication['id']} could not be made against <em>{$user['displayName']}</em>; the matches were: <em>" . implode ('</em>, <em>', $nameAppearsAs) . "</em>.</p>";
+					$errorHtml .= "\n<p class=\"warning\">A single unique author match for publication #{$publication['id']} could not be made against <em>{$user['displayName']}</em>; the matches were: <em>" . implode ('</em>, <em>', $nameAppearsAs) . "</em>.</p>";
 					$nameAppearsAs = array ();
 				}
 				$publication['nameAppearsAs'] = ($nameAppearsAs ? $nameAppearsAs[0] : NULL);	// Convert the single item to a string, or the empty array to a database NULL
 				
 				# Create a compiled HTML version; highlighting is not applied at this stage, as that has to be done at listing runtime depending on the listing context (person/group/all)
-				$publication['html'] = $this->compilePublicationHtml ($publication);
+				$publication['html'] = $this->compilePublicationHtml ($publication, $errorHtml);
 				
 				# Add this publication
 				$publications[$id] = $publication;
@@ -1236,7 +1259,7 @@ class publicationsDatabase extends frontControllerApplication
 	
 	
 	# Helper function to create a compiled HTML version of a publication
-	private function compilePublicationHtml ($publication)
+	private function compilePublicationHtml ($publication, &$errorHtml = '')
 	{
 		# Convert each element to entities
 		foreach ($publication as $key => $value) {
@@ -1244,7 +1267,7 @@ class publicationsDatabase extends frontControllerApplication
 			
 			# If the conversion failed, report
 			if (strlen ($value) && !strlen ($publication[$key])) {
-				echo "\n<p class=\"warning\">Invalid character(s) were found in publication #{$publication['id']} in the {$key} field; input text: {$value} .</p>";
+				$errorHtml .= "\n<p class=\"warning\">Invalid character(s) were found in publication #{$publication['id']} in the {$key} field; input text: {$value} .</p>";
 			}
 		}
 		
