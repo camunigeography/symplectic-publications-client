@@ -1045,6 +1045,12 @@ class publicationsDatabase extends frontControllerApplication
 		# If no data, check if the result was a 404, by checking the auto-created variable $http_response_header
 		if (!$data) {
 			
+			# End if no response at all
+			if (!isSet ($http_response_header)) {
+				echo "\n<p class=\"warning\">No response was received for <em>{$url}</em>.</p>";
+				die;
+			}
+			
 			# Find the header which contains the HTTP response code (seemingly usually the first)
 			foreach ($http_response_header as $header) {
 				if (preg_match ('|^HTTP/1|i', $header)) {
