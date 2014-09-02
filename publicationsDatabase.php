@@ -5,7 +5,7 @@
 
 # Licence: GPL
 # (c) Martin Lucas-Smith, University of Cambridge
-# More info: https://github.com/camunigeog/publicationsdatabase
+# More info: https://github.com/camunigeog/publications-database
 
 
 require_once ('frontControllerApplication.php');
