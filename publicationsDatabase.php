@@ -351,6 +351,89 @@ class publicationsDatabase extends frontControllerApplication
 	}
 	
 	
+	# Function to provide a side-by-side comparison system for migration
+	public static function comparison ($baseUrl, $username, $administrators, $websiteUrl, $goLiveDate)
+	{
+		# End if no a logged-in user
+		if (!$_SERVER['REMOTE_USER']) {return false;}
+		
+		# Ensure the page has a publications div
+		if (!$contents = file_get_contents ($_SERVER['SCRIPT_FILENAME'])) {return false;}
+		if (!substr_count ($contents, '<h2 id="publications">')) {return false;}
+		
+		# Determine if the user is an administrator
+		$currentUser = $_SERVER['REMOTE_USER'];
+		$userIsAdministrator = in_array ($currentUser, $administrators);
+		
+		# End if not the current user or an administrator
+		if (($currentUser != $username) && !$userIsAdministrator) {
+			return false;
+		}
+		
+		# Define the HTML
+		$html = <<< EOT
+			
+			<style type="text/css">
+				#symplecticswitch {margin-bottom: 20px;}
+				#symplecticswitch p {float: right; border: 1px solid #603; background-color: #f7f7f7; padding: 5px;}
+				#symplecticpublications {border-top: 1px dashed #ccc; border-bottom: 1px dashed #ccc; padding: 5px 0; background-color: #f7f7f7;}
+			</style>
+			<script type="text/javascript" src="/javascripts/libs/jquery-min.js"></script>
+			<script type="text/javascript">
+				$(function(){
+					
+					// Define username
+					var username = '{$username}';
+					
+					// Add checkbox
+					$('#publications').before('<div id="symplecticswitch" />');
+					
+					// Attempt to get the HTML (will be run asyncronously) from the API for this user, or return 404
+					$.get('{$baseUrl}/people/' + username + '/html', function (symplecticpublicationsHtml) {
+						
+						// Add checkbox
+						$('#symplecticswitch').html('<p><label for="symplectic">Show Symplectic version? </label><input type="checkbox" id="symplectic" name="symplectic" /></p>');
+						
+						// Surround existing publications block with a div, automatically, unless <div id="manualpublications">...</div> is already present
+						if($("#" + 'manualpublications').length == 0) {
+							$("h2#publications").nextUntil('h2').wrapAll('<div id="manualpublications" />');
+						}
+						
+						// Add a location for the new publications block, and hide it at first
+						$('#manualpublications').after('<div id="symplecticpublications" />');
+						$('#symplecticpublications').hide();
+						
+						// Add the HTML from the API
+						$('#symplecticpublications').html(symplecticpublicationsHtml);
+						
+						// Add helpful links
+						$('#symplecticpublications').prepend('<ul class="actions spaced"><li>This listing goes live {$goLiveDate} &nbsp;</li><li><a href="{$websiteUrl}" target="_blank"><img src="/images/icons/pencil.png" /> Add/edit this list</a></li><li><a href="{$baseUrl}/quickstart.pdf" target="_blank" class="noautoicon"><img src="/images/icons/page.png" />  Help guide (PDF)</a></li></div>');
+						
+						// Toggle div blocks when checkbox is on
+						$('#symplectic').click(function(){
+							if ($('#symplectic').is(':checked')) {
+								$('#symplecticpublications').show();
+								$('#manualpublications').hide();
+							} else {
+								$('#manualpublications').show();
+								$('#symplecticpublications').hide();
+							}
+						});
+						
+					// No such user (error 404)
+					}).fail(function(){
+						$('#symplecticswitch').html('<p>(No publications found in Symplectic.)</p>');
+					});
+					
+				});
+			</script>
+EOT;
+		
+		# Return the HTML
+		return $html;
+	}
+	
+	
 	# Function to determine if a user has publications
 	public function userHasPublications ($username)
 	{
