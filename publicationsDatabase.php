@@ -316,15 +316,13 @@ class publicationsDatabase extends frontControllerApplication
 		$html = '';
 		
 		# Ensure the person is present, or end
-		$users = $this->getPeople ();
-		if (!isSet ($users[$username])) {
+		if (!$user = $this->userHasPublications ($username)) {
 			$errorMessage = 'There is no such user.';
 			if ($this->action == 'api') {return array ('json' => array ('error' => $errorMessage), 'html' => $html);}
 			$html .= "\n<p>{$errorMessage}</p>";
 			echo $html;
 			return true;
 		}
-		$user = $users[$username];
 		
 		# Get the publications for that user
 		$publications = $this->getPerson ($username);
@@ -345,6 +343,20 @@ class publicationsDatabase extends frontControllerApplication
 		
 		# Show the page HTML
 		echo $pageHtml;
+	}
+	
+	
+	# Function to determine if a user has publications
+	public function userHasPublications ($username)
+	{
+		# Get the users
+		$users = $this->getPeople ();
+		
+		# If not present, return false
+		if (!isSet ($users[$username])) {return false;}
+		
+		# Return the user's details
+		return $users[$username];
 	}
 	
 	
