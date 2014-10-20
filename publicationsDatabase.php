@@ -30,6 +30,7 @@ class publicationsDatabase extends frontControllerApplication
 			'getGroupsFunction' => NULL,
 			'getGroupMembers' => NULL,
 			'cronUsername' => NULL,
+			'corsDomains' => array (),
 		);
 		
 		# Return the defaults
@@ -187,6 +188,9 @@ class publicationsDatabase extends frontControllerApplication
 	# API controller
 	public function api ()
 	{
+		# Send CORS headers
+		$this->corsHeaders ();
+		
 		# Get the data, which may be an error
 		$data = $this->apiInner ($errorMessage);
 		
