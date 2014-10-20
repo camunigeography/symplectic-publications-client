@@ -190,6 +190,11 @@ class publicationsDatabase extends frontControllerApplication
 		# Get the data, which may be an error
 		$data = $this->apiInner ($errorMessage);
 		
+		# Emit 404 header if an error (e.g. method wrong, or person not present, etc.)
+		if (isSet ($data['json']['error'])) {
+			application::sendHeader (404);
+		}
+		
 		# Select the relevant rendering
 		$outputFormat = $_GET['api'];	// Already validated in mainPreActions
 		$data = $data[$outputFormat];
