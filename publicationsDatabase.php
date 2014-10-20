@@ -218,7 +218,7 @@ class publicationsDatabase extends frontControllerApplication
 	{
 		# Ensure an action is specified
 		if (!isSet ($_GET['action'])) {
-			return array ('error' => 'No method was specified');
+			return array ('json' => array ('error' => 'No method was specified.'), 'html' => '');
 		}
 		$action = $_GET['action'];
 		
