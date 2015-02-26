@@ -786,6 +786,14 @@ EOT;
 			return false;
 		}
 		
+		# Ensure the lockfile directory is writable
+		$lockdir = dirname ($this->lockfile);
+		if (!is_writable ($lockdir)) {
+			$html .= "\n<p class=\"error\"><em>Error: The lockfile directory is not writable, so an import cannot be run.</em></p>";
+			echo $html;
+			return false;
+		}
+		
 		# Create the form
 		if (!$result = $this->runImportForm ($html)) {
 			echo $html;
