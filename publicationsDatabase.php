@@ -42,7 +42,7 @@ class publicationsDatabase extends frontControllerApplication
 	# Define the supported types and their labels
 	private $types = array (
 		'book'					=> 'Books',
-	//	'chapter'				=> 'Chapters',
+		'chapter'				=> 'Chapters',
 	//	'?'						=> 'Datasets',
 	//	'conference'			=> 'Conferences',
 		'journal-article'		=> 'Journal articles',
