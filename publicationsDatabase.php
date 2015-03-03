@@ -62,6 +62,11 @@ class publicationsDatabase extends frontControllerApplication
 	//	'?'						=> 'Working papers',
 	);
 	
+	# Define the types that should use listing by year
+	private $typesListingByYear = array (
+		'journal-article',
+	);
+	
 	
 	# Function to assign additional actions
 	public function actions ()
@@ -995,80 +1000,109 @@ EOT;
 			$html .= application::htmlUl ($favourites);
 		}
 		
-		# Extract the books first
-		$books = array ();
-		foreach ($publications as $publicationId => $publication) {
-			if ($publication['type'] == 'book') {
-				$books[$publicationId] = $publication['html'];
-				unset ($publications[$publicationId]);
-			}
-		}
-		if ($books) {
-			$html .= "\n<h3>Books</h3>";
-			$html .= application::htmlUl ($books);
-		}
+		# Regroup by type
+		$publicationsByType = application::regroup ($publications, 'type');
 		
-		# Show articles
-		if ($publications) {
+		# Work through each enabled type
+		foreach ($this->types as $type => $label) {
 			
-			# Regroup the remaining items by year
-			$publications = application::regroup ($publications, 'publicationYear', false);
+			# Skip if none of this type
+			if (!isSet ($publicationsByType[$type])) {continue;}
 			
-			# Loop through each year
-			if ($books) {	// Show heading only if there were previously also books
-				$html .= "\n<h3>Articles</h3>";
-			}
-			if ($favourites) {
-				$html .= "<p class=\"small comment\"><em>Key publications are marked with a star.</em></p>";
-			}
-			$oldYearsOpened = false;
-			$canSplitIfTotal = $this->settings['canSplitIfTotal'];
-			foreach ($publications as $year => $publicationsThisYear) {
-				
-				# If the first old year, open a div for Javascript filtering purposes
-				if (!$oldYearsOpened && ($year <= $this->firstOldYear) && $canSplitIfTotal <= 0) {
-					$oldYearsOpened = true;
-					
-					# Add a show/hide link for the div
-					$html .= "\n\n<!-- Show/hide link -->";
-					$html .= "\n" . '<script src="//code.jquery.com/jquery-1.11.1.min.js"></script>';
-					$html .= "\n" . '<script type="text/javascript">
-						$(document).ready(function(){
-							$("#olderpublications").hide();
-							$("#olderpublications").before("<p id=\"showall\"><a href=\"#showall\">&#9660; Show earlier publications &hellip;</a></p>");
-							$("#showall a").click(function(e){
-								e.preventDefault();
-								$("#showall").hide();
-								$("#olderpublications").show();
-							});
-						});
-					</script>
-					';
-					
-					# Add the div
-					$html .= "\n\n<div id=\"olderpublications\">\n";
-				}
-				
-				# Loop through the publications in the year and add it to the list
-				$articles = array ();
-				foreach ($publicationsThisYear as $publicationId => $publication) {
-					$canSplitIfTotal--;
-					$articles[$publicationId] = $publication['html'];
-				}
-				
-				# Add the list for this year
-				$html .= "\n<h4>" . ($year ? $year : '[Unknown year]') . '</h4>';
-				$html .= application::htmlUl ($articles);
-			}
-			
-			# Close the old years div if it was created
-			if ($oldYearsOpened) {
-				$html .= "\n\n</div><!-- /#olderpublications -->\n";
+			# Create a listing for this type
+			if (in_array ($type, $this->typesListingByYear)) {
+				$html .= $this->publicationsListByYear ($publicationsByType[$type], $label, $favourites);
+			} else {
+				$html .= $this->publicationsListSimple ($publicationsByType[$type], $label);
 			}
 		}
 		
 		# Surround with a div
 		$html = "\n\n\n<div id=\"publicationslist\">" . "\n" . $html . "\n\n</div><!-- /#publicationslist -->\n\n";
+		
+		# Return the HTML
+		return $html;
+	}
+	
+	
+	# Function to render a publication group as a simple bullet-point list without grouping
+	private function publicationsListSimple ($publications, $label)
+	{
+		# Construct the HTML
+		$sectionListing = array ();
+		foreach ($publications as $publicationId => $publication) {
+			$sectionListing[$publicationId] = $publication['html'];
+		}
+		$html  = "\n<h3>{$label}</h3>";
+		$html .= application::htmlUl ($sectionListing);
+		
+		# Return the HTML
+		return $html;
+	}
+	
+	
+	# Function to render a publication group as a simple bullet-point list without grouping
+	private function publicationsListByYear ($publications, $label, $favourites)
+	{
+		# End if none
+		if (!$publications) {return false;}
+		
+		# Start the HTML
+		$html  = "\n<h3>Articles</h3>";
+		
+		# Add favourites indication
+		if ($favourites) {
+			$html .= "<p class=\"small comment\"><em>Key publications are marked with a star.</em></p>";
+		}
+		
+		# Regroup the remaining items by year
+		$publications = application::regroup ($publications, 'publicationYear', false);
+		
+		# Loop through each year
+		$oldYearsOpened = false;
+		$canSplitIfTotal = $this->settings['canSplitIfTotal'];
+		foreach ($publications as $year => $publicationsThisYear) {
+			
+			# If the first old year, open a div for Javascript filtering purposes
+			if (!$oldYearsOpened && ($year <= $this->firstOldYear) && $canSplitIfTotal <= 0) {
+				$oldYearsOpened = true;
+				
+				# Add a show/hide link for the div
+				$html .= "\n\n<!-- Show/hide link -->";
+				$html .= "\n" . '<script src="//code.jquery.com/jquery-1.11.1.min.js"></script>';
+				$html .= "\n" . '<script type="text/javascript">
+					$(document).ready(function(){
+						$("#olderpublications").hide();
+						$("#olderpublications").before("<p id=\"showall\"><a href=\"#showall\">&#9660; Show earlier publications &hellip;</a></p>");
+						$("#showall a").click(function(e){
+							e.preventDefault();
+							$("#showall").hide();
+							$("#olderpublications").show();
+						});
+					});
+				</script>
+				';
+				
+				# Add the div
+				$html .= "\n\n<div id=\"olderpublications\">\n";
+			}
+			
+			# Loop through the publications in the year and add it to the list
+			$articles = array ();
+			foreach ($publicationsThisYear as $publicationId => $publication) {
+				$canSplitIfTotal--;
+				$articles[$publicationId] = $publication['html'];
+			}
+			
+			# Add the list for this year
+			$html .= "\n<h4>" . ($year ? $year : '[Unknown year]') . '</h4>';
+			$html .= application::htmlUl ($articles);
+		}
+		
+		# Close the old years div if it was created
+		if ($oldYearsOpened) {
+			$html .= "\n\n</div><!-- /#olderpublications -->\n";
+		}
 		
 		# Return the HTML
 		return $html;
