@@ -620,6 +620,8 @@ EOT;
 				COUNT(instances.isFavourite) AS favourites
 			FROM users
 			LEFT JOIN instances ON users.id = instances.username
+			LEFT JOIN publications ON instances.publicationId = publications.id
+			WHERE {$this->typesConstraintString}
 			GROUP BY instances.username
 			HAVING total > 0
 			ORDER BY surname, forename
