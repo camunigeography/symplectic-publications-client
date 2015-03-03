@@ -1259,8 +1259,8 @@ EOT;
 		$call = '/users/username-' . $username . '/publications?detail=full';
 		$resultsUrlPage = $this->settings['apiHttp'] . $call;
 		
-		# Get the user's details
-		$user = $this->getUser ($username);
+		# Get the user's details, or skip if they do not exist
+		if (!$user = $this->getUser ($username)) {return false;}
 		
 		# Start an array of all publication data to return
 		$publications = array ();
