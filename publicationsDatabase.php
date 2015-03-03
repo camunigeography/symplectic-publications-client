@@ -1154,6 +1154,16 @@ EOT;
 		# Delay to prevent API overload
 		usleep (500000);	// 0.5 seconds is requested in documentation (page 16, "500ms")
 		
+		/*
+		# Logging during development (uncomment to enable)
+		foreach ($http_response_header as $header) {
+			if (preg_match ('|^HTTP/1|i', $header)) {
+				break;	// The correct header has been found
+			}
+		}
+		file_put_contents ('/tmp/publications-api.txt', "\n" . date ('Y-m-d H:i:s') . '  ' . $url . '  ' . $header, FILE_APPEND);
+		*/
+		
 		# If no data, check if the result was a 404, by checking the auto-created variable $http_response_header
 		if (!$data) {
 			
@@ -1173,6 +1183,7 @@ EOT;
 			# If the response was anything other than 404, report the error
 			if (!substr_count ($header, ' 404 ')) {
 				echo "\n<p class=\"warning\">An empty response was received for <em>{$url}</em>, with header response: <em>{$header}</em>.</p>";
+				// application::dumpData ($http_response_header);
 				die;
 			}
 			
