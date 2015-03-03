@@ -777,7 +777,7 @@ EOT;
 		
 		# Show current statistics
 		$totalPublicationsCurrently = $this->getTotalPublications ();
-		$html .= "\n<p>There are currently {$totalPublicationsCurrently} publications imported.</p>";
+		$html .= "\n<p>There are currently " . number_format ($totalPublicationsCurrently) . " publications imported.</p>";
 		
 		# Ensure an import is not running
 		if ($importHtml = $this->importInProgress ()) {
