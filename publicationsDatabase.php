@@ -554,7 +554,7 @@ EOT;
 		# Show publications
 		$total = number_format (count ($publications));
 		$pageHtml  = $this->apiLinks ();
-		$pageHtml .= "\n<p id=\"introduction\">Most recent publications involving members of the Department in the last {$this->settings['yearsConsideredRecentMainListing']} " . ($this->settings['yearsConsideredRecentMainListing'] == 1 ? 'year' : 'years') . ":</p>";
+		$pageHtml .= "\n<p id=\"introduction\">Most recent publications ({$total}) involving members of the Department in the last {$this->settings['yearsConsideredRecentMainListing']} " . ($this->settings['yearsConsideredRecentMainListing'] == 1 ? 'year' : 'years') . ":</p>";
 		$pageHtml .= "\n<hr />";
 		$pageHtml .= $html;
 		
