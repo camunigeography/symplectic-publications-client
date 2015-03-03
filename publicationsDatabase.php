@@ -38,6 +38,31 @@ class publicationsDatabase extends frontControllerApplication
 	}
 	
 	
+	
+	# Define the supported types and their labels
+	private $types = array (
+		'book'					=> 'Books',
+	//	'chapter'				=> 'Chapters',
+	//	'?'						=> 'Datasets',
+	//	'conference'			=> 'Conferences',
+		'journal-article'		=> 'Journal articles',
+	//	'patent'				=> 'Patents',
+	//	'report'				=> 'Reports',
+	//	'software'				=> 'Software',
+	//	'?'						=> 'Performances',
+	//	'?'						=> 'Compositions',
+	//	'?'						=> 'Designs',
+	//	'?'						=> 'Artefacts',
+	//	'?'						=> 'Exhibitions',
+	//	'other'					=> 'Other',
+	//	'internet-publication'	=> 'Internet publications',
+	//	'?'						=> 'Scholarly editions',
+	//	'?'						=> 'Posters',
+	//	'thesis-dissertation'	=> 'Theses / Dissertations',
+	//	'?'						=> 'Working papers',
+	);
+	
+	
 	# Function to assign additional actions
 	public function actions ()
 	{
@@ -181,6 +206,9 @@ class publicationsDatabase extends frontControllerApplication
 	{
 		# Set the first year when publications are considered old
 		$this->firstOldYear = date ('Y') - $this->settings['yearsConsideredRecent'] - 1;	// e.g. 2014 gives 2008 as the old year
+		
+		# Define a database constraint string for types
+		$this->typesConstraintString = "type IN('" . implode ("','", array_keys ($this->types)) . "')";
 		
 	}
 	
@@ -608,7 +636,9 @@ EOT;
 				instances.nameAppearsAs AS highlightAuthors
 			FROM instances
 			LEFT OUTER JOIN publications ON instances.publicationId = publications.id
-			WHERE username = :username
+			WHERE
+				    username = :username
+				AND {$this->typesConstraintString}
 			ORDER BY publicationYear DESC, authors
 		;";
 		$data = $this->databaseConnection->getData ($query, "{$this->settings['database']}.instances", true, array ('username' => $username));
@@ -636,6 +666,7 @@ EOT;
 			LEFT OUTER JOIN publications ON instances.publicationId = publications.id
 			WHERE
 				    username REGEXP :usernames
+				AND {$this->typesConstraintString}
 				AND CAST(publicationYear AS UNSIGNED INT) > '{$this->firstOldYear}'
 			GROUP BY publications.id
 			ORDER BY publicationYear DESC, authors
@@ -661,7 +692,9 @@ EOT;
 				GROUP_CONCAT(DISTINCT instances.nameAppearsAs ORDER BY nameAppearsAs SEPARATOR '|') AS highlightAuthors
 			FROM instances
 			LEFT OUTER JOIN publications ON instances.publicationId = publications.id
-			WHERE CAST(publicationYear AS UNSIGNED INT) > '{$firstOldYearMainListing}'
+			WHERE
+				    CAST(publicationYear AS UNSIGNED INT) > '{$firstOldYearMainListing}'
+				AND {$this->typesConstraintString}
 			GROUP BY publications.id
 			ORDER BY publicationYear DESC, authors
 		;";
