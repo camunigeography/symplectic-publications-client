@@ -1,5 +1,5 @@
 #publicationsdatabase p#introduction + hr {margin: 1.2em 0 3em;}
-#publicationsdatabase #publicationslist p#showall a {display: block; border: 0; margin-top: 2em; padding: 5px 22px 20px; background-image: linear-gradient(to top, #fff 0%, #ddd 100%);}
+#publicationsdatabase #publicationslist p.showall a {display: block; border: 0; margin-top: 2em; padding: 5px 22px 20px; background-image: linear-gradient(to top, #fff 0%, #ddd 100%);}
 /* #publicationslist #olderpublications {opacity: 0.5;} */
 #publicationsdatabase #publicationslist ul li {text-align: left;}
 #publicationsdatabase #publicationslist ul li img.favourite, #publicationsdatabase img.favourite {position: relative; top: -2px;}

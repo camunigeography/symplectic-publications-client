@@ -1014,7 +1014,7 @@ EOT;
 			
 			# Create a listing for this type
 			if (in_array ($type, $this->typesListingByYear)) {
-				$html .= $this->publicationsListByYear ($publicationsByType[$type], $label, $favourites);
+				$html .= $this->publicationsListByYear ($publicationsByType[$type], $label, $type, $favourites);
 			} else {
 				$html .= $this->publicationsListSimple ($publicationsByType[$type], $label);
 			}
@@ -1045,13 +1045,13 @@ EOT;
 	
 	
 	# Function to render a publication group as a simple bullet-point list without grouping
-	private function publicationsListByYear ($publications, $label, $favourites)
+	private function publicationsListByYear ($publications, $label, $type, $favourites)
 	{
 		# End if none
 		if (!$publications) {return false;}
 		
 		# Start the HTML
-		$html  = "\n<h3>Articles</h3>";
+		$html  = "\n<h3>{$label}</h3>";
 		
 		# Add favourites indication
 		if ($favourites) {
@@ -1060,6 +1060,9 @@ EOT;
 		
 		# Regroup the remaining items by year
 		$publications = application::regroup ($publications, 'publicationYear', false);
+		
+		# Determine a namespace extension for the jQuery references
+		$namespace = '_' . str_replace ('-', '', $type);
 		
 		# Loop through each year
 		$oldYearsOpened = false;
@@ -1075,19 +1078,19 @@ EOT;
 				$html .= "\n" . '<script src="//code.jquery.com/jquery-1.11.1.min.js"></script>';
 				$html .= "\n" . '<script type="text/javascript">
 					$(document).ready(function(){
-						$("#olderpublications").hide();
-						$("#olderpublications").before("<p id=\"showall\"><a href=\"#showall\">&#9660; Show earlier publications &hellip;</a></p>");
-						$("#showall a").click(function(e){
+						$("#olderpublications' . $namespace . '").hide();
+						$("#olderpublications' . $namespace . '").before("<p class=\"showall\" id=\"showall' . $namespace . '\"><a href=\"#showall' . $namespace . '\">&#9660; Show earlier ' . lcfirst ($label) . ' &hellip;</a></p>");
+						$("#showall' . $namespace . ' a").click(function(e){
 							e.preventDefault();
-							$("#showall").hide();
-							$("#olderpublications").show();
+							$("#showall' . $namespace . '").hide();
+							$("#olderpublications' . $namespace . '").show();
 						});
 					});
 				</script>
 				';
 				
 				# Add the div
-				$html .= "\n\n<div id=\"olderpublications\">\n";
+				$html .= "\n\n<div id=\"olderpublications" . $namespace . "\">\n";
 			}
 			
 			# Loop through the publications in the year and add it to the list
