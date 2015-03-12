@@ -1514,7 +1514,9 @@ EOT;
 		$html  = '';
 		$html .= $authors . ($publication['publicationYear'] ? ', ' : '');
 		$html .= ($publication['publicationYear'] ? $publication['publicationYear'] : '') . '. ';
+		if ($publication['type'] == 'book') {$html .= '<em>';}
 		$html .= "{$publication['title']}";
+		if ($publication['type'] == 'book') {$html .= '</em>';}
 		if ($publication['type'] == 'book') {
 			if (strlen ($publication['edition'])) {$html .= ", {$publication['edition']} edition";}
 			if (strlen ($publication['publisher'])) {$html .= ", {$publication['publisher']}";}
