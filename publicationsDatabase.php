@@ -173,6 +173,8 @@ class publicationsDatabase extends frontControllerApplication
 			  `publicationDay` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL COMMENT 'Publication day',
 			  `volume` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL COMMENT 'Volume',
 			  `pagination` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL COMMENT 'Pagination',
+			  `publisher` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL COMMENT 'Publisher',
+			  `edition` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL COMMENT 'Publisher',
 			  `number` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL COMMENT 'Number',
 			  `authors` text COLLATE utf8_unicode_ci COMMENT 'Authors',
 			  `html` text COLLATE utf8_unicode_ci NOT NULL COMMENT 'Compiled HTML representation of record',
@@ -1383,6 +1385,8 @@ EOT;
 					'publicationDay'		=> $this->XPath ($xpathDom, './/api:field[@name="publication-date"]/api:date/api:day', $publicationNode),
 					'volume'				=> $this->XPath ($xpathDom, './/api:field[@name="volume"]/api:text', $publicationNode),
 					'pagination'			=> $this->formatPagination ($this->XPath ($xpathDom, './/api:field[@name="pagination"]/api:pagination/api:begin-page', $publicationNode), $this->XPath ($xpathDom, './/api:field[@name="pagination"]/api:pagination/api:end-page', $publicationNode)),
+					'publisher'				=> $this->XPath ($xpathDom, './/api:field[@name="publisher"]/api:text', $publicationNode),
+					'edition'				=> $this->XPath ($xpathDom, './/api:field[@name="edition"]/api:text', $publicationNode),
 					'number'				=> $this->XPath ($xpathDom, './/api:field[@name="number"]/api:text', $publicationNode),
 					'isFavourite'			=> ($this->XPath ($xpathDom, './/api:is-favourite', $publicationNode) == 'false' ? NULL : 1),
 				);
@@ -1510,7 +1514,12 @@ EOT;
 		$html  = '';
 		$html .= $authors . ($publication['publicationYear'] ? ', ' : '');
 		$html .= ($publication['publicationYear'] ? $publication['publicationYear'] : '') . '. ';
-		$html .= "{$publication['title']}.";
+		$html .= "{$publication['title']}";
+		if ($publication['type'] == 'book') {
+			if (strlen ($publication['edition'])) {$html .= ", {$publication['edition']} edition";}
+			if (strlen ($publication['publisher'])) {$html .= ", {$publication['publisher']}";}
+		}
+		$html .= '.';
 		$html .= (strlen ($publication['journal']) ? " <em>{$publication['journal']}</em>," : '');
 		$html .= (strlen ($publication['volume']) ? " v. {$publication['volume']}," : '');
 		$html .= (strlen ($publication['pagination']) ? " {$publication['pagination']}." : '');
