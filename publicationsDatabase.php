@@ -175,6 +175,8 @@ class publicationsDatabase extends frontControllerApplication
 			  `pagination` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL COMMENT 'Pagination',
 			  `publisher` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL COMMENT 'Publisher',
 			  `edition` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL COMMENT 'Publisher',
+			  `editors` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL COMMENT 'Editors',
+			  `parentTitle` text COLLATE utf8_unicode_ci DEFAULT NULL COMMENT 'Parent title',
 			  `number` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL COMMENT 'Number',
 			  `authors` text COLLATE utf8_unicode_ci COMMENT 'Authors',
 			  `html` text COLLATE utf8_unicode_ci NOT NULL COMMENT 'Compiled HTML representation of record',
@@ -1386,6 +1388,7 @@ EOT;
 					'volume'				=> $this->XPath ($xpathDom, './/api:field[@name="volume"]/api:text', $publicationNode),
 					'pagination'			=> $this->formatPagination ($this->XPath ($xpathDom, './/api:field[@name="pagination"]/api:pagination/api:begin-page', $publicationNode), $this->XPath ($xpathDom, './/api:field[@name="pagination"]/api:pagination/api:end-page', $publicationNode)),
 					'publisher'				=> $this->XPath ($xpathDom, './/api:field[@name="publisher"]/api:text', $publicationNode),
+					'parentTitle'			=> $this->XPath ($xpathDom, './/api:field[@name="parent-title"]/api:text', $publicationNode),
 					'edition'				=> $this->XPath ($xpathDom, './/api:field[@name="edition"]/api:text', $publicationNode),
 					'number'				=> $this->XPath ($xpathDom, './/api:field[@name="number"]/api:text', $publicationNode),
 					'isFavourite'			=> ($this->XPath ($xpathDom, './/api:is-favourite', $publicationNode) == 'false' ? NULL : 1),
@@ -1417,6 +1420,16 @@ EOT;
 					$nameAppearsAs = array ();
 				}
 				$publication['nameAppearsAs'] = ($nameAppearsAs ? $nameAppearsAs[0] : NULL);	// Convert the single item to a string, or the empty array to a database NULL
+				
+				# Get the editors
+				$editors = array ();
+				$editorsNode = $xpathDom->query ('.//api:record[@is-preferred-record="true"]//api:field[@name="editors"]/api:people/api:person', $publicationNode);
+				foreach ($editorsNode as $index => $editorNode) {
+					$surname	= $this->XPath ($xpathDom, './api:last-name', $editorNode);
+					$initials	= $this->XPath ($xpathDom, './api:initials', $editorNode);
+					$editors[$index] = $this->formatAuthor ($surname, $initials);
+				}
+				$publication['editors'] = implode ('|', $editors);
 				
 				# Create a compiled HTML version; highlighting is not applied at this stage, as that has to be done at listing runtime depending on the listing context (person/group/all)
 				$publication['html'] = $this->compilePublicationHtml ($publication, $errorHtml);
@@ -1507,8 +1520,9 @@ EOT;
 			}
 		}
 		
-		# Unpack the author listing into "A, B and C" format; the same routine is also used at runtime for higlighting
+		# Unpack the author/editor listing(s) into "A, B and C" format; the same routine is also used at runtime for higlighting
 		$authors = application::commaAndListing (explode ('|', $publication['authors']));
+		$editors = application::commaAndListing (explode ('|', $publication['editors']));
 		
 		# Compile the HTML for this publication
 		$html  = '';
@@ -1517,7 +1531,12 @@ EOT;
 		if ($publication['type'] == 'book') {$html .= '<em>';}
 		$html .= "{$publication['title']}";
 		if ($publication['type'] == 'book') {$html .= '</em>';}
-		if ($publication['type'] == 'book') {
+		if ($publication['type'] == 'chapter' && strlen ($publication['parentTitle'])) {
+			$html .= ', in';
+			if (strlen ($publication['editors'])) {$html .= ' ' . $editors . ' (' . (substr_count ($publication['editors'], '|') ? 'eds' : 'ed') . '.)';}
+			if (strlen ($publication['parentTitle'])) {$html .= " <em>{$publication['parentTitle']}</em>";}
+		}
+		if (($publication['type'] == 'book') || ($publication['type'] == 'chapter')) {
 			if (strlen ($publication['edition'])) {$html .= ", {$publication['edition']} edition";}
 			if (strlen ($publication['publisher'])) {$html .= ", {$publication['publisher']}";}
 		}
