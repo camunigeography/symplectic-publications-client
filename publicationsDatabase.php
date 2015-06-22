@@ -31,6 +31,9 @@ class publicationsDatabase extends frontControllerApplication
 			'getGroupMembers' => NULL,
 			'cronUsername' => NULL,
 			'corsDomains' => array (),
+			'bookcoversLocation' => 'bookcovers/',		// From baseUrl, or if starting with a slash, from DOCUMENT_ROOT
+			'bookcoversFormat' => 'png',
+			'bookcoversHeight' => 250,
 		);
 		
 		# Return the defaults
@@ -79,6 +82,13 @@ class publicationsDatabase extends frontControllerApplication
 				'url' => '',
 				'icon' => 'house',
 				'tab' => 'Home',
+			),
+			'bookcover' => array (
+				'description' => 'Upload a book cover',
+				'url' => 'bookcover.html',
+				'icon' => 'book',
+				'tab' => 'Book cover',
+				'authentication' => true,
 			),
 			'recent' => array (
 				'description' => 'Most recent publications',
@@ -220,7 +230,24 @@ class publicationsDatabase extends frontControllerApplication
 		# Define a database constraint string for types
 		$this->typesConstraintString = "type IN('" . implode ("','", array_keys ($this->types)) . "')";
 		
+		# Determine the book covers directory; if a relative path, define it in relation to the baseUrl
+		if (substr ($this->settings['bookcoversLocation'], 0, 1) != '/') {
+			$this->settings['bookcoversLocation'] = $this->baseUrl . '/' . $this->settings['bookcoversLocation'];
+		}
+		
+		# Ensure the book covers directory exists and is writable
+		if (!is_dir ($_SERVER['DOCUMENT_ROOT'] . $this->settings['bookcoversLocation'])) {
+			echo "\n<p class=\"warning\">The book covers directory is not present. The administrator needs to fix this problem before the system will run.</p>";
+			return false;
+		}
+		if (!is_writable ($_SERVER['DOCUMENT_ROOT'] . $this->settings['bookcoversLocation'])) {
+			echo "\n<p class=\"warning\">The book covers directory is not writable. The administrator needs to fix this problem before the system will run.</p>";
+			return false;
+		}
+		
 	}
+	
+	
 	
 	
 	# API controller
@@ -309,6 +336,80 @@ class publicationsDatabase extends frontControllerApplication
 		$html .= "\n<h3>Statistics</h3>";
 		$data = $this->getStatistics ();
 		$html .= application::htmlTableKeyed ($data, array (), false, 'lines compressed');
+		
+		# Show the HTML
+		echo $html;
+	}
+	
+	
+	# Page to upload a book cover
+	public function bookcover ()
+	{
+		# Start the HTML
+		$html = '';
+		
+		# Ensure the person is present, or end
+		if (!$user = $this->userHasPublications ($this->user)) {
+			$html .= "\n<p>You do not appear to have any books in the Symplectic system.</p>";
+			echo $html;
+			return true;
+		}
+		
+		# Get the publications for that user
+		if (!$data = $this->getPerson ($this->user, 'book')) {
+			$html .= "\n<p>You do not appear to have any books in the Symplectic system. However, if you have added a book to Symplectic just now, please check back here in a few hours, as there is a slight delay for this website to pick up new publications from Symplectic.</p>";
+			echo $html;
+			return true;
+		}
+		
+		# Arrange as key => title
+		$books = array ();
+		foreach ($data as $id => $book) {
+			$books[$id] = $book['title'];
+		}
+		
+		# Assemble the book covers directory
+		$directory = $_SERVER['DOCUMENT_ROOT'] . $this->settings['bookcoversLocation'];
+		
+		# Show the upload form
+		$form = new form (array (
+			'formCompleteText' => false,
+			'div' => 'ultimateform',
+		));
+		$form->select (array (
+			'name' => 'book',
+			'title' => 'Book',
+			'values' => $books,
+			'required' => true,
+		));
+		$form->heading ('p', "Please select an image from your computer. It will be automatically resized to a height of {$this->settings['bookcoversHeight']}px.");
+		$form->upload (array (
+			'name'				=> 'image',
+			'title'				=> 'Image',
+			'required'			=> 1,
+			'directory'			=> $directory,
+			'allowedExtensions'	=> array ('jpg', 'gif', 'png', ),
+			'forcedFileName'	=> $this->user,		// Avoids race condition issues
+			'required'			=> true,
+		));
+		if (!$result = $form->process ()) {
+			echo $html;
+			return false;
+		}
+		
+		# Rename the file to the ID of the book
+		$tmpFile = $_SERVER['DOCUMENT_ROOT'] . $this->settings['bookcoversLocation'] . $result['image'][0];
+		$uploadedFile = $_SERVER['DOCUMENT_ROOT'] . $this->settings['bookcoversLocation'] . $result['book'] . '-original' . '.' . pathinfo ($result['image'][0], PATHINFO_EXTENSION);
+		rename ($tmpFile, $uploadedFile);
+		
+		# Resize
+		$thumbnailFile = $_SERVER['DOCUMENT_ROOT'] . $this->settings['bookcoversLocation'] . $result['book'] . '.' . $this->settings['bookcoversFormat'];
+		require_once ('image.php');
+		image::resize ($uploadedFile, $outputFormat = 'jpg', $newWidth = '', $this->settings['bookcoversHeight'], $thumbnailFile, false);
+		
+		# Confirm success
+		$html  = "\n<p>{$this->tick} The book cover has been successfully uploaded.</p>";
+		$html .= "\n<p>Please navigate to your public page on the website to see it.</p>";
 		
 		# Show the HTML
 		echo $html;
@@ -639,7 +740,7 @@ EOT;
 	
 	
 	# Function to get publications of a user from the database
-	private function getPerson ($username)
+	private function getPerson ($username, $type = false)
 	{
 		# Get the data
 		$query = "SELECT
@@ -650,7 +751,8 @@ EOT;
 			LEFT OUTER JOIN publications ON instances.publicationId = publications.id
 			WHERE
 				    username = :username
-				AND {$this->typesConstraintString}
+				AND {$this->typesConstraintString}"
+				. ($type ? " AND type = '{$type}'" : '') . "
 			ORDER BY publicationYear DESC, authors
 		;";
 		$data = $this->databaseConnection->getData ($query, "{$this->settings['database']}.instances", true, array ('username' => $username));
@@ -745,6 +847,19 @@ EOT;
 			# Substitute the authors listing at the start of the HTML with the new authors listing
 			$delimiter = '/';
 			$data[$id]['html'] = preg_replace ($delimiter . '^' . addcslashes ($authorsOriginal, $delimiter) . $delimiter, $authorsHighlighted, $publication['html']);
+		}
+		
+		# Add book covers if present
+		foreach ($data as $id => $publication) {
+			$data[$id]['thumbnail'] = false;
+			$data[$id]['thumbnailHtml'] = false;
+			$location = $this->settings['bookcoversLocation'] . $id . '.' . $this->settings['bookcoversFormat'];
+			if (file_exists ($_SERVER['DOCUMENT_ROOT'] . $location)) {
+				list ($width, $height, $type, $attributesHtml) = getimagesize ($_SERVER['DOCUMENT_ROOT'] . $location);
+				$altHtml = htmlspecialchars ($publication['title']);
+				$data[$id]['thumbnail'] = $_SERVER['_SITE_URL'] . $location;
+				$data[$id]['thumbnailHtml'] = "<img src=\"{$data[$id]['thumbnail']}\" {$attributesHtml} alt=\"{$altHtml}\" />";
+			}
 		}
 		
 		# Add stars
@@ -1042,6 +1157,17 @@ EOT;
 		}
 		$html  = "\n<h3>{$label}</h3>";
 		$html .= application::htmlUl ($sectionListing);
+		
+		# If there are book covers show these, as a block at the end of the books
+		$images = array ();
+		foreach ($publications as $id => $publication) {
+			if ($publication['thumbnailHtml']) {
+				$images[$id] = $publication['thumbnailHtml'];
+			}
+		}
+		if ($images) {
+			$html .= "\n<p class=\"bookcovers\">" . implode (' &nbsp; ', $images) . "\n</p>";
+		}
 		
 		# Return the HTML
 		return $html;

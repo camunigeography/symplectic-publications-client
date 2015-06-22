@@ -21,6 +21,7 @@
 	RedirectMatch permanent ^$applicationBaseUrl/(people)/([a-z]+[0-9]+)$ $applicationBaseUrl/$1/$2/
 	RewriteRule ^$applicationBaseUrl/(group)s/([a-z0-9]+)/(|json|html)$ $applicationBaseUrl/index.html?action=$1&item=$2&api=$3 [L]
 	RedirectMatch permanent ^$applicationBaseUrl/(groups)/([a-z0-9]+)$ $applicationBaseUrl/$1/$2/
+	RewriteRule ^$applicationBaseUrl/(bookcover).html$ $applicationBaseUrl/index.html?action=$1 [L]
 	
 	# API output formats
 	<LocationMatch ^$applicationBaseUrl/.+/(html|json)$>
@@ -28,5 +29,9 @@
 		php_value auto_append_file none
 	</LocationMatch>
 	
+	# Permit uploads
+	<Location $applicationBaseUrl/bookcover.html>
+		php_admin_flag file_uploads on
+	</Location>
 	
 </Macro>
