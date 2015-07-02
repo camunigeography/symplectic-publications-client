@@ -189,6 +189,7 @@ class publicationsDatabase extends frontControllerApplication
 			  `parentTitle` text COLLATE utf8_unicode_ci DEFAULT NULL COMMENT 'Parent title',
 			  `number` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL COMMENT 'Number',
 			  `authors` text COLLATE utf8_unicode_ci COMMENT 'Authors',
+			  `url` VARCHAR(255) COLLATE utf8_unicode_ci NULL COMMENT 'URL';
 			  `html` text COLLATE utf8_unicode_ci NOT NULL COMMENT 'Compiled HTML representation of record',
 			  `savedAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Automatic timestamp',
 			  PRIMARY KEY (`id`)
@@ -1518,6 +1519,7 @@ EOT;
 					'parentTitle'			=> $this->XPath ($xpathDom, './/api:field[@name="parent-title"]/api:text', $publicationNode),
 					'edition'				=> $this->XPath ($xpathDom, './/api:field[@name="edition"]/api:text', $publicationNode),
 					'number'				=> $this->XPath ($xpathDom, './/api:field[@name="number"]/api:text', $publicationNode),
+					'url'					=> $this->XPath ($xpathDom, './/api:field[@name="publisher-url"]/api:text', $publicationNode),
 					'isFavourite'			=> ($this->XPath ($xpathDom, './/api:is-favourite', $publicationNode) == 'false' ? NULL : 1),
 				);
 				
@@ -1655,9 +1657,15 @@ EOT;
 		$html  = '';
 		$html .= $authors . ($publication['publicationYear'] ? ', ' : '');
 		$html .= ($publication['publicationYear'] ? $publication['publicationYear'] : '') . '. ';
+		if (strlen ($publication['url'])) {
+			$html .= '<a href="' . htmlspecialchars ($publication['url']) . '" target="_blank">';
+		}
 		if ($publication['type'] == 'book') {$html .= '<em>';}
 		$html .= "{$publication['title']}";
 		if ($publication['type'] == 'book') {$html .= '</em>';}
+		if (strlen ($publication['url'])) {
+			$html .= '</a>';
+		}
 		if ($publication['type'] == 'chapter' && strlen ($publication['parentTitle'])) {
 			$html .= ', in';
 			if (strlen ($publication['editors'])) {$html .= ' ' . $editors . ' (' . (substr_count ($publication['editors'], '|') ? 'eds' : 'ed') . '.)';}
