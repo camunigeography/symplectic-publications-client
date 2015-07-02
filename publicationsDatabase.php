@@ -8,6 +8,9 @@
 # More info: https://github.com/camunigeog/publications-database
 
 
+#!# Consider adding support for direct upload of MP3 files, etc., in the same way as book covers
+
+
 require_once ('frontControllerApplication.php');
 class publicationsDatabase extends frontControllerApplication
 {
@@ -1669,6 +1672,9 @@ EOT;
 		}
 		if (strlen ($publication['url'])) {
 			$html .= '</a>';
+			if (preg_match ('/\.mp3$/', $publication['url'])) {
+				$html .= ' [MP3 file]';
+			}
 		}
 		if ($publication['type'] == 'chapter' && strlen ($publication['parentTitle'])) {
 			$html .= ', in';
