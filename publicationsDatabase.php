@@ -1544,11 +1544,11 @@ EOT;
 				
 				# Register what the name is formatted as, reporting any errors detected
 				if (!$nameAppearsAs) {
-					$errorHtml .= "\n<p class=\"warning\">The authors list for publication #{$publication['id']} does not appear to contain a match for <em>{$user['displayName']}</em> even though that publication is registered to that user; the authors found were: <em>" . implode ('</em>, <em>', $authors) . "</em>.</p>";
+					$errorHtml .= "\n<p class=\"warning\">The authors list for <a href=\"{$this->settings['website']}viewobject.html?cid=1&amp;id={$publication['id']}\" target=\"_blank\">publication #{$publication['id']}</a> does not appear to contain a match for <em>{$user['displayName']}</em> even though that publication is registered to that user; the authors found were: <em>" . implode ('</em>, <em>', $authors) . "</em>.</p>";
 					$nameAppearsAs = array ();
 				}
 				if (count ($nameAppearsAs) > 1) {
-					$errorHtml .= "\n<p class=\"warning\">A single unique author match for publication #{$publication['id']} could not be made against <em>{$user['displayName']}</em>; the matches were: <em>" . implode ('</em>, <em>', $nameAppearsAs) . "</em>.</p>";
+					$errorHtml .= "\n<p class=\"warning\">A single unique author match for <a href=\"{$this->settings['website']}viewobject.html?cid=1&amp;id={$publication['id']}\" target=\"_blank\">publication #{$publication['id']}</a> could not be made against <em>{$user['displayName']}</em>; the matches were: <em>" . implode ('</em>, <em>', $nameAppearsAs) . "</em>.</p>";
 					$nameAppearsAs = array ();
 				}
 				$publication['nameAppearsAs'] = ($nameAppearsAs ? $nameAppearsAs[0] : NULL);	// Convert the single item to a string, or the empty array to a database NULL
@@ -1648,7 +1648,7 @@ EOT;
 			
 			# If the conversion failed, report
 			if (strlen ($value) && !strlen ($publication[$key])) {
-				$errorHtml .= "\n<p class=\"warning\">Invalid character(s) were found in publication #{$publication['id']} in the {$key} field; input text: {$value} .</p>";
+				$errorHtml .= "\n<p class=\"warning\">Invalid character(s) were found in <a href=\"{$this->settings['website']}viewobject.html?cid=1&amp;id={$publication['id']}\" target=\"_blank\">publication #{$publication['id']}</a> in the {$key} field; input text: {$value} .</p>";
 			}
 		}
 		
