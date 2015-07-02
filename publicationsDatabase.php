@@ -520,6 +520,7 @@ class publicationsDatabase extends frontControllerApplication
 				#symplecticswitch {margin-bottom: 20px;}
 				#symplecticswitch p {float: right; border: 1px solid #603; background-color: #f7f7f7; padding: 5px;}
 				#symplecticpublications {border-top: 1px dashed #ccc; border-bottom: 1px dashed #ccc; padding: 5px 0; background-color: #f7f7f7;}
+				#symplecticpublications img.bookcover {min-width: 170px; margin: 5px 10px 12px 0; box-shadow: 5px 5px 10px 0 #aaa;}
 			</style>
 			<script type="text/javascript" src="/javascripts/libs/jquery-min.js"></script>
 			<script type="text/javascript">
@@ -858,7 +859,7 @@ EOT;
 				list ($width, $height, $type, $attributesHtml) = getimagesize ($_SERVER['DOCUMENT_ROOT'] . $location);
 				$altHtml = htmlspecialchars ($publication['title']);
 				$data[$id]['thumbnail'] = $_SERVER['_SITE_URL'] . $location;
-				$data[$id]['thumbnailHtml'] = "<img src=\"{$data[$id]['thumbnail']}\" {$attributesHtml} alt=\"{$altHtml}\" />";
+				$data[$id]['thumbnailHtml'] = "<img src=\"{$data[$id]['thumbnail']}\" {$attributesHtml} alt=\"{$altHtml}\" class=\"bookcover\" />";
 			}
 		}
 		
