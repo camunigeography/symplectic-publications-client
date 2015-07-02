@@ -48,6 +48,7 @@ class publicationsDatabase extends frontControllerApplication
 		'journal-article'		=> 'Journal articles',
 		'chapter'				=> 'Book chapters',
 		'conference'			=> 'Conference proceedings',
+		'internet-publication'	=> 'Internet publications',
 		
 	//	'?'						=> 'Datasets',
 	//	'patent'				=> 'Patents',
@@ -59,7 +60,6 @@ class publicationsDatabase extends frontControllerApplication
 	//	'?'						=> 'Artefacts',
 	//	'?'						=> 'Exhibitions',
 	//	'other'					=> 'Other',
-	//	'internet-publication'	=> 'Internet publications',
 	//	'?'						=> 'Scholarly editions',
 	//	'?'						=> 'Posters',
 	//	'thesis-dissertation'	=> 'Theses / Dissertations',
@@ -1660,9 +1660,13 @@ EOT;
 		if (strlen ($publication['url'])) {
 			$html .= '<a href="' . htmlspecialchars ($publication['url']) . '" target="_blank">';
 		}
-		if ($publication['type'] == 'book') {$html .= '<em>';}
+		if (($publication['type'] == 'book') || ($publication['type'] == 'internet-publication')) {
+			$html .= '<em>';
+		}
 		$html .= "{$publication['title']}";
-		if ($publication['type'] == 'book') {$html .= '</em>';}
+		if (($publication['type'] == 'book') || ($publication['type'] == 'internet-publication')) {
+			$html .= '</em>';
+		}
 		if (strlen ($publication['url'])) {
 			$html .= '</a>';
 		}
@@ -1673,7 +1677,14 @@ EOT;
 		}
 		if (($publication['type'] == 'book') || ($publication['type'] == 'chapter')) {
 			if (strlen ($publication['edition'])) {$html .= ", {$publication['edition']} edition";}
+		}
+		if (($publication['type'] == 'book') || ($publication['type'] == 'chapter') || ($publication['type'] == 'internet-publication')) {
 			if (strlen ($publication['publisher'])) {$html .= ", {$publication['publisher']}";}
+		}
+		if ($publication['type'] == 'internet-publication') {
+			if ($publication['publicationYear']) {
+				$html .= ' (' . $this->formatDate ($publication) . ')';
+			}
 		}
 		$html .= '.';
 		$html .= (strlen ($publication['journal']) ? " <em>{$publication['journal']}</em>," : '');
@@ -1684,6 +1695,30 @@ EOT;
 		# Ensure ends with a dot
 		if (substr ($html, -1) == ',') {$html = substr ($html, 0, -1);}
 		if (substr ($html, -1) != '.') {$html .= '.';}
+		
+		# Return the HTML
+		return $html;
+	}
+	
+	
+	# Helper function to format a date
+	private function formatDate ($publication)
+	{
+		# Add day, month and year, if they exist
+		if ($publication['publicationDay']) {
+			$dates[] = application::ordinalSuffix ($publication['publicationDay']);
+		}
+		if ($publication['publicationMonth']) {
+			$months = array (1 => 'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December');
+			$month = $months[(int) $publication['publicationMonth']];
+			$dates[] = $month;
+		}
+		if ($publication['publicationYear']) {
+			$dates[] = $publication['publicationYear'];
+		}
+		
+		# Compile the HTML
+		$html = implode (' ', $dates);
 		
 		# Return the HTML
 		return $html;
