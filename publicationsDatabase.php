@@ -76,6 +76,7 @@ class publicationsDatabase extends frontControllerApplication
 	
 	# Define the types that should use the expandability system
 	private $expandableTypes = array (
+		'chapter',
 		'journal-article',
 	);
 	
