@@ -237,7 +237,7 @@ class publicationsDatabase extends frontControllerApplication
 	protected function main ()
 	{
 		# Set the first year when publications are considered old
-		$this->firstOldYear = date ('Y') - $this->settings['yearsConsideredRecent'] - 1;	// e.g. 2014 gives 2008 as the old year
+		$this->firstOldYear = date ('Y') - $this->settings['yearsConsideredRecent'] - 1;	// e.g. 2015 gives 2009 as the old year
 		
 		# Define a database constraint string for types
 		$this->typesConstraintString = "type IN('" . implode ("','", array_keys ($this->types)) . "')";
@@ -1148,17 +1148,17 @@ EOT;
 			if (in_array ($type, $this->typesListingByYear)) {
 				$html .= $this->publicationsListByYear ($publicationsByType[$type], $label, $type, $favourites);
 			} else {
-				$html .= $this->publicationsListSimple ($publicationsByType[$type], $label);
+				$html .= $this->publicationsListSimple ($publicationsByType[$type], $label, $type);
 			}
+		}
+		
+		# Prepend with jQuery loading if required
+		if ($this->jQueryEnabled) {
+			$html = "\n" . '<script src="//code.jquery.com/jquery-1.11.1.min.js"></script>' . $html;
 		}
 		
 		# Surround with a div
 		$html = "\n\n\n<div id=\"publicationslist\">" . "\n" . $html . "\n\n</div><!-- /#publicationslist -->\n\n";
-		
-		# Prepend with jQuery loading if required
-		if ($this->jQueryEnabled) {
-			$html .= "\n" . '<script src="//code.jquery.com/jquery-1.11.1.min.js"></script>' . $html;
-		}
 		
 		# Return the HTML
 		return $html;
@@ -1166,15 +1166,37 @@ EOT;
 	
 	
 	# Function to render a publication group as a simple bullet-point list without grouping
-	private function publicationsListSimple ($publications, $label)
+	private function publicationsListSimple ($publications, $label, $type)
 	{
-		# Construct the HTML
-		$sectionListing = array ();
-		foreach ($publications as $publicationId => $publication) {
-			$sectionListing[$publicationId] = $publication['html'];
-		}
+		# Start the HTML with label
 		$html  = "\n<h3>{$label}</h3>";
-		$html .= application::htmlUl ($sectionListing);
+		
+		# Determine a namespace extension for the jQuery references
+		$namespace = '_' . str_replace ('-', '', $type);
+		
+		# Compile the list
+		$oldYear = false;
+		$html .= "\n<ul id=\"publications{$namespace}\">";
+		foreach ($publications as $publicationId => $publication) {
+			
+			# If enabled, for the first old year, open a div for Javascript filtering purposes
+			if (in_array ($type, $this->expandableTypes)) {
+				if (!$oldYear) {		// If not already found, check
+					if ($publication['publicationYear'] <= $this->firstOldYear) {
+						$oldYear = true;
+					}
+				}
+			}
+			
+			# Add the publication
+			$html .= "\n\t<li" . ($oldYear ? ' class="oldyear"' : '') . '>' . $publication['html'] . '</li>';
+		}
+		$html .= "\n</ul>";
+		
+		# Add jQuery expandability at the end of the list
+		if ($oldYear) {
+			$html .= $this->showHideLinkUl ($namespace, $label);
+		}
 		
 		# If there are book covers show these, as a block at the end of the books
 		$images = array ();
@@ -1223,7 +1245,7 @@ EOT;
 					$oldYearsOpened = true;
 					
 					# Add a show/hide link for the div
-					$html .= $this->showHideLink ($namespace, $label);
+					$html .= $this->showHideLinkDiv ($namespace, $label);
 					
 					# Add the div
 					$html .= "\n\n<div id=\"olderpublications" . $namespace . "\">\n";
@@ -1252,8 +1274,34 @@ EOT;
 	}
 	
 	
-	# Helper function to create a show/hiden link for a div
-	private function showHideLink ($namespace, $label)
+	# Helper function to create a show/hidden link for a list
+	private function showHideLinkUl ($namespace, $label)
+	{
+		# Enable jQuery
+		$this->jQueryEnabled = true;
+		
+		# Compile the HTML
+		$html  = "\n\n<!-- Show/hide link -->";
+		$html .= "\n" . '<script type="text/javascript">
+			$(document).ready(function(){
+				$("#publications' . $namespace . ' li.oldyear").hide();
+				$("#publications' . $namespace . '").after("<p class=\"showall\" id=\"showall' . $namespace . '\"><a href=\"#showall' . $namespace . '\">&#9660; Show earlier ' . lcfirst ($label) . ' &hellip;</a></p>");
+				$("#showall' . $namespace . ' a").click(function(e){
+					e.preventDefault();
+					$("#showall' . $namespace . '").hide();
+					$("#publications' . $namespace . ' li.oldyear").show();
+				});
+			});
+		</script>
+		';
+		
+		# Return the HTML
+		return $html;
+	}
+	
+	
+	# Helper function to create a show/hidden link for a div
+	private function showHideLinkDiv ($namespace, $label)
 	{
 		# Enable jQuery
 		$this->jQueryEnabled = true;
