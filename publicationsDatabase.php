@@ -74,6 +74,11 @@ class publicationsDatabase extends frontControllerApplication
 		'journal-article',
 	);
 	
+	# Define the types that should use the expandability system
+	private $expandableTypes = array (
+		'journal-article',
+	);
+	
 	# General class properties
 	private $jQueryEnabled = false;
 	
@@ -1212,15 +1217,17 @@ EOT;
 		$canSplitIfTotal = $this->settings['canSplitIfTotal'];
 		foreach ($publications as $year => $publicationsThisYear) {
 			
-			# If the first old year, open a div for Javascript filtering purposes
-			if (!$oldYearsOpened && ($year <= $this->firstOldYear) && $canSplitIfTotal <= 0) {
-				$oldYearsOpened = true;
-				
-				# Add a show/hide link for the div
-				$html .= $this->showHideLink ($namespace, $label);
-				
-				# Add the div
-				$html .= "\n\n<div id=\"olderpublications" . $namespace . "\">\n";
+			# If enabled, for the first old year, open a div for Javascript filtering purposes
+			if (in_array ($type, $this->expandableTypes)) {
+				if (!$oldYearsOpened && ($year <= $this->firstOldYear) && $canSplitIfTotal <= 0) {
+					$oldYearsOpened = true;
+					
+					# Add a show/hide link for the div
+					$html .= $this->showHideLink ($namespace, $label);
+					
+					# Add the div
+					$html .= "\n\n<div id=\"olderpublications" . $namespace . "\">\n";
+				}
 			}
 			
 			# Loop through the publications in the year and add it to the list
