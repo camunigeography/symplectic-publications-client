@@ -74,6 +74,9 @@ class publicationsDatabase extends frontControllerApplication
 		'journal-article',
 	);
 	
+	# General class properties
+	private $jQueryEnabled = false;
+	
 	
 	# Function to assign additional actions
 	public function actions ()
@@ -1147,6 +1150,11 @@ EOT;
 		# Surround with a div
 		$html = "\n\n\n<div id=\"publicationslist\">" . "\n" . $html . "\n\n</div><!-- /#publicationslist -->\n\n";
 		
+		# Prepend with jQuery loading if required
+		if ($this->jQueryEnabled) {
+			$html .= "\n" . '<script src="//code.jquery.com/jquery-1.11.1.min.js"></script>' . $html;
+		}
+		
 		# Return the HTML
 		return $html;
 	}
@@ -1209,8 +1217,8 @@ EOT;
 				$oldYearsOpened = true;
 				
 				# Add a show/hide link for the div
+				$this->jQueryEnabled = true;
 				$html .= "\n\n<!-- Show/hide link -->";
-				$html .= "\n" . '<script src="//code.jquery.com/jquery-1.11.1.min.js"></script>';
 				$html .= "\n" . '<script type="text/javascript">
 					$(document).ready(function(){
 						$("#olderpublications' . $namespace . '").hide();
