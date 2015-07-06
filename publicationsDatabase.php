@@ -1217,20 +1217,7 @@ EOT;
 				$oldYearsOpened = true;
 				
 				# Add a show/hide link for the div
-				$this->jQueryEnabled = true;
-				$html .= "\n\n<!-- Show/hide link -->";
-				$html .= "\n" . '<script type="text/javascript">
-					$(document).ready(function(){
-						$("#olderpublications' . $namespace . '").hide();
-						$("#olderpublications' . $namespace . '").before("<p class=\"showall\" id=\"showall' . $namespace . '\"><a href=\"#showall' . $namespace . '\">&#9660; Show earlier ' . lcfirst ($label) . ' &hellip;</a></p>");
-						$("#showall' . $namespace . ' a").click(function(e){
-							e.preventDefault();
-							$("#showall' . $namespace . '").hide();
-							$("#olderpublications' . $namespace . '").show();
-						});
-					});
-				</script>
-				';
+				$html .= $this->showHideLink ($namespace, $label);
 				
 				# Add the div
 				$html .= "\n\n<div id=\"olderpublications" . $namespace . "\">\n";
@@ -1252,6 +1239,32 @@ EOT;
 		if ($oldYearsOpened) {
 			$html .= "\n\n</div><!-- /#olderpublications -->\n";
 		}
+		
+		# Return the HTML
+		return $html;
+	}
+	
+	
+	# Helper function to create a show/hiden link for a div
+	private function showHideLink ($namespace, $label)
+	{
+		# Enable jQuery
+		$this->jQueryEnabled = true;
+		
+		# Compile the HTML
+		$html  = "\n\n<!-- Show/hide link -->";
+		$html .= "\n" . '<script type="text/javascript">
+			$(document).ready(function(){
+				$("#olderpublications' . $namespace . '").hide();
+				$("#olderpublications' . $namespace . '").before("<p class=\"showall\" id=\"showall' . $namespace . '\"><a href=\"#showall' . $namespace . '\">&#9660; Show earlier ' . lcfirst ($label) . ' &hellip;</a></p>");
+				$("#showall' . $namespace . ' a").click(function(e){
+					e.preventDefault();
+					$("#showall' . $namespace . '").hide();
+					$("#olderpublications' . $namespace . '").show();
+				});
+			});
+		</script>
+		';
 		
 		# Return the HTML
 		return $html;
