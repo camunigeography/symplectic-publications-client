@@ -154,6 +154,13 @@ class publicationsDatabase extends frontControllerApplication
 				'url' => 'data.json',
 				'export' => true,
 			),
+			'retrieve' => array (
+				'description' => 'Retrieve raw data from the Symplectic API',
+				'url' => 'retrieve.html',
+				'parent' => 'admin',
+				'subtab' => 'Retrieve raw data',
+				'administrator'	=> true,
+			),
 		);
 		
 		# Return the actions
@@ -1809,6 +1816,60 @@ EOT;
 		
 		# Return the HTML
 		return $html;
+	}
+	
+	
+	# Page to retrieve raw data from the Symplectic API
+	public function retrieve ()
+	{
+		# Start the HTML
+		$html = '';
+		
+		# Include examples
+		$html .= "
+			<p>Examples:</p>
+			<ul>
+				<li>/users/username-<span class=\"comment\">&lt;crsid&gt;</span>?detail=full</li>
+				<li>/users/username-<span class=\"comment\">&lt;crsid&gt;</span>/publications?detail=full</li>
+				<li>/users/username-<span class=\"comment\">&lt;crsid&gt;</span>/publications?detail=full&amp;page=2</li>
+				<li>/publications/<span class=\"comment\">&lt;id&gt;</span></li>
+				<li>/publications/<span class=\"comment\">&lt;id&gt;</span>/relationships</li>
+			</ul>
+		";
+		
+		# Show the upload form
+		$form = new form (array (
+			'formCompleteText' => false,
+			'div' => 'graybox ultimateform',
+			'display' => 'paragraphs',
+			'reappear' => true,
+		));
+		$form->input (array (
+			'name'			=> 'url',
+			'title'			=> 'URL',
+			'required'		=> true,
+			'autofocus'		=> true,
+			'prepend'		=> $this->settings['apiHttp'] . ' ',
+		));
+		if (!$result = $form->process ($html)) {
+			echo $html;
+			return false;
+		}
+		
+		# Retrieve the URL
+		$url = $this->settings['apiHttp'] . $result['url'];
+		if (!$contents = @file_get_contents ($url)) {
+			$html .= "\n<p class=\"warning\">Could not retrieve that URL.</p>";
+			echo $html;
+			return false;
+		}
+		
+		# Show the result
+		require_once ('xml.php');
+		$html .= xml::formatter ($contents);
+		
+		# Show the HTML
+		echo $html;
 	}
 	
 	
