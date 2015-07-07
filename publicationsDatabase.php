@@ -774,7 +774,7 @@ EOT;
 		$data = $this->databaseConnection->getData ($query, "{$this->settings['database']}.instances", true, array ('username' => $username));
 		
 		# Highlight the authors and add starring
-		$data = $this->decoratePublications ($data);
+		$data = $this->decoratePublicationsRuntime ($data);
 		
 		# Return the data
 		return $data;
@@ -805,7 +805,7 @@ EOT;
 		$data = $this->databaseConnection->getData ($query, false, "{$this->settings['database']}.{$this->settings['table']}", array ('usernames' => $usernames));
 		
 		# Highlight the authors and add starring
-		$data = $this->decoratePublications ($data);
+		$data = $this->decoratePublicationsRuntime ($data);
 		
 		# Return the data
 		return $data;
@@ -833,7 +833,7 @@ EOT;
 		$data = $this->databaseConnection->getData ($query, "{$this->settings['database']}.instances");
 		
 		# Highlight the authors and add starring
-		$data = $this->decoratePublications ($data);
+		$data = $this->decoratePublicationsRuntime ($data);
 		
 		# Return the data
 		return $data;
@@ -841,7 +841,7 @@ EOT;
 	
 	
 	# Function to decorate publications at runtime (e.g. highlight the authors and add stars)
-	private function decoratePublications ($data)
+	private function decoratePublicationsRuntime ($data)
 	{
 		# Highlight authors
 		foreach ($data as $id => $publication) {
