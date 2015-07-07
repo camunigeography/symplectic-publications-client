@@ -1604,31 +1604,8 @@ EOT;
 				);
 				
 				# Get the authors
-				$authors = array ();
 				$authorsNode = $xpathDom->query ('.//api:record[@is-preferred-record="true"]//api:field[@name="authors"]/api:people/api:person', $publicationNode);
-				$nameAppearsAs = array ();
-				foreach ($authorsNode as $index => $authorNode) {
-					$surname	= $this->XPath ($xpathDom, './api:last-name', $authorNode);
-					$initials	= $this->XPath ($xpathDom, './api:initials', $authorNode);
-					$authors[$index] = $this->formatAuthor ($surname, $initials);
-					
-					# If this author's name appears to match, register this as a possible name match; it is unfortunate that the API seems to provide no proper match indication
-					if ($this->isAuthorNameMatch ($surname, $initials, $user)) {
-						$nameAppearsAs[] = $authors[$index];
-					}
-				}
-				$publication['authors'] = implode ('|', $authors);
-				
-				# Register what the name is formatted as, reporting any errors detected
-				if (!$nameAppearsAs) {
-					$errorHtml .= "\n<p class=\"warning\">The authors list for <a href=\"{$this->settings['website']}viewobject.html?cid=1&amp;id={$publication['id']}\" target=\"_blank\">publication #{$publication['id']}</a> does not appear to contain a match for <em>{$user['displayName']}</em> even though that publication is registered to that user; the authors found were: <em>" . implode ('</em>, <em>', $authors) . "</em>.</p>";
-					$nameAppearsAs = array ();
-				}
-				if (count ($nameAppearsAs) > 1) {
-					$errorHtml .= "\n<p class=\"warning\">A single unique author match for <a href=\"{$this->settings['website']}viewobject.html?cid=1&amp;id={$publication['id']}\" target=\"_blank\">publication #{$publication['id']}</a> could not be made against <em>{$user['displayName']}</em>; the matches were: <em>" . implode ('</em>, <em>', $nameAppearsAs) . "</em>.</p>";
-					$nameAppearsAs = array ();
-				}
-				$publication['nameAppearsAs'] = ($nameAppearsAs ? $nameAppearsAs[0] : NULL);	// Convert the single item to a string, or the empty array to a database NULL
+				list ($publication['authors'], $publication['nameAppearsAs']) = $this->processAuthors ($authorsNode, $xpathDom, $user, $publication['id'], $errorHtml);
 				
 				# Get the editors
 				$editors = array ();
@@ -1653,6 +1630,40 @@ EOT;
 		
 		# Return the array of publications
 		return $publications;
+	}
+	
+	
+	# Helper function to process authors
+	private function processAuthors ($authorsNode, $xpathDom, $user, $publicationId, &$errorHtml)
+	{
+		# Process the authors
+		$authors = array ();
+		$nameAppearsAs = array ();
+		foreach ($authorsNode as $index => $authorNode) {
+			$surname	= $this->XPath ($xpathDom, './api:last-name', $authorNode);
+			$initials	= $this->XPath ($xpathDom, './api:initials', $authorNode);
+			$authors[$index] = $this->formatAuthor ($surname, $initials);
+			
+			# If this author's name appears to match, register this as a possible name match; it is unfortunate that the API seems to provide no proper match indication
+			if ($this->isAuthorNameMatch ($surname, $initials, $user)) {
+				$nameAppearsAs[] = $authors[$index];
+			}
+		}
+		$authorsString = implode ('|', $authors);
+		
+		# Register what the name is formatted as, reporting any errors detected
+		if (!$nameAppearsAs) {
+			$errorHtml .= "\n<p class=\"warning\">The authors list for <a href=\"{$this->settings['website']}viewobject.html?cid=1&amp;id={$publicationId}\" target=\"_blank\">publication #{$publicationId}</a> does not appear to contain a match for <em>{$user['displayName']}</em> even though that publication is registered to that user; the authors found were: <em>" . implode ('</em>, <em>', $authors) . "</em>.</p>";
+			$nameAppearsAs = array ();
+		}
+		if (count ($nameAppearsAs) > 1) {
+			$errorHtml .= "\n<p class=\"warning\">A single unique author match for <a href=\"{$this->settings['website']}viewobject.html?cid=1&amp;id={$publicationId}\" target=\"_blank\">publication #{$publicationId}</a> could not be made against <em>{$user['displayName']}</em>; the matches were: <em>" . implode ('</em>, <em>', $nameAppearsAs) . "</em>.</p>";
+			$nameAppearsAs = array ();
+		}
+		$nameAppearsAsString = ($nameAppearsAs ? $nameAppearsAs[0] : NULL);	// Convert the single item to a string, or the empty array to a database NULL
+		
+		# Return the pair
+		return array ($authorsString, $nameAppearsAsString);
 	}
 	
 	
