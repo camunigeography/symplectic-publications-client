@@ -1735,8 +1735,12 @@ EOT;
 		
 		# Compile the HTML for this publication
 		$html  = '';
-		$html .= $authors . ($publication['publicationYear'] ? ', ' : '');
-		$html .= ($publication['publicationYear'] ? $publication['publicationYear'] : '') . '. ';
+		if (($publication['type'] == 'book') && strlen ($publication['editors'])) {
+			$html .= $editors . ' (' . (substr_count ($publication['editors'], '|') ? 'eds' : 'ed') . '.)';
+		} else {
+			$html .= $authors;
+		}
+		$html .= ($publication['publicationYear'] ? ', ' . $publication['publicationYear'] : '') . '. ';
 		if (strlen ($publication['url'])) {
 			$html .= '<a href="' . htmlspecialchars ($publication['url']) . '" target="_blank">';
 		}
