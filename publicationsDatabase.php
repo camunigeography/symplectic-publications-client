@@ -845,7 +845,9 @@ EOT;
 	{
 		# Highlight authors
 		foreach ($data as $id => $publication) {
-			$data[$id]['html'] = $this->highlightContributors ($publication);
+			$publication['html'] = $this->highlightContributors ($publication, 'authors', 'highlightAuthors');
+			$publication['html'] = $this->highlightContributors ($publication, 'editors', 'highlightEditors');
+			$data[$id]['html'] = $publication['html'];
 		}
 		
 		# Add book covers if present
@@ -876,11 +878,11 @@ EOT;
 	
 	
 	# Function to perform contributor highlighting
-	public function highlightContributors ($publication)
+	public function highlightContributors ($publication, $field, $highlightField)
 	{
 		# Convert the full list of contributors and the list of contributors to be highlighted into arrays
-		$contributorsOriginal = explode ('|', $publication['authors']);
-		$highlightContributors = explode ('|', $publication['highlightAuthors']);
+		$contributorsOriginal = explode ('|', $publication[$field]);
+		$highlightContributors = explode ('|', $publication[$highlightField]);
 		
 		# Add bold to any contributor which is set to be highlighted
 		$contributors = $contributorsOriginal;
