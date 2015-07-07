@@ -177,7 +177,8 @@ class publicationsDatabase extends frontControllerApplication
 			`id` int(11) NOT NULL COMMENT 'Automatic key',
 			  `username` varchar(10) COLLATE utf8_unicode_ci NOT NULL COMMENT 'Username',
 			  `publicationId` int(11) NOT NULL COMMENT 'Publication ID',
-			  `nameAppearsAs` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL COMMENT 'The string appearing in the data for the name',
+			  `nameAppearsAsAuthor` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL COMMENT 'The string appearing in the data for the name of the author',
+			  `nameAppearsAsEditor` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL COMMENT 'The string appearing in the data for the name of the editor',
 			  `isFavourite` int(1) DEFAULT NULL COMMENT 'Favourite publication',
 			  `savedAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Automatic timestamp',
 			  PRIMARY KEY (`id`)
@@ -760,7 +761,8 @@ EOT;
 		$query = "SELECT
 				publications.*,
 				instances.isFavourite,
-				instances.nameAppearsAs AS highlightAuthors
+				instances.nameAppearsAsAuthor AS highlightAuthors,
+				instances.nameAppearsAsEditor AS highlightEditors
 			FROM instances
 			LEFT OUTER JOIN publications ON instances.publicationId = publications.id
 			WHERE
@@ -789,7 +791,8 @@ EOT;
 		$query = "SELECT
 				publications.*,
 				GROUP_CONCAT(DISTINCT instances.isFavourite) AS isFavourite,
-				GROUP_CONCAT(DISTINCT instances.nameAppearsAs ORDER BY nameAppearsAs SEPARATOR '|') AS highlightAuthors
+				GROUP_CONCAT(DISTINCT instances.nameAppearsAsAuthor ORDER BY nameAppearsAsAuthor SEPARATOR '|') AS highlightAuthors,
+				GROUP_CONCAT(DISTINCT instances.nameAppearsAsEditor ORDER BY nameAppearsAsEditor SEPARATOR '|') AS highlightEditors
 			FROM instances
 			LEFT OUTER JOIN publications ON instances.publicationId = publications.id
 			WHERE
@@ -817,7 +820,8 @@ EOT;
 		$query = "SELECT
 				publications.*,
 				GROUP_CONCAT(DISTINCT instances.isFavourite) AS isFavourite,
-				GROUP_CONCAT(DISTINCT instances.nameAppearsAs ORDER BY nameAppearsAs SEPARATOR '|') AS highlightAuthors
+				GROUP_CONCAT(DISTINCT instances.nameAppearsAsAuthor ORDER BY nameAppearsAsAuthor SEPARATOR '|') AS highlightAuthors,
+				GROUP_CONCAT(DISTINCT instances.nameAppearsAsEditor ORDER BY nameAppearsAsEditor SEPARATOR '|') AS highlightEditors
 			FROM instances
 			LEFT OUTER JOIN publications ON instances.publicationId = publications.id
 			WHERE
@@ -1053,11 +1057,15 @@ EOT;
 				$instances[] = array (
 					'username' => $username,
 					'publicationId' => $publicationId,
-					'nameAppearsAs' => $publication['nameAppearsAs'],
+					'nameAppearsAsAuthor' => $publication['nameAppearsAsAuthor'],
+					'nameAppearsAsEditor' => $publication['nameAppearsAsEditor'],
 					'isFavourite' => $publication['isFavourite'],	// This is a user-specific value
 				);
-				unset ($publications[$publicationId]['nameAppearsAs']);	// Prevent leakage into the stored publication data
-				unset ($publications[$publicationId]['isFavourite']);	// Prevent leakage into the stored publication data
+				
+				# Prevent leakage into the stored publication data
+				unset ($publications[$publicationId]['nameAppearsAsAuthor']);
+				unset ($publications[$publicationId]['nameAppearsAsEditor']);
+				unset ($publications[$publicationId]['isFavourite']);
 			}
 			
 			# Add the instances to the database
@@ -1605,17 +1613,11 @@ EOT;
 				
 				# Get the authors
 				$authorsNode = $xpathDom->query ('.//api:record[@is-preferred-record="true"]//api:field[@name="authors"]/api:people/api:person', $publicationNode);
-				list ($publication['authors'], $publication['nameAppearsAs']) = $this->processContributors ($authorsNode, $xpathDom, $user, $publication['id'], 'author', $errorHtml);
+				list ($publication['authors'], $publication['nameAppearsAsAuthor']) = $this->processContributors ($authorsNode, $xpathDom, $user, $publication['id'], 'author', $errorHtml);
 				
 				# Get the editors
-				$editors = array ();
 				$editorsNode = $xpathDom->query ('.//api:record[@is-preferred-record="true"]//api:field[@name="editors"]/api:people/api:person', $publicationNode);
-				foreach ($editorsNode as $index => $editorNode) {
-					$surname	= $this->XPath ($xpathDom, './api:last-name', $editorNode);
-					$initials	= $this->XPath ($xpathDom, './api:initials', $editorNode);
-					$editors[$index] = $this->formatContributor ($surname, $initials);
-				}
-				$publication['editors'] = implode ('|', $editors);
+				list ($publication['editors'], $publication['nameAppearsAsEditor']) = $this->processContributors ($editorsNode, $xpathDom, $user, $publication['id'], 'editor', $errorHtml);
 				
 				# Create a compiled HTML version; highlighting is not applied at this stage, as that has to be done at listing runtime depending on the listing context (person/group/all)
 				$publication['html'] = $this->compilePublicationHtml ($publication, $errorHtml);
