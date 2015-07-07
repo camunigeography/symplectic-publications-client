@@ -1541,7 +1541,7 @@ EOT;
 		);
 		
 		# Add the display name as it appears in publications
-		$data['displayName'] = $this->formatAuthor ($data['surname'], $data['initials']);
+		$data['displayName'] = $this->formatContributor ($data['surname'], $data['initials']);
 		
 		# Return the user ID
 		return $data;
@@ -1605,7 +1605,7 @@ EOT;
 				
 				# Get the authors
 				$authorsNode = $xpathDom->query ('.//api:record[@is-preferred-record="true"]//api:field[@name="authors"]/api:people/api:person', $publicationNode);
-				list ($publication['authors'], $publication['nameAppearsAs']) = $this->processAuthors ($authorsNode, $xpathDom, $user, $publication['id'], $errorHtml);
+				list ($publication['authors'], $publication['nameAppearsAs']) = $this->processContributors ($authorsNode, $xpathDom, $user, $publication['id'], 'author', $errorHtml);
 				
 				# Get the editors
 				$editors = array ();
@@ -1613,7 +1613,7 @@ EOT;
 				foreach ($editorsNode as $index => $editorNode) {
 					$surname	= $this->XPath ($xpathDom, './api:last-name', $editorNode);
 					$initials	= $this->XPath ($xpathDom, './api:initials', $editorNode);
-					$editors[$index] = $this->formatAuthor ($surname, $initials);
+					$editors[$index] = $this->formatContributor ($surname, $initials);
 				}
 				$publication['editors'] = implode ('|', $editors);
 				
@@ -1633,42 +1633,42 @@ EOT;
 	}
 	
 	
-	# Helper function to process authors
-	private function processAuthors ($authorsNode, $xpathDom, $user, $publicationId, &$errorHtml)
+	# Helper function to process contributors (authors/editors)
+	private function processContributors ($contributorsNode, $xpathDom, $user, $publicationId, $type, &$errorHtml)
 	{
-		# Process the authors
-		$authors = array ();
+		# Process the contributors
+		$contributors = array ();
 		$nameAppearsAs = array ();
-		foreach ($authorsNode as $index => $authorNode) {
-			$surname	= $this->XPath ($xpathDom, './api:last-name', $authorNode);
-			$initials	= $this->XPath ($xpathDom, './api:initials', $authorNode);
-			$authors[$index] = $this->formatAuthor ($surname, $initials);
+		foreach ($contributorsNode as $index => $contributorNode) {
+			$surname	= $this->XPath ($xpathDom, './api:last-name', $contributorNode);
+			$initials	= $this->XPath ($xpathDom, './api:initials', $contributorNode);
+			$contributors[$index] = $this->formatContributor ($surname, $initials);
 			
-			# If this author's name appears to match, register this as a possible name match; it is unfortunate that the API seems to provide no proper match indication
-			if ($this->isAuthorNameMatch ($surname, $initials, $user)) {
-				$nameAppearsAs[] = $authors[$index];
+			# If this contributor's name appears to match, register this as a possible name match; it is unfortunate that the API seems to provide no proper match indication
+			if ($this->isContributorNameMatch ($surname, $initials, $user)) {
+				$nameAppearsAs[] = $contributors[$index];
 			}
 		}
-		$authorsString = implode ('|', $authors);
+		$contributorsString = implode ('|', $contributors);
 		
 		# Register what the name is formatted as, reporting any errors detected
 		if (!$nameAppearsAs) {
-			$errorHtml .= "\n<p class=\"warning\">The authors list for <a href=\"{$this->settings['website']}viewobject.html?cid=1&amp;id={$publicationId}\" target=\"_blank\">publication #{$publicationId}</a> does not appear to contain a match for <em>{$user['displayName']}</em> even though that publication is registered to that user; the authors found were: <em>" . implode ('</em>, <em>', $authors) . "</em>.</p>";
+			$errorHtml .= "\n<p class=\"warning\">The {$type}s list for <a href=\"{$this->settings['website']}viewobject.html?cid=1&amp;id={$publicationId}\" target=\"_blank\">publication #{$publicationId}</a> does not appear to contain a match for <em>{$user['displayName']}</em> even though that publication is registered to that user; the {$type}s found were: <em>" . implode ('</em>, <em>', $contributors) . "</em>.</p>";
 			$nameAppearsAs = array ();
 		}
 		if (count ($nameAppearsAs) > 1) {
-			$errorHtml .= "\n<p class=\"warning\">A single unique author match for <a href=\"{$this->settings['website']}viewobject.html?cid=1&amp;id={$publicationId}\" target=\"_blank\">publication #{$publicationId}</a> could not be made against <em>{$user['displayName']}</em>; the matches were: <em>" . implode ('</em>, <em>', $nameAppearsAs) . "</em>.</p>";
+			$errorHtml .= "\n<p class=\"warning\">A single unique {$type} match for <a href=\"{$this->settings['website']}viewobject.html?cid=1&amp;id={$publicationId}\" target=\"_blank\">publication #{$publicationId}</a> could not be made against <em>{$user['displayName']}</em>; the matches were: <em>" . implode ('</em>, <em>', $nameAppearsAs) . "</em>.</p>";
 			$nameAppearsAs = array ();
 		}
 		$nameAppearsAsString = ($nameAppearsAs ? $nameAppearsAs[0] : NULL);	// Convert the single item to a string, or the empty array to a database NULL
 		
 		# Return the pair
-		return array ($authorsString, $nameAppearsAsString);
+		return array ($contributorsString, $nameAppearsAsString);
 	}
 	
 	
-	# Helper function to match an author's name; this attempts to deal with the situation where two names are similar, e.g. the current user is "J. Smith" but the publication has "J. Smith" and "A. Smith" and "A.J. Smith"; this routine would match only on "J. Smith"
-	private function isAuthorNameMatch ($surname, $initials, $user)
+	# Helper function to match a contributor's name; this attempts to deal with the situation where two names are similar, e.g. the current user is "J. Smith" but the publication has "J. Smith" and "A. Smith" and "A.J. Smith"; this routine would match only on "J. Smith"
+	private function isContributorNameMatch ($surname, $initials, $user)
 	{
 		# Normalise the surname components
 		$surname = trim (strtolower ($surname));
@@ -1740,7 +1740,7 @@ EOT;
 			}
 		}
 		
-		# Unpack the author/editor listing(s) into "A, B and C" format; the same routine is also used at runtime for higlighting
+		# Unpack the contributor listings into "A, B and C" format; the same routine is also used at runtime for higlighting
 		$authors = application::commaAndListing (explode ('|', $publication['authors']));
 		$editors = application::commaAndListing (explode ('|', $publication['editors']));
 		
@@ -1848,7 +1848,7 @@ EOT;
 	
 	
 	# Helper function to format an author
-	private function formatAuthor ($surname, $initials)
+	private function formatContributor ($surname, $initials)
 	{
 		# Add dots after each initials
 		$initials = implode ('.', str_split ($initials)) . '.';
