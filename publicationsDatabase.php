@@ -840,31 +840,12 @@ EOT;
 	}
 	
 	
-	# Function to highlight the authors and add stars at runtime
+	# Function to decorate publications at runtime (e.g. highlight the authors and add stars)
 	private function decoratePublications ($data)
 	{
 		# Highlight authors
 		foreach ($data as $id => $publication) {
-			
-			# Convert the full list of authors and the list of authors to be highlighted into arrays
-			$authorsOriginal = explode ('|', $publication['authors']);
-			$highlightAuthors = explode ('|', $publication['highlightAuthors']);
-			
-			# Add bold to any author which is set to be highlighted
-			$authors = $authorsOriginal;
-			foreach ($authors as $index => $author) {
-				if (in_array ($author, $highlightAuthors, true)) {		// Strict matching applied
-					$authors[$index] = '<strong>' . $author . '</strong>';
-				}
-			}
-			
-			# Convert the original authors list and the highlighted versions into "A, B, and C" format, as per the original HTML
-			$authorsOriginal = application::commaAndListing ($authorsOriginal);
-			$authorsHighlighted = application::commaAndListing ($authors);
-			
-			# Substitute the authors listing at the start of the HTML with the new authors listing
-			$delimiter = '/';
-			$data[$id]['html'] = preg_replace ($delimiter . '^' . addcslashes ($authorsOriginal, $delimiter) . $delimiter, $authorsHighlighted, $publication['html']);
+			$data[$id]['html'] = $this->highlightContributors ($publication);
 		}
 		
 		# Add book covers if present
@@ -891,6 +872,34 @@ EOT;
 		
 		# Return the data
 		return $data;
+	}
+	
+	
+	# Function to perform contributor highlighting
+	public function highlightContributors ($publication)
+	{
+		# Convert the full list of contributors and the list of contributors to be highlighted into arrays
+		$contributorsOriginal = explode ('|', $publication['authors']);
+		$highlightContributors = explode ('|', $publication['highlightAuthors']);
+		
+		# Add bold to any contributor which is set to be highlighted
+		$contributors = $contributorsOriginal;
+		foreach ($contributors as $index => $contributor) {
+			if (in_array ($contributor, $highlightContributors, true)) {		// Strict matching applied
+				$contributors[$index] = '<strong>' . $contributor . '</strong>';
+			}
+		}
+		
+		# Convert the original contributors list and the highlighted versions into "A, B, and C" format, as per the original HTML
+		$contributorsOriginal = application::commaAndListing ($contributorsOriginal);
+		$contributorsHighlighted = application::commaAndListing ($contributors);
+		
+		# Substitute the contributors listing at the start of the HTML with the new contributors listing
+		$delimiter = '/';
+		$html = preg_replace ($delimiter . '^' . addcslashes ($contributorsOriginal, $delimiter) . $delimiter, $contributorsHighlighted, $publication['html']);
+		
+		# Return the HTML
+		return $html;
 	}
 	
 	
