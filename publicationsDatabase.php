@@ -1621,7 +1621,12 @@ EOT;
 					'publicationMonth'		=> $this->XPath ($xpathDom, './/api:field[@name="publication-date"]/api:date/api:month', $publicationNode),
 					'publicationDay'		=> $this->XPath ($xpathDom, './/api:field[@name="publication-date"]/api:date/api:day', $publicationNode),
 					'volume'				=> $this->XPath ($xpathDom, './/api:field[@name="volume"]/api:text', $publicationNode),
-					'pagination'			=> $this->formatPagination ($this->XPath ($xpathDom, './/api:field[@name="pagination"]/api:pagination/api:begin-page', $publicationNode), $this->XPath ($xpathDom, './/api:field[@name="pagination"]/api:pagination/api:end-page', $publicationNode)),
+					'pagination'			=> $this->formatPagination (
+						$this->XPath ($xpathDom, './/api:field[@name="pagination"]/api:pagination/api:begin-page', $publicationNode),
+						$this->XPath ($xpathDom, './/api:field[@name="pagination"]/api:pagination/api:end-page', $publicationNode),
+						$this->XPath ($xpathDom, './/api:field[@name="pagination"]/api:pagination/api:page-count', $publicationNode),
+						$type
+					),
 					'publisher'				=> $this->XPath ($xpathDom, './/api:field[@name="publisher"]/api:text', $publicationNode),
 					'parentTitle'			=> $this->XPath ($xpathDom, './/api:field[@name="parent-title"]/api:text', $publicationNode),
 					'edition'				=> $this->XPath ($xpathDom, './/api:field[@name="edition"]/api:text', $publicationNode),
@@ -1936,12 +1941,19 @@ EOT;
 	
 	
 	# Helper function to format pagination
-	private function formatPagination ($begin, $end)
+	private function formatPagination ($begin, $end, $count, $type)
 	{
+		# For a book, if a total count is provided, show only that
+		if ($type == 'book') {
+			if ($count) {
+				return $count . 'pp';
+			}
+		}
+		
 		# End if none
 		if (!$begin) {return '';}
 		
-		# Compile the string
+		# Compile the range string
 		return 'p.' . implode ('-', array ($begin, $end));
 	}
 	
