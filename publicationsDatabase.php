@@ -1636,14 +1636,14 @@ EOT;
 				);
 				
 				# For books, look for additional editors, which are in the api:relationships field
-				$isEditor = false;
+				$additionalEditor = false;
 				if ($type == 'book') {
 					$relationshipsUrl = $this->XPath ($xpathDom, './/api:object/api:relationships/@href', $publicationNode);
 					if ($relationshipsUrl) {
 						if ($xpathDomRelationships = $this->getData ($relationshipsUrl, 'xpathDom', true)) {
 							$usernameEditor = $this->XPath ($xpathDomRelationships, './/api:relationship[@type-id="9"]/api:related[@direction="to"]/api:object[@category="user"]/@username');	// "Relationship type 9 means "Edited by" in this context."
 							if (strtolower ($usernameEditor) == $username) {
-								$isEditor = $user['displayName'];
+								$additionalEditor = $user['displayName'];
 							}
 						}
 					}
@@ -1655,7 +1655,7 @@ EOT;
 				
 				# Get the editors
 				$editorsNode = $xpathDom->query ('.//api:record[@is-preferred-record="true"]//api:field[@name="editors"]/api:people/api:person', $publicationNode);
-				list ($publication['editors'], $publication['nameAppearsAsEditor']) = $this->processContributors ($editorsNode, $xpathDom, $user, $publication['id'], 'editor', $isEditor, $errorHtml);
+				list ($publication['editors'], $publication['nameAppearsAsEditor']) = $this->processContributors ($editorsNode, $xpathDom, $user, $publication['id'], 'editor', $additionalEditor, $errorHtml);
 				
 				# Create a compiled HTML version; highlighting is not applied at this stage, as that has to be done at listing runtime depending on the listing context (person/group/all)
 				$publication['html'] = $this->compilePublicationHtml ($publication, $errorHtml);
@@ -1680,23 +1680,28 @@ EOT;
 		$contributors = array ();
 		$nameAppearsAs = array ();
 		
-		# Process the contributors
-		foreach ($contributorsNode as $index => $contributorNode) {
-			$surname	= $this->XPath ($xpathDom, './api:last-name', $contributorNode);
-			$initials	= $this->XPath ($xpathDom, './api:initials', $contributorNode);
-			$contributors[$index] = $this->formatContributor ($surname, $initials);
-			
-			# If this contributor's name appears to match, register this as a possible name match; it is unfortunate that the API seems to provide no proper match indication
-			if ($this->isContributorNameMatch ($surname, $initials, $user)) {
-				$nameAppearsAs[] = $contributors[$index];
-			}
-		}
-		
-		# Add in additional person if specified
+		# Add in additional person if specified, as the first
 		if ($additionalPerson) {
 			$contributors[] = $additionalPerson;
 			$nameAppearsAs[] = $additionalPerson;
 		}
+		
+		# Process the contributors
+		foreach ($contributorsNode as $index => $contributorNode) {
+			$surname	= $this->XPath ($xpathDom, './api:last-name', $contributorNode);
+			$initials	= $this->XPath ($xpathDom, './api:initials', $contributorNode);
+			$contributor = $this->formatContributor ($surname, $initials);
+			$contributors[] = $contributor;
+			
+			# If this contributor's name appears to match, register this as a possible name match; it is unfortunate that the API seems to provide no proper match indication
+			if ($this->isContributorNameMatch ($surname, $initials, $user)) {
+				$nameAppearsAs[] = $contributor;
+			}
+		}
+		
+		# Unique the lists
+		$contributors = array_unique ($contributors);
+		$nameAppearsAs = array_unique ($nameAppearsAs);
 		
 		# Compile as a string
 		$contributorsString = implode ('|', $contributors);
