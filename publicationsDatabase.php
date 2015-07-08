@@ -1601,17 +1601,18 @@ EOT;
 			$publicationsNode = $xpathDom->query ('//default:feed/default:entry');
 			foreach ($publicationsNode as $index => $publicationNode) {
 				
-				# Get the ID
-				$id = $this->XPath ($xpathDom, './/api:object/@id', $publicationNode);
-				
 				# Ensure the publication is set to be visible
 				$isVisible = ($this->XPath ($xpathDom, './/api:is-visible', $publicationNode) == 'true');
 				if (!$isVisible) {continue;}
 				
+				# Get values which will be reused more than once in code below
+				$id = $this->XPath ($xpathDom, './/api:object/@id', $publicationNode);
+				$type = $this->XPath ($xpathDom, './/api:object/@type', $publicationNode);
+				
 				# Add key details
 				$publication = array (
 					'id'					=> $id,
-					'type'					=> $this->XPath ($xpathDom, './/api:object/@type', $publicationNode),
+					'type'					=> $type,
 					'lastModifiedWhen'		=> strtotime ($this->XPath ($xpathDom, './/api:object/@last-modified-when', $publicationNode)),
 					'doi'					=> $this->XPath ($xpathDom, './/api:field[@name="doi"]/api:text', $publicationNode),
 					'title'					=> str_replace (array ("\n", ' '), ' ', $this->XPath ($xpathDom, './/api:field[@name="title"]/api:text', $publicationNode)),
@@ -1629,13 +1630,27 @@ EOT;
 					'isFavourite'			=> ($this->XPath ($xpathDom, './/api:is-favourite', $publicationNode) == 'false' ? NULL : 1),
 				);
 				
+				# For books, look for additional editors, which are in the api:relationships field
+				$isEditor = false;
+				if ($type == 'book') {
+					$relationshipsUrl = $this->XPath ($xpathDom, './/api:object/api:relationships/@href', $publicationNode);
+					if ($relationshipsUrl) {
+						if ($xpathDomRelationships = $this->getData ($relationshipsUrl, 'xpathDom', true)) {
+							$usernameEditor = $this->XPath ($xpathDomRelationships, './/api:relationship[@type-id="9"]/api:related[@direction="to"]/api:object[@category="user"]/@username');	// "Relationship type 9 means "Edited by" in this context."
+							if (strtolower ($usernameEditor) == $username) {
+								$isEditor = $user['displayName'];
+							}
+						}
+					}
+				}
+				
 				# Get the authors
 				$authorsNode = $xpathDom->query ('.//api:record[@is-preferred-record="true"]//api:field[@name="authors"]/api:people/api:person', $publicationNode);
-				list ($publication['authors'], $publication['nameAppearsAsAuthor']) = $this->processContributors ($authorsNode, $xpathDom, $user, $publication['id'], 'author', $errorHtml);
+				list ($publication['authors'], $publication['nameAppearsAsAuthor']) = $this->processContributors ($authorsNode, $xpathDom, $user, $publication['id'], 'author', NULL, $errorHtml);
 				
 				# Get the editors
 				$editorsNode = $xpathDom->query ('.//api:record[@is-preferred-record="true"]//api:field[@name="editors"]/api:people/api:person', $publicationNode);
-				list ($publication['editors'], $publication['nameAppearsAsEditor']) = $this->processContributors ($editorsNode, $xpathDom, $user, $publication['id'], 'editor', $errorHtml);
+				list ($publication['editors'], $publication['nameAppearsAsEditor']) = $this->processContributors ($editorsNode, $xpathDom, $user, $publication['id'], 'editor', $isEditor, $errorHtml);
 				
 				# Create a compiled HTML version; highlighting is not applied at this stage, as that has to be done at listing runtime depending on the listing context (person/group/all)
 				$publication['html'] = $this->compilePublicationHtml ($publication, $errorHtml);
@@ -1654,11 +1669,13 @@ EOT;
 	
 	
 	# Helper function to process contributors (authors/editors)
-	private function processContributors ($contributorsNode, $xpathDom, $user, $publicationId, $type, &$errorHtml)
+	private function processContributors ($contributorsNode, $xpathDom, $user, $publicationId, $type, $additionalPerson = false, &$errorHtml)
 	{
-		# Process the contributors
+		# Start a list of contributors and how their name appears
 		$contributors = array ();
 		$nameAppearsAs = array ();
+		
+		# Process the contributors
 		foreach ($contributorsNode as $index => $contributorNode) {
 			$surname	= $this->XPath ($xpathDom, './api:last-name', $contributorNode);
 			$initials	= $this->XPath ($xpathDom, './api:initials', $contributorNode);
@@ -1669,6 +1686,14 @@ EOT;
 				$nameAppearsAs[] = $contributors[$index];
 			}
 		}
+		
+		# Add in additional person if specified
+		if ($additionalPerson) {
+			$contributors[] = $additionalPerson;
+			$nameAppearsAs[] = $additionalPerson;
+		}
+		
+		# Compile as a string
 		$contributorsString = implode ('|', $contributors);
 		
 		# Register what the name is formatted as, reporting any errors detected
