@@ -747,7 +747,7 @@ EOT;
 		$publications = $this->getRecent ($this->settings['yearsConsideredRecentMainListing']);
 		
 		# Render as a list
-		$html = $this->publicationsList ($publications);
+		$html = $this->publicationsList ($publications, $showFeatured = false);
 		
 		# API output
 		if ($this->action == 'api') {return array ('json' => $publications, 'html' => $html);}
@@ -1185,21 +1185,25 @@ EOT;
 	# Function to create a formatted list of publications
 	# Desired format is:
 	// Batchelor, C.L., Dowdeswell, J.A. and Pietras, J.T., 2014. Evidence for multiple Quaternary ice advances and fan development from the Amundsen Gulf cross-shelf trough and slope, Canadian Beaufort Sea margin. Marine and Petroleum Geology, v. 52, p.125-143. doi:10.1016/j.marpetgeo.2013.11.005
-	public function publicationsList ($publications)
+	public function publicationsList ($publications, $showFeatured = true)
 	{
 		# Start the HTML
 		$html = '';
 		
-		# Featured publications
+		# Determine favourites
 		$favourites = array ();
 		foreach ($publications as $publicationId => $publication) {
 			if ($publication['isFavourite']) {
 				$favourites[$publicationId] = $publication['html'];
 			}
 		}
-		if ($favourites) {
-			$html .= "\n<h3>Featured publications</h3>";
-			$html .= application::htmlUl ($favourites);
+		
+		# Show favourites if enabled
+		if ($showFeatured) {
+			if ($favourites) {
+				$html .= "\n<h3>Featured publications</h3>";
+				$html .= application::htmlUl ($favourites);
+			}
 		}
 		
 		# Regroup by type
