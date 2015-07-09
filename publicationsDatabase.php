@@ -517,23 +517,38 @@ class publicationsDatabase extends frontControllerApplication
 	
 	
 	# Function to provide a side-by-side comparison system for migration
-	public static function comparison ($baseUrl, $username, $administrators, $websiteUrl, $goLiveDate)
+	public function autoreplace ($baseUrl, $username, $previewMode, $goLiveDate = 'soon')
 	{
-		# End if no a logged-in user
-		if (!$_SERVER['REMOTE_USER']) {return false;}
-		
 		# Ensure the page has a publications div
 		if (!$contents = file_get_contents ($_SERVER['SCRIPT_FILENAME'])) {return false;}
 		if (!substr_count ($contents, '<h2 id="publications">')) {return false;}
 		
-		# Determine if the user is an administrator
-		$currentUser = $_SERVER['REMOTE_USER'];
-		$userIsAdministrator = in_array ($currentUser, $administrators);
-		
-		# End if not the current user or an administrator
-		if (($currentUser != $username) && !$userIsAdministrator) {
-			return false;
+		# When live, do nothing if the user has no publications
+		if (!$previewMode) {
+			if (!$this->userHasPublications ($username)) {return false;}
 		}
+		
+		# Determine if the user is authorised for internal functions
+		$authorisedUser = false;
+		if ($_SERVER['REMOTE_USER']) {
+			
+			# Determine if the user is an administrator
+			$currentUser = $_SERVER['REMOTE_USER'];
+			$userIsAdministrator = array_key_exists ($currentUser, $this->administrators);
+			
+			# End if not the current user or an administrator
+			if (($currentUser == $username) || $userIsAdministrator) {
+				$authorisedUser = true;
+			}
+		}
+		$showToolsJs = ($authorisedUser ? 'true' : 'false');
+		
+		# In preview mode, require an authorised user
+		if ($previewMode) {
+			if (!$authorisedUser) {return false;}
+		}
+		
+		$previewModeJs = ($previewMode ? 'true' : 'false');
 		
 		# Define the HTML
 		$html = <<< EOT
@@ -541,7 +556,7 @@ class publicationsDatabase extends frontControllerApplication
 			<style type="text/css">
 				#symplecticswitch {margin-bottom: 20px;}
 				#symplecticswitch p {float: right; border: 1px solid #603; background-color: #f7f7f7; padding: 5px;}
-				#symplecticpublications {border-top: 1px dashed #ccc; border-bottom: 1px dashed #ccc; padding: 5px 0; background-color: #f7f7f7;}
+				#symplecticpublications.proposed {border-top: 1px dashed #ccc; border-bottom: 1px dashed #ccc; padding: 5px 0; background-color: #f7f7f7;}
 				#symplecticpublications img.bookcover {min-width: 170px; margin: 5px 10px 12px 0; box-shadow: 5px 5px 10px 0 #aaa;}
 			</style>
 			<script type="text/javascript" src="/javascripts/libs/jquery-min.js"></script>
@@ -551,46 +566,70 @@ class publicationsDatabase extends frontControllerApplication
 					// Define username
 					var username = '{$username}';
 					
-					// Add checkbox
+					// Whether to show the toggle button
+					var showTools = {$showToolsJs};
+					
+					// Whether to enable preview mode
+					var previewMode = {$previewModeJs};
+					
+					// Add checkbox container
 					$('#publications').before('<div id="symplecticswitch" />');
 					
 					// Attempt to get the HTML (will be run asyncronously) from the API for this user, or return 404
 					$.get('{$baseUrl}/people/' + username + '/html', function (symplecticpublicationsHtml) {
 						
-						// Add checkbox
-						$('#symplecticswitch').html('<p><label for="symplectic">Show Symplectic version? </label><input type="checkbox" id="symplectic" name="symplectic" /></p>');
-						
-						// Surround existing publications block with a div, automatically, unless <div id="manualpublications">...</div> is already present
-						if($("#" + 'manualpublications').length == 0) {
-							$("h2#publications").nextUntil('h2').wrapAll('<div id="manualpublications" />');
+						// Surround existing (manual) publications block with a div, automatically, unless already present
+						if($('#manualpublications').length == 0) {
+							$('h2#publications').nextUntil('h2').wrapAll('<div id="manualpublications" />');
 						}
 						
-						// Add a location for the new publications block, and hide it at first
+						// Add a location for the new publications block
 						$('#manualpublications').after('<div id="symplecticpublications" />');
-						$('#symplecticpublications').hide();
+						if (previewMode) {
+							$('#symplecticpublications').addClass('proposed');
+						}
+						
+						// Determine whether to show or hide by default
+						if (previewMode) {
+							$('#symplecticpublications').hide();
+						} else {
+							$('#manualpublications').hide();
+							$('#symplecticpublications').show();
+						}
 						
 						// Add the HTML from the API
 						$('#symplecticpublications').html(symplecticpublicationsHtml);
 						
-						// Add helpful links
-						$('#symplecticpublications').prepend('<ul class="actions spaced"><li>This listing goes live {$goLiveDate} &nbsp;</li><li><a href="{$websiteUrl}" target="_blank"><img src="/images/icons/pencil.png" /> Add/edit this list</a></li><li><a href="{$baseUrl}/quickstart.pdf" target="_blank" class="noautoicon"><img src="/images/icons/page.png" />  Help guide (PDF)</a></li></div>');
-						
-						// Toggle div blocks when checkbox is on
-						$('#symplectic').click(function(){
-							if ($('#symplectic').is(':checked')) {
-								$('#symplecticpublications').show();
-								$('#manualpublications').hide();
-							} else {
-								$('#manualpublications').show();
-								$('#symplecticpublications').hide();
+						// Show tools if required
+						if(showTools) {
+							
+							// Add checkbox
+							$('#symplecticswitch').html('<p><label for="symplectic">Show Symplectic version? </label><input type="checkbox" id="symplectic" name="symplectic" /></p>');
+							
+							// Check by default when live
+							if (!previewMode) {
+								$('#symplecticswitch input[type="checkbox"]').prop('checked', true);
 							}
-						});
+							
+							// Add helpful links
+							$('#symplecticpublications').prepend('<ul class="actions spaced">' + (previewMode ? '<li>This listing goes live {$goLiveDate}.</li>' : '') + '<li><a href="{$this->settings['website']}" target="_blank"><img src="/images/icons/pencil.png" /> Add/edit this list</a></li><li><a href="{$baseUrl}/quickstart.pdf" target="_blank" class="noautoicon"><img src="/images/icons/page.png" />  Help guide (PDF)</a></li></div>');
+							
+							// Toggle div blocks when checkbox is on
+							$('#symplectic').click(function(){
+								if ($('#symplectic').is(':checked')) {
+									$('#symplecticpublications').show();
+									$('#manualpublications').hide();
+								} else {
+									$('#manualpublications').show();
+									$('#symplecticpublications').hide();
+								}
+							});
+						}
 						
 					// No such user (error 404)
 					}).fail(function(){
 						$('#symplecticswitch').html('<p>(No publications found in Symplectic.)</p>');
 					});
-					
 				});
 			</script>
 EOT;
@@ -737,7 +776,7 @@ EOT;
 	}
 	
 	
-	# Function to get the list of users from the database
+	# Function to get the list of users from the database that have publications
 	private function getPeople ()
 	{
 		# Get the data
