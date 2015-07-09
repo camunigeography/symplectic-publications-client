@@ -37,6 +37,7 @@ class publicationsDatabase extends frontControllerApplication
 			'bookcoversLocation' => 'bookcovers/',		// From baseUrl, or if starting with a slash, from DOCUMENT_ROOT
 			'bookcoversFormat' => 'png',
 			'bookcoversHeight' => 250,
+			'enableRelationships' => false,		// Whether the relationships field in the API should be queried in limited circumstances
 		);
 		
 		# Return the defaults
@@ -1635,15 +1636,17 @@ EOT;
 					'isFavourite'			=> ($this->XPath ($xpathDom, './/api:is-favourite', $publicationNode) == 'false' ? NULL : 1),
 				);
 				
-				# For books, look for additional editors, which are in the api:relationships field
+				# If relationships are enabled, for books, look for additional editors, which are in the api:relationships field
 				$additionalEditor = false;
-				if ($type == 'book') {
-					$relationshipsUrl = $this->XPath ($xpathDom, './/api:object/api:relationships/@href', $publicationNode);
-					if ($relationshipsUrl) {
-						if ($xpathDomRelationships = $this->getData ($relationshipsUrl, 'xpathDom', true)) {
-							$usernameEditor = $this->XPath ($xpathDomRelationships, './/api:relationship[@type-id="9"]/api:related[@direction="to"]/api:object[@category="user"]/@username');	// "Relationship type 9 means "Edited by" in this context."
-							if (strtolower ($usernameEditor) == $username) {
-								$additionalEditor = $user['displayName'];
+				if ($this->settings['enableRelationships']) {
+					if ($type == 'book') {
+						$relationshipsUrl = $this->XPath ($xpathDom, './/api:object/api:relationships/@href', $publicationNode);
+						if ($relationshipsUrl) {
+							if ($xpathDomRelationships = $this->getData ($relationshipsUrl, 'xpathDom', true)) {
+								$usernameEditor = $this->XPath ($xpathDomRelationships, './/api:relationship[@type-id="9"]/api:related[@direction="to"]/api:object[@category="user"]/@username');	// "Relationship type 9 means "Edited by" in this context."
+								if (strtolower ($usernameEditor) == $username) {
+									$additionalEditor = $user['displayName'];
+								}
 							}
 						}
 					}
