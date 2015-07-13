@@ -1523,7 +1523,7 @@ EOT;
 		if (!$data) {
 			
 			# End if no response at all
-			if (!isSet ($http_response_header)) {
+			if (!isSet ($http_response_header) || empty ($http_response_header)) {		// It appears that when a failure happens, the magic variable $http_response_header is in fact created but not populated; http://php.net/reserved.variables.httpresponseheader doesn't seem to document this.
 				echo "\n<p class=\"warning\">No response was received for <em>{$url}</em>.</p>";
 				die;
 			}
