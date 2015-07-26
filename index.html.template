@@ -8,6 +8,7 @@ $settings = array (
 	'website' => 'https://publications.example.com/',
 	'apiHttp' => 'http://publications.example.com:8080/publications-api',
 	'apiHttps' => 'https://publications.example.com:8081/elements-api/v4.6',
+	'multisite' => false,
 	'getUsersFunction' => 'getUsersUpstream',
 	'getGroupsFunction' => 'getGroupsUpstream',
 	'getGroupMembers' => 'getGroupMembersUpstream',
@@ -31,11 +32,49 @@ function getUsersUpstream ()
 		            [name] => Sam Right
 		        ),
 		    [xyz123] => Array (
-		            [id] => abc123
+		            [id] => xyz123
 		            [name] => Xavier Yu
 		        ),
 			...
 		);
+		
+		or in multisite mode:
+		
+		Array
+		(
+			// Department of Widgets
+			'widgets' => Array
+			(
+			    [spqr1] => Array (
+			            [id] => spqr1
+			            [name] => Sam Right
+			        ),
+			    [xyz123] => Array (
+			            [id] => xyz123
+			            [name] => Xavier Yu
+			        ),
+				...
+			),
+			
+			// Department of Sprockets
+			'sprockets' => Array
+			(
+			    [spqr2] => Array (
+			            [id] => spqr2
+			            [name] => Sam Render
+			        ),
+			    [abc456] => Array (
+			            [id] => abc456
+			            [name] => Antonia Coneley
+			        ),
+			    [xyz123] => Array (
+			            [id] => xyz123
+			            [name] => Xavier Yu
+			        ),
+				...
+			),
+			
+			...
 	*/
 }
 

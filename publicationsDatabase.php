@@ -29,6 +29,7 @@ class publicationsDatabase extends frontControllerApplication
 			'yearsConsideredRecent' => 5,
 			'yearsConsideredRecentMainListing' => 2,
 			'canSplitIfTotal' => 10,
+			'multisite' => false,	// Whether the user/group/member functions cover more than one organisation
 			'getUsersFunction' => NULL,
 			'getGroupsFunction' => NULL,
 			'getGroupMembers' => NULL,
@@ -216,6 +217,13 @@ class publicationsDatabase extends frontControllerApplication
 			  PRIMARY KEY (`id`)
 			) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Publications';
 			
+			CREATE TABLE `userorganisations` (
+			  `id` int(11) NOT NULL COMMENT 'Automatic key',
+			  `userId` int(11) NOT NULL COMMENT 'User ID (join to users.id)',
+			  `organisation` varchar(255) COLLATE utf8_unicode_ci NOT NULL COMMENT 'Organisation',
+			  PRIMARY KEY (`id`)
+			) ENGINE=MyISAM  DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Table of organisations of each user';
+			
 			CREATE TABLE `users` (
 			  `id` varchar(10) COLLATE utf8_unicode_ci NOT NULL COMMENT 'Username',
 			  `forename` varchar(255) COLLATE utf8_unicode_ci NOT NULL COMMENT 'Forename',
@@ -226,6 +234,7 @@ class publicationsDatabase extends frontControllerApplication
 			
 			CREATE TABLE `instances_import` LIKE `instances`;
 			CREATE TABLE `publications_import` LIKE `publications`;
+			CREATE TABLE `userorganisations_import` LIKE `userorganisations`;
 			CREATE TABLE `users_import` LIKE `users`;
 		";
 	}
@@ -1090,18 +1099,24 @@ EOT;
 		# Write the lockfile
 		file_put_contents ($this->lockfile, $_SERVER['REMOTE_USER'] . ' ' . date ('Y-m-d H:i:s'));
 		
-		# Get the users from the local database
-		if (!$users = $this->getUsersUpstream ()) {
+		# Clear any existing data from the import tables; this should have been done at the end of any previous import
+		$tables = array ($this->settings['table'], 'instances', 'users', 'userorganisations');
+		foreach ($tables as $table) {
+			$this->databaseConnection->truncate ($this->settings['database'], "{$table}_import", true);
+		}
+		
+		# Get the users and their organisations
+		list ($users, $userOrganisations) = $this->getUsers ();
+		
+		# End if no users
+		if (!$users) {
 			$html .= "\n<p>There are no users.</p>";
 			unlink ($this->lockfile);
 			return false;
 		}
 		
-		# Clear any existing data from the import tables; this should have been done at the end of any previous import
-		$tables = array ($this->settings['table'], 'instances', 'users');
-		foreach ($tables as $table) {
-			$this->databaseConnection->truncate ($this->settings['database'], "{$table}_import", true);
-		}
+		# Add the user organisations to the database
+		$this->databaseConnection->insertMany ($this->settings['database'], 'userorganisations' . '_import', $userOrganisations, $chunking = false);
 		
 		# Import the publications of each user
 		foreach ($users as $username => $user) {
@@ -1179,6 +1194,39 @@ EOT;
 		
 		# Return the status
 		return $result;
+	}
+	
+	
+	# Function to get the users and their organisations
+	private function getUsers ()
+	{
+		# Get the users from the config
+		$usersRaw = $this->getUsersUpstream ();
+		
+		# Ensure the users are nested by organisation (site1 => users1, site2, => users2, ...)
+		if (!$this->settings['multisite']) {
+			$usersRaw = array ('global' => $usersRaw);
+		}
+		
+		# Loop through the user groups, to extract user data
+		$users = array ();
+		$userOrganisations = array ();
+		foreach ($usersRaw as $organisation => $usersThisSite) {
+			
+			# Merge into the master list of users
+			$users = array_merge ($users, $usersThisSite);
+			
+			# Capture the organisations of the users
+			foreach ($usersThisSite as $username => $user) {
+				$userOrganisations[] = array (
+					'userId' => $username,
+					'organisation' => $organisation,
+				);
+			}
+		}
+		
+		# Return the two arrays
+		return array ($users, $userOrganisations);
 	}
 	
 	
@@ -1397,8 +1445,10 @@ EOT;
 	}
 	
 	
-	# Get the users; the getUsersFunction callback function must return a datastructure like this:
+	# Get the users
 	/*
+		The getUsersFunction callback function must return a datastructure like this:
+		
 		Array
 		(
 		    [spqr1] => Array (
@@ -1406,9 +1456,48 @@ EOT;
 		            [name] => Sam Right
 		        ),
 		    [xyz123] => Array (
-		            [id] => abc123
+		            [id] => xyz123
 		            [name] => Xavier Yu
 		        ),
+			...
+		);
+		
+		or in multisite mode:
+		
+		Array
+		(
+			// Department of Widgets
+			'widgets' => Array
+			(
+			    [spqr1] => Array (
+			            [id] => spqr1
+			            [name] => Sam Right
+			        ),
+			    [xyz123] => Array (
+			            [id] => xyz123
+			            [name] => Xavier Yu
+			        ),
+				...
+			),
+			
+			// Department of Sprockets
+			'sprockets' => Array
+			(
+			    [spqr2] => Array (
+			            [id] => spqr2
+			            [name] => Sam Render
+			        ),
+			    [abc456] => Array (
+			            [id] => abc456
+			            [name] => Antonia Coneley
+			        ),
+			    [xyz123] => Array (
+			            [id] => xyz123
+			            [name] => Xavier Yu
+			        ),
+				...
+			),
+			
 			...
 		);
 	*/
