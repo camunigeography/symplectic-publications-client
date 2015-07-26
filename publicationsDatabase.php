@@ -219,7 +219,7 @@ class publicationsDatabase extends frontControllerApplication
 			
 			CREATE TABLE `userorganisations` (
 			  `id` int(11) NOT NULL COMMENT 'Automatic key',
-			  `userId` int(11) NOT NULL COMMENT 'User ID (join to users.id)',
+			  `userId` varchar(10) NOT NULL COMMENT 'User ID (join to users.id)',
 			  `organisation` varchar(255) COLLATE utf8_unicode_ci NOT NULL COMMENT 'Organisation',
 			  PRIMARY KEY (`id`)
 			) ENGINE=MyISAM  DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Table of organisations of each user';
