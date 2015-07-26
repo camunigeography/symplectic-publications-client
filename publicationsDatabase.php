@@ -751,8 +751,20 @@ EOT;
 		# Start the output HTML
 		$html = '';
 		
+		# Get the list of organisations (which will be done when multisite is disabled)
+		$organisations = $this->getOrganisations ();
+		
+		# If an organisation has been specified, ensure that organisations are enabled and that Determine and validate the requested organisation, if any
+		$organisation = (isSet ($_GET['organisation']) ? $_GET['organisation'] : false);
+		if ($organisation) {
+			if (!$organisations || !in_array ($organisation, $organisations)) {
+				$this->page404 ();
+				return false;
+			}
+		}
+		
 		# Get the most recent publications
-		$publications = $this->getRecent ($this->settings['yearsConsideredRecentMainListing']);
+		$publications = $this->getRecent ($this->settings['yearsConsideredRecentMainListing'], $organisation);
 		
 		# Render as a list
 		$html = $this->publicationsList ($publications, $showFeatured = false);
@@ -762,7 +774,8 @@ EOT;
 		
 		# Show publications
 		$total = number_format (count ($publications));
-		$pageHtml  = $this->apiLinks ();
+		$pageHtml  = $this->organisationsTabs ($organisations);
+		$pageHtml .= $this->apiLinks ();
 		$pageHtml .= "\n<p id=\"introduction\">Most recent publications ({$total}) involving members of the Department in the last {$this->settings['yearsConsideredRecentMainListing']} " . ($this->settings['yearsConsideredRecentMainListing'] == 1 ? 'year' : 'years') . ":</p>";
 		$pageHtml .= "\n<hr />";
 		$pageHtml .= $html;
@@ -771,6 +784,48 @@ EOT;
 		echo $pageHtml;
 	}
 	
+	
+	# Function to determine the organisations present
+	private function getOrganisations ()
+	{
+		# End if disabled
+		if (!$this->settings['multisite']) {return false;}
+		
+		# Get an array of distinct organisations
+		$query = "SELECT DISTINCT(organisation) FROM {$this->settings['database']}.userorganisations ORDER BY organisation;";
+		$data = $this->databaseConnection->getPairs ($query);
+		
+		# Return the list
+		return $data;
+	}
+	
+	
+	# Function to create a tab set of organisations
+	private function organisationsTabs ($organisations)
+	{
+		# End if not multiple organisations
+		if (!$organisations) {return false;}
+		
+		# Define a base link for all tabs
+		$baseLink = $this->baseUrl . '/recent/';
+		
+		# Start with the default (all)
+		$list = array ();
+		$list[''] = 'View: ';
+		$list[$baseLink] = "<a href=\"{$baseLink}\">All</a>";
+		
+		# Add a link for each organisation
+		foreach ($organisations as $organisation) {
+			$link = $baseLink . htmlspecialchars (urlencode ($organisation)) . '/';
+			$list[$link] = "<a href=\"{$link}\">" . htmlspecialchars ($organisation) . '</a>';
+		}
+		
+		# Compile the HTML
+		$html = application::htmlUl ($list, 0, 'tabs subtabs', true, false, false, false, $selected = $_SERVER['REQUEST_URI']);
+		
+		# Return the HTML
+		return $html;
+	}
 	
 	
 	# Function to provide an API link to the data equivalent of the current page
@@ -868,7 +923,7 @@ EOT;
 	
 	
 	# Function to get the most recent publications
-	private function getRecent ($years)
+	private function getRecent ($years, $organisation = false)
 	{
 		# Get the data
 		$firstOldYearMainListing = date ('Y') - $this->settings['yearsConsideredRecentMainListing'] - 1;

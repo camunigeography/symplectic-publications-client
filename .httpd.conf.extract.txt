@@ -17,6 +17,8 @@
 	
 	RewriteRule ^$applicationBaseUrl/(people|groups|recent|import|statistics)/(|json|html)$ $applicationBaseUrl/index.html?action=$1&api=$2 [L]
 	RedirectMatch permanent ^$applicationBaseUrl/(people|groups|recent|import|statistics)$ $applicationBaseUrl/$1/
+	RewriteRule ^$applicationBaseUrl/(recent)/([^/]+)/(|json|html)$ $applicationBaseUrl/index.html?action=recent&organisation=$2&api=$3 [L]
+	RedirectMatch permanent ^$applicationBaseUrl/(recent)/([^/]+)$ $applicationBaseUrl/$1/$2/
 	RewriteRule ^$applicationBaseUrl/(people)/([a-z]+[0-9]+)/(|json|html)$ $applicationBaseUrl/index.html?action=person&item=$2&api=$3 [L]
 	RedirectMatch permanent ^$applicationBaseUrl/(people)/([a-z]+[0-9]+)$ $applicationBaseUrl/$1/$2/
 	RewriteRule ^$applicationBaseUrl/(group)s/([a-z0-9]+)/(|json|html)$ $applicationBaseUrl/index.html?action=$1&item=$2&api=$3 [L]
