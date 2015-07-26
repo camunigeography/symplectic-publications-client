@@ -175,26 +175,24 @@ class publicationsDatabase extends frontControllerApplication
 	{
 		return "
 			CREATE TABLE `administrators` (
-			  `crsid` varchar(10) COLLATE utf8_unicode_ci NOT NULL,
+			  `crsid` varchar(10) COLLATE utf8_unicode_ci NOT NULL PRIMARY KEY,
 			  `active` enum('Y','N') COLLATE utf8_unicode_ci NOT NULL DEFAULT 'Y',
 			  `name` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
-			  `email` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
-			  PRIMARY KEY (`crsid`)
+			  `email` varchar(255) COLLATE utf8_unicode_ci NOT NULL
 			) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Administrators';
 			
 			CREATE TABLE `instances` (
-			`id` int(11) NOT NULL COMMENT 'Automatic key',
+			`id` int(11) NOT NULL COMMENT 'Automatic key' PRIMARY KEY,
 			  `username` varchar(10) COLLATE utf8_unicode_ci NOT NULL COMMENT 'Username',
 			  `publicationId` int(11) NOT NULL COMMENT 'Publication ID',
 			  `nameAppearsAsAuthor` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL COMMENT 'The string appearing in the data for the name of the author',
 			  `nameAppearsAsEditor` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL COMMENT 'The string appearing in the data for the name of the editor',
 			  `isFavourite` int(1) DEFAULT NULL COMMENT 'Favourite publication',
-			  `savedAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Automatic timestamp',
-			  PRIMARY KEY (`id`)
+			  `savedAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Automatic timestamp'
 			) ENGINE=MyISAM  DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Table of publications for each user';
 			
 			CREATE TABLE `publications` (
-			  `id` int(11) NOT NULL COMMENT 'ID in original datasource',
+			  `id` int(11) NOT NULL COMMENT 'ID in original datasource' PRIMARY KEY,
 			  `type` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL COMMENT 'Type',
 			  `lastModifiedWhen` int(11) NOT NULL COMMENT 'Last modified when (Unixtime)',
 			  `doi` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL COMMENT 'DOI',
@@ -213,23 +211,20 @@ class publicationsDatabase extends frontControllerApplication
 			  `authors` text COLLATE utf8_unicode_ci COMMENT 'Authors',
 			  `url` VARCHAR(255) COLLATE utf8_unicode_ci NULL COMMENT 'URL';
 			  `html` text COLLATE utf8_unicode_ci NOT NULL COMMENT 'Compiled HTML representation of record',
-			  `savedAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Automatic timestamp',
-			  PRIMARY KEY (`id`)
+			  `savedAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Automatic timestamp'
 			) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Publications';
 			
 			CREATE TABLE `userorganisations` (
-			  `id` int(11) NOT NULL COMMENT 'Automatic key',
+			  `id` int(11) NOT NULL COMMENT 'Automatic key' PRIMARY KEY,
 			  `userId` varchar(10) NOT NULL COMMENT 'User ID (join to users.id)',
-			  `organisation` varchar(255) COLLATE utf8_unicode_ci NOT NULL COMMENT 'Organisation',
-			  PRIMARY KEY (`id`)
+			  `organisation` varchar(255) COLLATE utf8_unicode_ci NOT NULL COMMENT 'Organisation'
 			) ENGINE=MyISAM  DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Table of organisations of each user';
 			
 			CREATE TABLE `users` (
-			  `id` varchar(10) COLLATE utf8_unicode_ci NOT NULL COMMENT 'Username',
+			  `id` varchar(10) COLLATE utf8_unicode_ci NOT NULL COMMENT 'Username' PRIMARY KEY,
 			  `forename` varchar(255) COLLATE utf8_unicode_ci NOT NULL COMMENT 'Forename',
 			  `surname` varchar(255) COLLATE utf8_unicode_ci NOT NULL COMMENT 'Surname',
-			  `savedAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Automatic timestamp',
-			  PRIMARY KEY (`id`)
+			  `savedAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Automatic timestamp'
 			) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Table of data of users who have publications';
 			
 			CREATE TABLE `instances_import` LIKE `instances`;
