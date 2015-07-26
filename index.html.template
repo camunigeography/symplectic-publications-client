@@ -101,6 +101,8 @@ function getGroupsUpstream ()
 		        ),
 			...
 		);
+		
+		or in multisite mode, nested by organisation as in getUsersUpstream
 	*/
 }
 

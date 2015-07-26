@@ -671,8 +671,8 @@ EOT;
 		# Provide API links
 		$apiLinks = $this->apiLinks ();
 		
-		# Get the groups from the installation
-		$groups = $this->getGroupsUpstream ();
+		# Get the users and their organisations
+		list ($groups, $groupsBySite) = $this->getGroups ();
 		
 		# End if none
 		if (!$groups) {
@@ -683,12 +683,15 @@ EOT;
 		}
 		
 		# Create a listing
-		$list = array ();
-		foreach ($groups as $id => $group) {
-			$nameHtml = htmlspecialchars ($group['name']);
-			$list[$id] = "<a href=\"{$this->baseUrl}/groups/{$id}/\">{$nameHtml}</a>";
+		foreach ($groupsBySite as $organisation => $groupsThisSite) {
+			$list = array ();
+			foreach ($groupsThisSite as $id => $group) {
+				$nameHtml = htmlspecialchars ($group['name']);
+				$list[$id] = "<a href=\"{$this->baseUrl}/groups/{$id}/\">{$nameHtml}</a>";
+			}
+			$html .= "\n<h3>" . htmlspecialchars ($organisation) . ':</h3>';
+			$html .= application::htmlUl ($list);
 		}
-		$html = application::htmlUl ($list);
 		
 		# API output
 		if ($this->action == 'api') {return array ('json' => $groups, 'html' => $html);}
@@ -709,8 +712,10 @@ EOT;
 		# Start the output HTML
 		$html = '';
 		
+		# Get the users and their organisations
+		list ($groups, $groupsBySite) = $this->getGroups ();
+		
 		# Ensure the group is present, or end
-		$groups = $this->getGroupsUpstream ();
 		if (!isSet ($groups[$moniker])) {
 			$errorMessage = 'There is no such group.';
 			if ($this->action == 'api') {return array ('json' => array ('error' => $errorMessage), 'html' => $html);}
@@ -1230,6 +1235,30 @@ EOT;
 	}
 	
 	
+	# Function to get the groups, both as a unified list and grouped by site
+	private function getGroups ()
+	{
+		# Get the groups from the config
+		$groupsRaw = $this->getGroupsUpstream ();
+		
+		# Ensure the groups are nested by organisation (site1 => groups1, site2, => groups2, ...)
+		if ($this->settings['multisite']) {
+			$groupsBySite = $groupsRaw;
+		} else {
+			$groupsBySite = array ('' => $groupsBySite);	// Unnamed, so that no title is shown
+		}
+		
+		# Merge each group into the master list of groups
+		$groups = array ();
+		foreach ($groupsRaw as $organisation => $groupsThisSite) {
+			$groups = array_merge ($groups, $groupsThisSite);
+		}
+		
+		# Return the two arrays
+		return array ($groups, $groupsBySite);
+	}
+	
+	
 	# Function to create a formatted list of publications
 	# Desired format is:
 	// Batchelor, C.L., Dowdeswell, J.A. and Pietras, J.T., 2014. Evidence for multiple Quaternary ice advances and fan development from the Amundsen Gulf cross-shelf trough and slope, Canadian Beaufort Sea margin. Marine and Petroleum Geology, v. 52, p.125-143. doi:10.1016/j.marpetgeo.2013.11.005
@@ -1509,8 +1538,10 @@ EOT;
 	}
 	
 	
-	# Get the groups; the getGroupsFunction callback function must return a datastructure like this:
+	# Get the groups
 	/*
+		The getGroupsFunction callback function must return a datastructure like this:
+		
 		Array
 		(
 		    [widgets] => Array (
@@ -1527,6 +1558,8 @@ EOT;
 		        ),
 			...
 		);
+		
+		or in multisite mode, nested by organisation as in getUsersUpstream
 	*/
 	private function getGroupsUpstream ()
 	{
