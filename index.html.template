@@ -120,7 +120,7 @@ function getGroupMembersUpstream ($groupUrl)
 		            [name] => Sam Right
 		        ),
 		    [xyz123] => Array (
-		            [id] => abc123
+		            [id] => xyz123
 		            [name] => Xavier Yu
 		        ),
 			...

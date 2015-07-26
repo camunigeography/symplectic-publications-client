@@ -1569,8 +1569,11 @@ EOT;
 	}
 	
 	
-	# Get the group members; the getGroupMembers callback function must return a datastructure like this:
+	# Get the group members
+	#!# This is not ideal, because in multisite mode, the callback has to do string matching on the groupUrl; ideally supply the users up-front within getGroupsUpstream
 	/*
+		The getGroupMembers callback function must return a datastructure like this:
+		
 		Array
 		(
 		    [spqr1] => Array (
@@ -1578,7 +1581,7 @@ EOT;
 		            [name] => Sam Right
 		        ),
 		    [xyz123] => Array (
-		            [id] => abc123
+		            [id] => xyz123
 		            [name] => Xavier Yu
 		        ),
 			...
