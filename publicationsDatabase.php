@@ -182,7 +182,7 @@ class publicationsDatabase extends frontControllerApplication
 			) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Administrators';
 			
 			CREATE TABLE `instances` (
-			`id` int(11) NOT NULL COMMENT 'Automatic key' PRIMARY KEY,
+			`id` int(11) NOT NULL AUTO_INCREMENT COMMENT 'Automatic key' PRIMARY KEY,
 			  `username` varchar(10) COLLATE utf8_unicode_ci NOT NULL COMMENT 'Username',
 			  `publicationId` int(11) NOT NULL COMMENT 'Publication ID',
 			  `nameAppearsAsAuthor` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL COMMENT 'The string appearing in the data for the name of the author',
@@ -215,7 +215,7 @@ class publicationsDatabase extends frontControllerApplication
 			) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Publications';
 			
 			CREATE TABLE `userorganisations` (
-			  `id` int(11) NOT NULL COMMENT 'Automatic key' PRIMARY KEY,
+			  `id` int(11) NOT NULL AUTO_INCREMENT COMMENT 'Automatic key' PRIMARY KEY,
 			  `userId` varchar(10) NOT NULL COMMENT 'User ID (join to users.id)',
 			  `organisation` varchar(255) COLLATE utf8_unicode_ci NOT NULL COMMENT 'Organisation'
 			) ENGINE=MyISAM  DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Table of organisations of each user';
