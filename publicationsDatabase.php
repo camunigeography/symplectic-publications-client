@@ -726,8 +726,7 @@ EOT;
 		$group = $groups[$moniker];
 		
 		# Get the members of the group
-		$users = $this->getGroupMembersUpstream ($group['url']);
-		$usernames = array_keys ($users);
+		$usernames = $this->getGroupMembersUpstream ($group['url']);
 		
 		# Get the publications for that user
 		$publications = $this->getPeoplePublications ($usernames);
@@ -1576,14 +1575,8 @@ EOT;
 		
 		Array
 		(
-		    [spqr1] => Array (
-		            [id] => spqr1
-		            [name] => Sam Right
-		        ),
-		    [xyz123] => Array (
-		            [id] => xyz123
-		            [name] => Xavier Yu
-		        ),
+		    spqr1,
+		    xyz123,
 			...
 		);
 	*/

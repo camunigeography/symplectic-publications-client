@@ -115,14 +115,8 @@ function getGroupMembersUpstream ($groupUrl)
 		
 		Array
 		(
-		    [spqr1] => Array (
-		            [id] => spqr1
-		            [name] => Sam Right
-		        ),
-		    [xyz123] => Array (
-		            [id] => xyz123
-		            [name] => Xavier Yu
-		        ),
+		    spqr1,
+		    xyz123,
 			...
 		);
 	*/
