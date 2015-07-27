@@ -764,8 +764,14 @@ EOT;
 			}
 		}
 		
+		# Determine the number of years to show
+		$years = $this->settings['yearsConsideredRecentMainListing'];
+		if (isSet ($_GET['years']) && ctype_digit ($_GET['years'])) {
+			$years = $_GET['years'];
+		}
+		
 		# Get the most recent publications
-		$publications = $this->getRecent ($this->settings['yearsConsideredRecentMainListing'], $organisation);
+		$publications = $this->getRecent ($years, $organisation);
 		
 		# Render as a list
 		$html = $this->publicationsList ($publications, $showFeatured = false);
@@ -789,7 +795,7 @@ EOT;
 		$total = number_format (count ($publications));
 		$pageHtml  = $this->organisationsTabs ($organisations);
 		$pageHtml .= $this->apiLinks ();
-		$pageHtml .= "\n<p id=\"introduction\">Most recent publications ({$total}) involving members of the {$organisationDescription} in the last {$this->settings['yearsConsideredRecentMainListing']} " . ($this->settings['yearsConsideredRecentMainListing'] == 1 ? 'year' : 'years') . ":</p>";
+		$pageHtml .= "\n<p id=\"introduction\">Most recent publications ({$total}) involving members of the {$organisationDescription} in the last {$years} " . ($years == 1 ? 'year' : 'years') . ":</p>";
 		$pageHtml .= "\n<hr />";
 		$pageHtml .= $html;
 		
@@ -945,7 +951,7 @@ EOT;
 		}
 		
 		# Get the data
-		$firstOldYearMainListing = date ('Y') - $this->settings['yearsConsideredRecentMainListing'] - 1;
+		$firstOldYearMainListing = date ('Y') - $years - 1;
 		$query = "SELECT
 				publications.*,
 				GROUP_CONCAT(DISTINCT instances.isFavourite) AS isFavourite,
