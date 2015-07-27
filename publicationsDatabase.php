@@ -925,6 +925,12 @@ EOT;
 	# Function to get the most recent publications
 	private function getRecent ($years, $organisation = false)
 	{
+		# Determine constraints
+		$preparedStatementValues = array ();
+		if ($organisation) {
+			$preparedStatementValues['organisation'] = $organisation;
+		}
+		
 		# Get the data
 		$firstOldYearMainListing = date ('Y') - $this->settings['yearsConsideredRecentMainListing'] - 1;
 		$query = "SELECT
@@ -934,13 +940,15 @@ EOT;
 				GROUP_CONCAT(DISTINCT instances.nameAppearsAsEditor ORDER BY nameAppearsAsEditor SEPARATOR '|') AS highlightEditors
 			FROM instances
 			LEFT OUTER JOIN publications ON instances.publicationId = publications.id
+			LEFT JOIN userorganisations ON instances.username = userorganisations.userId	/* Only actually needed when organisation constraint present */
 			WHERE
 				    CAST(publicationYear AS UNSIGNED INT) > '{$firstOldYearMainListing}'
 				AND {$this->typesConstraintString}
+				" . ($organisation ? ' AND organisation = :organisation' : '') . "
 			GROUP BY publications.id
 			ORDER BY publicationYear DESC, authors
 		;";
-		$data = $this->databaseConnection->getData ($query, "{$this->settings['database']}.instances");
+		$data = $this->databaseConnection->getData ($query, "{$this->settings['database']}.instances", true, $preparedStatementValues);
 		
 		# Highlight the authors and add starring
 		$data = $this->decoratePublicationsRuntime ($data);
