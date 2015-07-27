@@ -40,6 +40,7 @@ class publicationsDatabase extends frontControllerApplication
 			'bookcoversHeight' => 250,
 			'enableRelationships' => false,		// Whether the relationships field in the API should be queried in limited circumstances
 			'organisationDescription' => 'Department',	// String for all, or array to support multisite definitions
+			'corsDomains' => array (),	// List of supported domains for JS embedding, respecting CORS
 		);
 		
 		# Return the defaults
