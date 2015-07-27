@@ -39,6 +39,7 @@ class publicationsDatabase extends frontControllerApplication
 			'bookcoversFormat' => 'png',
 			'bookcoversHeight' => 250,
 			'enableRelationships' => false,		// Whether the relationships field in the API should be queried in limited circumstances
+			'organisationDescription' => 'Department',	// String for all, or array to support multisite definitions
 		);
 		
 		# Return the defaults
@@ -772,11 +773,23 @@ EOT;
 		# API output
 		if ($this->action == 'api') {return array ('json' => $publications, 'html' => $html);}
 		
+		# Determine the organisation description
+		$organisationDescription = $this->settings['organisationDescription'];
+		if ($this->settings['multisite'] && is_array ($this->settings['organisationDescription'])) {
+			if ($organisation) {
+				$organisationDescription = $this->settings['organisationDescription'][$organisation];
+			} else {
+				$organisationDescriptionValues = array_values ($this->settings['organisationDescription']);
+				$firstOrganisationDescription = array_shift ($organisationDescriptionValues);
+				$organisationDescription = $firstOrganisationDescription;
+			}
+		}
+		
 		# Show publications
 		$total = number_format (count ($publications));
 		$pageHtml  = $this->organisationsTabs ($organisations);
 		$pageHtml .= $this->apiLinks ();
-		$pageHtml .= "\n<p id=\"introduction\">Most recent publications ({$total}) involving members of the Department in the last {$this->settings['yearsConsideredRecentMainListing']} " . ($this->settings['yearsConsideredRecentMainListing'] == 1 ? 'year' : 'years') . ":</p>";
+		$pageHtml .= "\n<p id=\"introduction\">Most recent publications ({$total}) involving members of the {$organisationDescription} in the last {$this->settings['yearsConsideredRecentMainListing']} " . ($this->settings['yearsConsideredRecentMainListing'] == 1 ? 'year' : 'years') . ":</p>";
 		$pageHtml .= "\n<hr />";
 		$pageHtml .= $html;
 		
