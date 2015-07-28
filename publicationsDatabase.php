@@ -363,7 +363,7 @@ class publicationsDatabase extends frontControllerApplication
 		# Statistics
 		$html .= "\n<h3>Statistics</h3>";
 		$data = $this->getStatistics ();
-		$html .= application::htmlTableKeyed ($data, array (), false, 'lines compressed');
+		$html .= application::htmlTable ($data, array (), 'statistics lines compressed');
 		
 		# Show the HTML
 		echo $html;
@@ -1051,7 +1051,7 @@ EOT;
 		
 		# Render as a table
 		$html  = "\n<p>This page shows the data available in this system:</p>";
-		$html .= application::htmlTableKeyed ($data);
+		$html .= application::htmlTable ($data, array (), 'statistics lines');
 		
 		# Show the HTML
 		echo $html;
@@ -1064,23 +1064,34 @@ EOT;
 		# Start an array of data
 		$data = array ();
 		
-		# Total users
-		$data['Users'] = $this->databaseConnection->getTotal ($this->settings['database'], 'users');
+		# Define organisations
+		$organisations = array ('all');
 		
-		# Total publications
-		$data['Publications'] = $this->getTotalPublications ();
-		
-		# Total favourited items
-		$data['Favourited'] = $this->databaseConnection->getTotal ($this->settings['database'], 'instances', 'WHERE isFavourite = 1');
-		
-		# Publication types
-		$query = "SELECT CONCAT('Type - ', type) AS type, COUNT(*) AS total FROM {$this->settings['table']} GROUP BY type ORDER BY type;";
-		$types = $this->databaseConnection->getPairs ($query);
-		$data += $types;
-		
+		# Create listings for each organisation
+		foreach ($organisations as $organisation) {
+			
+			# Total users
+			$data['Users'][$organisation] = $this->databaseConnection->getTotal ($this->settings['database'], 'users');
+			
+			# Publication types
+			$query = "SELECT CONCAT('Type - ', type) AS type, COUNT(*) AS total FROM {$this->settings['table']} GROUP BY type ORDER BY type;";
+			$types = $this->databaseConnection->getPairs ($query);
+			foreach ($types as $type => $count) {
+				$data[$type][$organisation] = $count;
+			}
+			
+			# Total publications
+			$data['Publications'][$organisation] = $this->getTotalPublications ();
+			
+			# Total favourited items
+			$data['Favourited'][$organisation] = $this->databaseConnection->getTotal ($this->settings['database'], 'instances', 'WHERE isFavourite = 1');
+		}
+
 		# Apply number formatting decoration to each entry
-		foreach ($data as $key => $value) {
-			$data[$key] = number_format ($value);
+		foreach ($data as $key => $values) {
+			foreach ($organisations as $organisation) {
+				$data[$key][$organisation] = number_format ($values[$organisation]);
+			}
 		}
 		
 		# Return the data
