@@ -190,7 +190,8 @@ class publicationsDatabase extends frontControllerApplication
 			  `nameAppearsAsAuthor` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL COMMENT 'The string appearing in the data for the name of the author',
 			  `nameAppearsAsEditor` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL COMMENT 'The string appearing in the data for the name of the editor',
 			  `isFavourite` int(1) DEFAULT NULL COMMENT 'Favourite publication',
-			  `savedAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Automatic timestamp'
+			  `savedAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Automatic timestamp',
+			  INDEX publicationId (publicationId)
 			) ENGINE=MyISAM  DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Table of publications for each user';
 			
 			CREATE TABLE `publications` (
@@ -219,7 +220,8 @@ class publicationsDatabase extends frontControllerApplication
 			CREATE TABLE `userorganisations` (
 			  `id` int(11) NOT NULL AUTO_INCREMENT COMMENT 'Automatic key' PRIMARY KEY,
 			  `userId` varchar(10) NOT NULL COMMENT 'User ID (join to users.id)',
-			  `organisation` varchar(255) COLLATE utf8_unicode_ci NOT NULL COMMENT 'Organisation'
+			  `organisation` varchar(255) COLLATE utf8_unicode_ci NOT NULL COMMENT 'Organisation',
+			  INDEX userId (userId)
 			) ENGINE=MyISAM  DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Table of organisations of each user';
 			
 			CREATE TABLE `users` (
