@@ -6,4 +6,7 @@
 #publicationsdatabase div.code {white-space: nowrap; overflow-x: scroll;}
 #publicationsdatabase table.statistics th {background-color: #f7f7f7;}
 #publicationsdatabase table.statistics td {min-width: 60px; padding-right: 1.5em;}
+#publicationsdatabase .datefilter {float: right; width: 18em;}
+#publicationsdatabase .datefilter p span {display: inline-block; width: 4.5em;}
+#publicationsdatabase .datefilter p span.reset {float: right; margin-top: 20px;}
 

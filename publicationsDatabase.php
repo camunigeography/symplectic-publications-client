@@ -1048,11 +1048,18 @@ EOT;
 	# Statistics page
 	public function statistics ()
 	{
+		# Start the HTML
+		$html = '';
+		
+		# Add a form to enable limiting
+		$dateFilters = $this->dateFilterForm ($html);
+		
 		# Get the data
-		$data = $this->getStatistics ();
+		$data = $this->getStatistics ($dateFilters['startDate'], $dateFilters['untilDate']);
 		
 		# Render as a table
-		$html  = "\n<p>This page shows the data available in this system:</p>";
+		$html .= "\n<p>This page shows the data available in this system.</p>";
+		$html .= "\n<p>You can filter by date, where the date of a publication is known, using the controls on the right.</p>";
 		$html .= application::htmlTable ($data, array (), 'statistics lines');
 		
 		# Show the HTML
@@ -1060,8 +1067,59 @@ EOT;
 	}
 	
 	
+	# Function to provide a date filtering form
+	private function dateFilterForm (&$html)
+	{
+		# Default
+		$filter = array (
+			'startDate'		=> false,
+			'untilDate'	=> false,
+		);
+		
+		# Create the form
+		$form = new form (array (
+			'div' => 'datefilter ultimateform graybox',
+			'displayRestrictions' => false,
+			'nullText' => false,
+			'display' => 'template',
+			'displayTemplate' => "\n{[[PROBLEMS]]}" . "\n<p>Optional date filters:</p>\n<p><span>Earliest:</span> {startDate}<br /><span>Latest:</span> {untilDate}<br />{[[SUBMIT]]}\n<span class=\"reset small\">or <a href=\"{$this->baseUrl}/statistics/\">reset</a></span></p>",
+			'submitButtonText' => 'Apply filter',
+			'submitButtonAccesskey' => false,
+			'formCompleteText' => false,
+			'requiredFieldIndicator' => false,
+			'reappear' => true,
+		));
+		$form->datetime (array (
+			'name'			=> 'startDate',
+			'title'			=> 'Earliest date',
+			'picker'		=> true,
+		));
+		$form->datetime (array (
+			'name'			=> 'untilDate',
+			'title'			=> 'Latest date',
+			'picker'		=> true,
+		));
+		$form->validation ('either', array ('startDate', 'untilDate'));
+		if ($unfinalisedData = $form->getUnfinalisedData ()) {
+			if ($unfinalisedData['startDate'] && $unfinalisedData['untilDate']) {
+				if ($unfinalisedData['startDate'] > $unfinalisedData['untilDate']) {
+					$form->registerProblem ('timeOrderingInvalid', 'The dates must be in order.');
+				}
+			}
+		}
+		
+		# Process the form
+		if ($result = $form->process ($html)) {
+			$filter = $result;
+		}
+		
+		# Return the dates
+		return $filter;
+	}
+	
+	
 	# Function to get the statistics data
-	private function getStatistics ()
+	private function getStatistics ($startDate = false, $untilDate = false)
 	{
 		# Start an array of data
 		$data = array ();
@@ -1075,6 +1133,18 @@ EOT;
 			}
 		}
 		$organisations['total'] = false;	// false indicates no additional clause in query
+		
+		# Start an array of constraints
+		$constraints = array ();
+		
+		# Determine date limitation SQL
+		$publicationDateSql = "STR_TO_DATE( CONCAT(IFNULL(publicationDay, '1'), ',', IFNULL(publicationMonth, '1'), ',', publicationYear), '%d,%m,%Y')";
+		if ($startDate) {
+			$constraints[] = "{$publicationDateSql} >= '{$startDate}'";
+		}
+		if ($untilDate) {
+			$constraints[] = "{$publicationDateSql} <= '{$untilDate}'";
+		}
 		
 		# Get the distinct publication types in the data
 		$availableTypes = $this->databaseConnection->getPairs ("SELECT DISTINCT(type) FROM {$this->settings['database']}.{$this->settings['table']} ORDER BY type;");
@@ -1092,13 +1162,21 @@ EOT;
 			$query = "SELECT
 					COUNT(*) AS total
 				FROM (
-					/* Pre-filter table for matches with the relevant organisation (if any) */
-					SELECT users.*
-					FROM {$this->settings['database']}.users
-					LEFT JOIN userorganisations ON users.id = userorganisations.userId"
-					. ($filterQuery ? ' WHERE organisation = :organisation' : '') . "
-					GROUP BY id
-				) AS records
+					SELECT
+						users.id
+					FROM (
+						/* Pre-filter table for matches with the relevant organisation (if any) */
+						SELECT users.id
+						FROM {$this->settings['database']}.users
+						LEFT JOIN userorganisations ON users.id = userorganisations.userId"
+						. ($filterQuery ? ' WHERE organisation = :organisation' : '') . "
+						GROUP BY id
+					) AS users
+					LEFT JOIN instances ON users.id = instances.username
+					LEFT JOIN publications ON instances.publicationId = publications.id
+					" . ($constraints ? 'WHERE ' . implode (' AND ', $constraints) : '') . "
+					GROUP BY users.id
+				) AS userPublications
 			;";
 			$data['Users'][$organisation] = $this->databaseConnection->getOneField ($query, 'total', $preparedStatementValues);
 			
@@ -1115,6 +1193,7 @@ EOT;
 					. ($filterQuery ? ' WHERE organisation = :organisation' : '') . "
 					GROUP BY id
 				) AS records
+				" . ($constraints ? 'WHERE ' . implode (' AND ', $constraints) : '') . "
 				GROUP BY type
 				ORDER BY type
 			;";
@@ -1136,21 +1215,24 @@ EOT;
 					. ($filterQuery ? ' WHERE organisation = :organisation' : '') . "
 					GROUP BY id
 				) AS records
+				" . ($constraints ? 'WHERE ' . implode (' AND ', $constraints) : '') . "
 			;";
 			$data['Publications'][$organisation] = $this->databaseConnection->getOneField ($query, 'total', $preparedStatementValues);
 			
 			# Total favourited items
+			$thisConstraints = array_merge ($constraints, array ('isFavourite = 1'));
 			$query = "SELECT
 					COUNT(*) AS total
 				FROM (
 					/* Pre-filter table for matches with the relevant organisation (if any) */
-					SELECT instances.*
+					SELECT instances.*, publications.publicationYear, publications.publicationMonth, publications.publicationDay
 					FROM {$this->settings['database']}.instances
-					LEFT JOIN userorganisations ON instances.username = userorganisations.userId"
+					LEFT JOIN userorganisations ON instances.username = userorganisations.userId
+					LEFT JOIN publications ON instances.publicationId = publications.id"
 					. ($filterQuery ? ' WHERE organisation = :organisation' : '') . "
-					GROUP BY id
+					GROUP BY instances.id
 				) AS records
-				WHERE isFavourite = 1
+				" . ($thisConstraints ? 'WHERE ' . implode (' AND ', $thisConstraints) : '') . "
 			;";
 			$data['Favourited'][$organisation] = $this->databaseConnection->getOneField ($query, 'total', $preparedStatementValues);
 		}
