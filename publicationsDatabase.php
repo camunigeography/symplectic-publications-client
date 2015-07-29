@@ -1067,13 +1067,14 @@ EOT;
 		$data = array ();
 		
 		# Define organisations
-		$organisations = array ('all' => false);	// false indicates no additional clause in query
+		$organisations = array ();
 		if ($this->settings['multisite']) {
 			$sites = $this->getOrganisations ();
 			foreach ($sites as $organisation) {
 				$organisations[$organisation] = true;	// true indicates additional clause in query
 			}
 		}
+		$organisations['total'] = false;	// false indicates no additional clause in query
 		
 		# Get the distinct publication types in the data
 		$availableTypes = $this->databaseConnection->getPairs ("SELECT DISTINCT(type) FROM {$this->settings['database']}.{$this->settings['table']} ORDER BY type;");
