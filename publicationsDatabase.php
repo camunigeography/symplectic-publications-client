@@ -1065,31 +1065,96 @@ EOT;
 		$data = array ();
 		
 		# Define organisations
-		$organisations = array ('all');
+		$organisations = array ('all' => false);	// false indicates no additional clause in query
+		if ($this->settings['multisite']) {
+			$sites = $this->getOrganisations ();
+			foreach ($sites as $organisation) {
+				$organisations[$organisation] = true;	// true indicates additional clause in query
+			}
+		}
+		
+		# Get the distinct publication types in the data
+		$availableTypes = $this->databaseConnection->getPairs ("SELECT DISTINCT(type) FROM {$this->settings['database']}.{$this->settings['table']} ORDER BY type;");
 		
 		# Create listings for each organisation
-		foreach ($organisations as $organisation) {
+		foreach ($organisations as $organisation => $filterQuery) {
 			
-			# Total users
-			$data['Users'][$organisation] = $this->databaseConnection->getTotal ($this->settings['database'], 'users');
-			
-			# Publication types
-			$query = "SELECT CONCAT('Type - ', type) AS type, COUNT(*) AS total FROM {$this->settings['table']} GROUP BY type ORDER BY type;";
-			$types = $this->databaseConnection->getPairs ($query);
-			foreach ($types as $type => $count) {
-				$data[$type][$organisation] = $count;
+			# Determine filter
+			$preparedStatementValues = array ();
+			if ($filterQuery) {
+				$preparedStatementValues = array ('organisation' => $organisation);
 			}
 			
-			# Total publications
-			$data['Publications'][$organisation] = $this->getTotalPublications ();
+			# Total users
+			$query = "SELECT
+					COUNT(*) AS total
+				FROM (
+					/* Pre-filter table for matches with the relevant organisation (if any) */
+					SELECT users.*
+					FROM {$this->settings['database']}.users
+					LEFT JOIN userorganisations ON users.id = userorganisations.userId"
+					. ($filterQuery ? ' WHERE organisation = :organisation' : '') . "
+					GROUP BY id
+				) AS records
+			;";
+			$data['Users'][$organisation] = $this->databaseConnection->getOneField ($query, 'total', $preparedStatementValues);
+			
+			# Publication types
+			$query = "SELECT
+					type,
+					COUNT(*) AS total
+				FROM (
+					/* Pre-filter table for matches with the relevant organisation (if any) */
+					SELECT {$this->settings['table']}.*
+					FROM {$this->settings['database']}.{$this->settings['table']}
+					LEFT JOIN instances ON {$this->settings['table']}.id = instances.publicationId
+					LEFT JOIN userorganisations ON instances.username = userorganisations.userId"
+					. ($filterQuery ? ' WHERE organisation = :organisation' : '') . "
+					GROUP BY id
+				) AS records
+				GROUP BY type
+				ORDER BY type
+			;";
+			$typeTotals = $this->databaseConnection->getPairs ($query, false, $preparedStatementValues);
+			foreach ($availableTypes as $type) {
+				$typeLabel = 'Type - ' . $type;
+				$data[$typeLabel][$organisation] = (isSet ($typeTotals[$type]) ? $typeTotals[$type] : 0);		// A type with no matches for the organisation concerned will thus not be present in the data
+			}
+			
+			# Total records
+			$query = "SELECT
+					COUNT(*) AS total
+				FROM (
+					/* Pre-filter table for matches with the relevant organisation (if any) */
+					SELECT {$this->settings['table']}.*
+					FROM {$this->settings['database']}.{$this->settings['table']}
+					LEFT JOIN instances ON {$this->settings['table']}.id = instances.publicationId
+					LEFT JOIN userorganisations ON instances.username = userorganisations.userId"
+					. ($filterQuery ? ' WHERE organisation = :organisation' : '') . "
+					GROUP BY id
+				) AS records
+			;";
+			$data['Publications'][$organisation] = $this->databaseConnection->getOneField ($query, 'total', $preparedStatementValues);
 			
 			# Total favourited items
-			$data['Favourited'][$organisation] = $this->databaseConnection->getTotal ($this->settings['database'], 'instances', 'WHERE isFavourite = 1');
+			$query = "SELECT
+					COUNT(*) AS total
+				FROM (
+					/* Pre-filter table for matches with the relevant organisation (if any) */
+					SELECT instances.*
+					FROM {$this->settings['database']}.instances
+					LEFT JOIN userorganisations ON instances.username = userorganisations.userId"
+					. ($filterQuery ? ' WHERE organisation = :organisation' : '') . "
+					GROUP BY id
+				) AS records
+				WHERE isFavourite = 1
+			;";
+			$data['Favourited'][$organisation] = $this->databaseConnection->getOneField ($query, 'total', $preparedStatementValues);
 		}
-
+		
 		# Apply number formatting decoration to each entry
 		foreach ($data as $key => $values) {
-			foreach ($organisations as $organisation) {
+			foreach ($organisations as $organisation => $filterQuery) {
 				$data[$key][$organisation] = number_format ($values[$organisation]);
 			}
 		}

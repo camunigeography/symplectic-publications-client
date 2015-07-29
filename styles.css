@@ -5,3 +5,5 @@
 #publicationsdatabase #publicationslist ul li img.favourite, #publicationsdatabase img.favourite {position: relative; top: -2px;}
 #publicationsdatabase div.code {white-space: nowrap; overflow-x: scroll;}
 #publicationsdatabase table.statistics th {background-color: #f7f7f7;}
+#publicationsdatabase table.statistics td {min-width: 60px; padding-right: 1.5em;}
+
