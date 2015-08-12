@@ -235,6 +235,12 @@ class publicationsDatabase extends frontControllerApplication
 			CREATE TABLE `publications_import` LIKE `publications`;
 			CREATE TABLE `userorganisations_import` LIKE `userorganisations`;
 			CREATE TABLE `users_import` LIKE `users`;
+			
+			CREATE TABLE `exclude` (
+			  `id` varchar(255) COLLATE utf8_unicode_ci NOT NULL COMMENT 'Group' PRIMARY KEY,
+			  `exclude` text COLLATE utf8_unicode_ci COMMENT 'Publications to exclude, comma-separated',
+			  `savedAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Automatic timestamp'
+			) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Table of publications to be excluded for a group';
 		";
 	}
 	
@@ -730,8 +736,15 @@ EOT;
 		# Get the publications for that user
 		$publications = $this->getPeoplePublications ($usernames);
 		
+		# Determine publications determined already as filtered
+		$currentlyFiltered = $this->databaseConnection->selectOneField ($this->settings['database'], 'exclude', 'exclude', array ('id' => $moniker));
+		$currentlyFiltered = ($currentlyFiltered ? explode (',', $currentlyFiltered) : array ());		// Convert to array
+		
+		# Determine whether to enable the filtering UI, and if so, specify the moniker of the group
+		$filteringUiGroup = ($this->action == 'group' ? $moniker : false);
+		
 		# Render as a list
-		$html = $this->publicationsList ($publications);
+		$html = $this->publicationsList ($publications, true, $currentlyFiltered, $filteringUiGroup);
 		
 		# API output
 		if ($this->action == 'api') {return array ('json' => $publications, 'html' => $html);}
@@ -1500,16 +1513,34 @@ EOT;
 	# Function to create a formatted list of publications
 	# Desired format is:
 	// Batchelor, C.L., Dowdeswell, J.A. and Pietras, J.T., 2014. Evidence for multiple Quaternary ice advances and fan development from the Amundsen Gulf cross-shelf trough and slope, Canadian Beaufort Sea margin. Marine and Petroleum Geology, v. 52, p.125-143. doi:10.1016/j.marpetgeo.2013.11.005
-	public function publicationsList ($publications, $showFeatured = true)
+	public function publicationsList ($publications, $showFeatured = true, $currentlyFiltered = array (), $filteringUiGroup = false)
 	{
 		# Start the HTML
 		$html = '';
+		
+		# In the public listing, filter out unwanted publications if required; the UI still requires these, however, so that they can be shown with buttons, faded
+		if (!$filteringUiGroup) {
+			foreach ($currentlyFiltered as $excludePublicationId) {
+				if (isSet ($publications[$excludePublicationId])) {
+					unset ($publications[$excludePublicationId]);
+				}
+			}
+		}
 		
 		# Determine favourites
 		$favourites = array ();
 		foreach ($publications as $publicationId => $publication) {
 			if ($publication['isFavourite']) {
 				$favourites[$publicationId] = $publication['html'];
+			}
+		}
+		
+		# If the filtering interface is required, add placeholders to each publication entry; this is done after the favourites stage, to avoid duplication of placeholders
+		if ($filteringUiGroup) {
+			$placeholders = array ();
+			foreach ($publications as $publicationId => $publication) {
+				$placeholders[$publicationId] = '{' . $publicationId . '}';
+				$publications[$publicationId]['html'] = $placeholders[$publicationId] . ' ' . $publication['html'];
 			}
 		}
 		
@@ -1545,6 +1576,100 @@ EOT;
 		
 		# Surround with a div
 		$html = "\n\n\n<div id=\"publicationslist\">" . "\n" . $html . "\n\n</div><!-- /#publicationslist -->\n\n";
+		
+		# Add the filtering form if required
+		if ($filteringUiGroup) {
+			$html = $this->filteringForm ($filteringUiGroup, $currentlyFiltered, $placeholders, $html);
+		}
+		
+		# Return the HTML
+		return $html;
+	}
+	
+	
+	# Function to provide a filtering form
+	private function filteringForm ($group, $currentlyFiltered, $placeholders, $template)
+	{
+		# Start the HTML
+		$html  = '';
+		
+		# Create the form
+		$form = new form (array (
+			'displayRestrictions' => false,
+			'formCompleteText' => false,
+			'display' => 'template',
+			'displayTemplate' => '<p>{[[SUBMIT]]}</p>' . '{[[PROBLEMS]]}' . $template . '<p>{[[SUBMIT]]}</p>',
+			'reappear' => true,
+			'submitButtonText' => 'Exclude ticked publications',
+			'unsavedDataProtection' => true,
+		));
+		foreach ($placeholders as $publicationId => $placeholder) {
+			$form->checkboxes (array (
+				'title'			=> 'Exclude #' . $publicationId,
+				'name'			=> $publicationId,
+				'values'		=> array ('exclude'),
+				'labels'		=> false,
+				'linebreaks'	=> false,
+				'output'		=> array ('processing' => 'special-setdatatype'),	// Flattens the output
+				'default'		=> (in_array ($publicationId, $currentlyFiltered) ? 'exclude' : false),
+			));
+		}
+		# Add hidden field so that form will be processed even if no checkboxes are ticked
+		#!# This should ideally be handled by ultimateForm natively
+		$form->hidden (array (
+			'values'	=> array ('discard'),
+			'name'		=> 'discard',
+			'discard'	=> true,
+		));
+		if ($result = $form->process ($html)) {
+			
+			# Determine excluded values
+			$exclude = array ();
+			foreach ($result as $publicationId => $excluded) {
+				if ($excluded) {
+					$exclude[] = $publicationId;
+				}
+			}
+			
+			# Assemble the database values
+			$data = array (
+				'id' => $group,
+				'exclude' => implode (',', $exclude),
+			);
+			
+			# Insert/update the value
+			$this->databaseConnection->insert ($this->settings['database'], 'exclude', $data, $onDuplicateKeyUpdate = true);
+			
+			# Confirm success
+			$confirmationHtml  = "\n" . '<div class="graybox">';
+			$totalExcluded = count ($exclude);
+			$confirmationHtml .= "\n<p>{$this->tick} " . ($totalExcluded ? ($totalExcluded == 1 ? 'One publication is now' : "{$totalExcluded} publications are now") : 'No publications are') . ' being excluded from the public listing' . ($totalExcluded ? ', shown faded-out below' : '') . '.</p>';
+			$confirmationHtml .= "\n" . '</div>';
+			$html = $confirmationHtml . $html;
+		}
+		
+		# Add javascript to fade out publications as they are ticked
+		$this->jQueryEnabled = true;
+		$html .= "\n\n<!-- Show/hide link -->";
+		$html .= "\n" . "<script type=\"text/javascript\">
+			$(document).ready(function(){
+				
+				// Fade out pre-checked checkboxes
+				var fadedOpacity = 0.25;
+				$(':checkbox').each(function () {
+					if (this.checked) {
+						$(this).parent('li').css( 'opacity', fadedOpacity );
+					}
+				});
+				
+				// Fade/unfade if checked
+				$(':checkbox').click(function() {
+					var opacity = ($(this).is(':checked') ? fadedOpacity : 1);
+					$(this).parent('li').css( 'opacity', opacity );
+				});
+			});
+		</script>
+		";
 		
 		# Return the HTML
 		return $html;
