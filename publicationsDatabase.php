@@ -20,6 +20,7 @@ class publicationsDatabase extends frontControllerApplication
 		# Specify available arguments as defaults or as NULL (to represent a required argument)
 		$defaults = array (
 			'div' => strtolower (__CLASS__),
+			'authentication' => true,
 			'database' => 'publications',
 			'table' => 'publications',
 			'website' => NULL,
@@ -104,7 +105,6 @@ class publicationsDatabase extends frontControllerApplication
 				'url' => 'bookcover.html',
 				'icon' => 'book',
 				'tab' => 'Book cover',
-				'authentication' => true,
 			),
 			'recent' => array (
 				'description' => 'Most recent publications',
@@ -151,6 +151,7 @@ class publicationsDatabase extends frontControllerApplication
 			'api' => array (
 				'description' => 'API',
 				'url' => '%/json',
+				'authentication' => false,
 				'export' => true,
 			),
 			'data' => array (	// Used for e.g. AJAX calls, etc.
