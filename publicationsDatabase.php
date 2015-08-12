@@ -154,6 +154,12 @@ class publicationsDatabase extends frontControllerApplication
 				'authentication' => false,
 				'export' => true,
 			),
+			'cron' => array (
+				'description' => 'Cron hook for non-interactive processes',
+				'url' => 'cron/',
+				'authentication' => false,
+				'export' => true,
+			),
 			'data' => array (	// Used for e.g. AJAX calls, etc.
 				'description' => 'Data point',
 				'url' => 'data.json',
