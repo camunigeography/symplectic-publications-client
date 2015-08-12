@@ -744,7 +744,7 @@ EOT;
 		$currentlyFiltered = ($currentlyFiltered ? explode (',', $currentlyFiltered) : array ());		// Convert to array
 		
 		# Determine whether to enable the filtering UI, and if so, specify the moniker of the group
-		$filteringUiGroup = ($this->action == 'group' ? $moniker : false);
+		$filteringUiGroup = ($this->userIsAdministrator ? ($this->action == 'group' ? $moniker : false) : false);
 		
 		# Render as a list
 		$html = $this->publicationsList ($publications, true, $currentlyFiltered, $filteringUiGroup);
