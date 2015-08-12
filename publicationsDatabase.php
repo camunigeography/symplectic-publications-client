@@ -934,7 +934,7 @@ EOT;
 			GROUP BY publications.id
 			ORDER BY publicationYear DESC, authors
 		;";
-		$data = $this->databaseConnection->getData ($query, false, "{$this->settings['database']}.{$this->settings['table']}", array ('usernames' => $usernames));
+		$data = $this->databaseConnection->getData ($query, "{$this->settings['database']}.publications", true, array ('usernames' => $usernames));
 		
 		# Highlight the authors and add starring
 		$data = $this->decoratePublicationsRuntime ($data);
