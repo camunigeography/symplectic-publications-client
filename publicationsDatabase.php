@@ -370,9 +370,11 @@ class publicationsDatabase extends frontControllerApplication
 		$html .= "\n<p><a href=\"{$this->baseUrl}/groups/\" class=\"actions\">" . '<img src="/images/icons/group.png" alt="*" class="icon" />' . " <strong>Publications by group</strong></a></p>";
 		
 		# Statistics
-		$html .= "\n<h3>Statistics</h3>";
-		$data = $this->getStatistics ();
-		$html .= application::htmlTable ($data, array (), 'statistics lines compressed');
+		if ($this->userIsAdministrator) {
+			$html .= "\n<h3>Statistics</h3>";
+			$data = $this->getStatistics ();
+			$html .= application::htmlTable ($data, array (), 'statistics lines compressed');
+		}
 		
 		# Show the HTML
 		echo $html;
