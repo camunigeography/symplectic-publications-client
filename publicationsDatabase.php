@@ -527,7 +527,7 @@ class publicationsDatabase extends frontControllerApplication
 		$publications = $this->getPerson ($username);
 		
 		# Render as a list
-		$html = $this->publicationsList ($publications, true, $showStars);
+		$html = $this->publicationsList ($publications, $showFeatured = true, $showStars);
 		
 		# API output
 		if ($this->action == 'api') {return array ('json' => $publications, 'html' => $html);}
@@ -765,7 +765,7 @@ EOT;
 		$filteringUiGroup = ($this->userIsAdministrator ? ($this->action == 'group' ? $moniker : false) : false);
 		
 		# Render as a list
-		$html = $this->publicationsList ($publications, true, $showStars, $currentlyFiltered, $filteringUiGroup);
+		$html = $this->publicationsList ($publications, false, $showStars, $currentlyFiltered, $filteringUiGroup);
 		
 		# API output
 		if ($this->action == 'api') {return array ('json' => $publications, 'html' => $html);}
@@ -817,7 +817,7 @@ EOT;
 		$publications = $this->getRecent ($years, $organisation);
 		
 		# Render as a list
-		$html = $this->publicationsList ($publications, $showFeatured = false, $showStars);
+		$html = $this->publicationsList ($publications, false, $showStars);
 		
 		# API output
 		if ($this->action == 'api') {return array ('json' => $publications, 'html' => $html);}
@@ -1533,7 +1533,7 @@ EOT;
 	# Function to create a formatted list of publications
 	# Desired format is:
 	// Batchelor, C.L., Dowdeswell, J.A. and Pietras, J.T., 2014. Evidence for multiple Quaternary ice advances and fan development from the Amundsen Gulf cross-shelf trough and slope, Canadian Beaufort Sea margin. Marine and Petroleum Geology, v. 52, p.125-143. doi:10.1016/j.marpetgeo.2013.11.005
-	public function publicationsList ($publications, $showFeatured = true, $showStars = true, $currentlyFiltered = array (), $filteringUiGroup = false)
+	public function publicationsList ($publications, $showFeatured = false, $showStars = true, $currentlyFiltered = array (), $filteringUiGroup = false)
 	{
 		# Start the HTML
 		$html = '';
