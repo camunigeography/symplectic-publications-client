@@ -517,11 +517,17 @@ class publicationsDatabase extends frontControllerApplication
 			return true;
 		}
 		
+		# Determine whether to show starred items with the star
+		$showStars = true;
+		if (isSet ($_GET['stars']) && ($_GET['stars'] == '0')) {
+			$showStars = false;
+		}
+		
 		# Get the publications for that user
 		$publications = $this->getPerson ($username);
 		
 		# Render as a list
-		$html = $this->publicationsList ($publications);
+		$html = $this->publicationsList ($publications, true, $showStars);
 		
 		# API output
 		if ($this->action == 'api') {return array ('json' => $publications, 'html' => $html);}
@@ -739,6 +745,12 @@ EOT;
 		}
 		$group = $groups[$moniker];
 		
+		# Determine whether to show starred items with the star
+		$showStars = true;
+		if (isSet ($_GET['stars']) && ($_GET['stars'] == '0')) {
+			$showStars = false;
+		}
+		
 		# Get the members of the group
 		$usernames = $this->getGroupMembersUpstream ($group['url']);
 		
@@ -753,7 +765,7 @@ EOT;
 		$filteringUiGroup = ($this->userIsAdministrator ? ($this->action == 'group' ? $moniker : false) : false);
 		
 		# Render as a list
-		$html = $this->publicationsList ($publications, true, $currentlyFiltered, $filteringUiGroup);
+		$html = $this->publicationsList ($publications, true, $showStars, $currentlyFiltered, $filteringUiGroup);
 		
 		# API output
 		if ($this->action == 'api') {return array ('json' => $publications, 'html' => $html);}
@@ -795,11 +807,17 @@ EOT;
 			$years = $_GET['years'];
 		}
 		
+		# Determine whether to show starred items with the star
+		$showStars = true;
+		if (isSet ($_GET['stars']) && ($_GET['stars'] == '0')) {
+			$showStars = false;
+		}
+		
 		# Get the most recent publications
 		$publications = $this->getRecent ($years, $organisation);
 		
 		# Render as a list
-		$html = $this->publicationsList ($publications, $showFeatured = false);
+		$html = $this->publicationsList ($publications, $showFeatured = false, $showStars);
 		
 		# API output
 		if ($this->action == 'api') {return array ('json' => $publications, 'html' => $html);}
@@ -927,7 +945,7 @@ EOT;
 		;";
 		$data = $this->databaseConnection->getData ($query, "{$this->settings['database']}.instances", true, array ('username' => $username));
 		
-		# Highlight the authors and add starring
+		# Highlight the authors
 		$data = $this->decoratePublicationsRuntime ($data);
 		
 		# Return the data
@@ -994,7 +1012,7 @@ EOT;
 		;";
 		$data = $this->databaseConnection->getData ($query, "{$this->settings['database']}.instances", true, $preparedStatementValues);
 		
-		# Highlight the authors and add starring
+		# Highlight the authors and add starring if required
 		$data = $this->decoratePublicationsRuntime ($data);
 		
 		# Return the data
@@ -1022,13 +1040,6 @@ EOT;
 				$altHtml = htmlspecialchars ($publication['title']);
 				$data[$id]['thumbnail'] = $_SERVER['_SITE_URL'] . $location;
 				$data[$id]['thumbnailHtml'] = "<img src=\"{$data[$id]['thumbnail']}\" {$attributesHtml} alt=\"{$altHtml}\" class=\"bookcover\" />";
-			}
-		}
-		
-		# Add stars
-		foreach ($data as $id => $publication) {
-			if ($publication['isFavourite']) {
-				$data[$id]['html'] = '<img src="/images/icons/star.png" class="icon favourite" /> ' . $publication['html'];
 			}
 		}
 		
@@ -1522,7 +1533,7 @@ EOT;
 	# Function to create a formatted list of publications
 	# Desired format is:
 	// Batchelor, C.L., Dowdeswell, J.A. and Pietras, J.T., 2014. Evidence for multiple Quaternary ice advances and fan development from the Amundsen Gulf cross-shelf trough and slope, Canadian Beaufort Sea margin. Marine and Petroleum Geology, v. 52, p.125-143. doi:10.1016/j.marpetgeo.2013.11.005
-	public function publicationsList ($publications, $showFeatured = true, $currentlyFiltered = array (), $filteringUiGroup = false)
+	public function publicationsList ($publications, $showFeatured = true, $showStars = true, $currentlyFiltered = array (), $filteringUiGroup = false)
 	{
 		# Start the HTML
 		$html = '';
@@ -1541,6 +1552,15 @@ EOT;
 		foreach ($publications as $publicationId => $publication) {
 			if ($publication['isFavourite']) {
 				$favourites[$publicationId] = $publication['html'];
+			}
+		}
+		
+		# Add stars if required
+		if ($showStars) {
+			foreach ($publications as $publicationId => $publication) {
+				if ($publication['isFavourite']) {
+					$publications[$publicationId]['html'] = '<img src="/images/icons/star.png" class="icon favourite" /> ' . $publication['html'];
+				}
 			}
 		}
 		
@@ -1572,7 +1592,7 @@ EOT;
 			
 			# Create a listing for this type
 			if (in_array ($type, $this->typesListingByYear)) {
-				$html .= $this->publicationsListByYear ($publicationsByType[$type], $label, $type, $favourites);
+				$html .= $this->publicationsListByYear ($publicationsByType[$type], $label, $type, $favourites, $showStars);
 			} else {
 				$html .= $this->publicationsListSimple ($publicationsByType[$type], $label, $type);
 			}
@@ -1735,7 +1755,7 @@ EOT;
 	
 	
 	# Function to render a publication group as a simple bullet-point list without grouping
-	private function publicationsListByYear ($publications, $label, $type, $favourites)
+	private function publicationsListByYear ($publications, $label, $type, $favourites, $showStars = true)
 	{
 		# End if none
 		if (!$publications) {return false;}
@@ -1743,9 +1763,11 @@ EOT;
 		# Start the HTML
 		$html  = "\n<h3>{$label}</h3>";
 		
-		# Add favourites indication
-		if ($favourites) {
-			$html .= "<p class=\"small comment\"><em>Key publications are marked with a star.</em></p>";
+		# Add stars indication if required
+		if ($showStars) {
+			if ($favourites) {
+				$html .= "<p class=\"small comment\"><em>Key publications are marked with a star.</em></p>";
+			}
 		}
 		
 		# Regroup the remaining items by year
