@@ -1301,7 +1301,7 @@ EOT;
 		$html .= "\n<p>There are currently " . number_format ($totalPublicationsCurrently) . " publications imported.</p>";
 		
 		# Ensure an import is not running
-		if ($importHtml = $this->importInProgress ()) {
+		if ($importHtml = $this->importInProgress ($detectStaleLockfileHours = 4)) {
 			$html .= $importHtml;
 			echo $html;
 			return false;
