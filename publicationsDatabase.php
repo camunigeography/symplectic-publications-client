@@ -57,6 +57,7 @@ class publicationsDatabase extends frontControllerApplication
 		'chapter'				=> 'Book chapters',
 		'conference'			=> 'Conference proceedings',
 		'internet-publication'	=> 'Internet publications',
+		'other'					=> 'Other publications',
 		
 	//	'?'						=> 'Datasets',
 	//	'patent'				=> 'Patents',
@@ -67,7 +68,6 @@ class publicationsDatabase extends frontControllerApplication
 	//	'?'						=> 'Designs',
 	//	'?'						=> 'Artefacts',
 	//	'?'						=> 'Exhibitions',
-	//	'other'					=> 'Other',
 	//	'?'						=> 'Scholarly editions',
 	//	'?'						=> 'Posters',
 	//	'thesis-dissertation'	=> 'Theses / Dissertations',
