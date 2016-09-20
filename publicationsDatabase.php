@@ -57,11 +57,11 @@ class publicationsDatabase extends frontControllerApplication
 		'chapter'				=> 'Book chapters',
 		'conference'			=> 'Conference proceedings',
 		'internet-publication'	=> 'Internet publications',
+		'report'				=> 'Reports',
 		'other'					=> 'Other publications',
 		
 	//	'?'						=> 'Datasets',
 	//	'patent'				=> 'Patents',
-	//	'report'				=> 'Reports',
 	//	'software'				=> 'Software',
 	//	'?'						=> 'Performances',
 	//	'?'						=> 'Compositions',
@@ -289,8 +289,6 @@ class publicationsDatabase extends frontControllerApplication
 		}
 		
 	}
-	
-	
 	
 	
 	# API controller
