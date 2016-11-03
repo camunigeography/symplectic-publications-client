@@ -290,6 +290,8 @@ class publicationsDatabase extends frontControllerApplication
 			return false;
 		}
 		
+		# Define start words to strip in comma-and listings
+		$this->commaAndStripStartingWords = array ('with');
 	}
 	
 	
@@ -1067,8 +1069,8 @@ EOT;
 		}
 		
 		# Convert the original contributors list and the highlighted versions into "A, B, and C" format, as per the original HTML
-		$contributorsOriginal = application::commaAndListing ($contributorsOriginal);
-		$contributorsHighlighted = application::commaAndListing ($contributors);
+		$contributorsOriginal = application::commaAndListing ($contributorsOriginal, $this->commaAndStripStartingWords);
+		$contributorsHighlighted = application::commaAndListing ($contributors, $this->commaAndStripStartingWords);
 		
 		# Substitute the contributors listing at the start of the HTML with the new contributors listing
 		$delimiter = '/';
@@ -2356,8 +2358,8 @@ EOT;
 		}
 		
 		# Unpack the contributor listings into "A, B and C" format; the same routine is also used at runtime for higlighting
-		$authors = application::commaAndListing (explode ('|', $publication['authors']));
-		$editors = application::commaAndListing (explode ('|', $publication['editors']));
+		$authors = application::commaAndListing (explode ('|', $publication['authors']), $this->commaAndStripStartingWords);
+		$editors = application::commaAndListing (explode ('|', $publication['editors']), $this->commaAndStripStartingWords);
 		
 		# Compile the HTML for this publication
 		$html  = '';
