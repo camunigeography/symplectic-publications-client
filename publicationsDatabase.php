@@ -1719,6 +1719,7 @@ EOT;
 		
 		# Compile the list
 		$oldYear = false;
+		$hasRecent = false;
 		$html .= "\n<ul id=\"publications{$namespace}\">";
 		foreach ($publications as $publicationId => $publication) {
 			
@@ -1727,6 +1728,8 @@ EOT;
 				if (!$oldYear) {		// If not already found, check
 					if ($publication['publicationYear'] <= $this->firstOldYear) {
 						$oldYear = true;
+					} else {
+						$hasRecent = true;
 					}
 				}
 			}
@@ -1738,7 +1741,7 @@ EOT;
 		
 		# Add jQuery expandability at the end of the list
 		if ($oldYear) {
-			$html .= $this->showHideLinkUl ($namespace, $label);
+			$html .= $this->showHideLinkUl ($namespace, $label, $hasRecent);
 		}
 		
 		# If there are book covers show these, as a block at the end of the books
@@ -1820,17 +1823,20 @@ EOT;
 	
 	
 	# Helper function to create a show/hidden link for a list
-	private function showHideLinkUl ($namespace, $label)
+	private function showHideLinkUl ($namespace, $label, $hasRecent)
 	{
 		# Enable jQuery
 		$this->jQueryEnabled = true;
+		
+		# Compile the expansion message
+		$message = 'Show ' . ($hasRecent ? 'earlier ' : '') . lcfirst ($label);
 		
 		# Compile the HTML
 		$html  = "\n\n<!-- Show/hide link -->";
 		$html .= "\n" . '<script type="text/javascript">
 			$(document).ready(function(){
 				$("#publications' . $namespace . ' li.oldyear").hide();
-				$("#publications' . $namespace . '").after("<p class=\"showall\" id=\"showall' . $namespace . '\"><a href=\"#showall' . $namespace . '\">&#9660; Show earlier ' . lcfirst ($label) . ' &hellip;</a></p>");
+				$("#publications' . $namespace . '").after("<p class=\"showall\" id=\"showall' . $namespace . '\"><a href=\"#showall' . $namespace . '\">&#9660; ' . $message . ' &hellip;</a></p>");
 				$("#showall' . $namespace . ' a").click(function(e){
 					e.preventDefault();
 					$("#showall' . $namespace . '").hide();
