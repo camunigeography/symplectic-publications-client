@@ -83,6 +83,8 @@ class publicationsDatabase extends frontControllerApplication
 	private $expandableTypes = array (
 		'chapter',
 		'journal-article',
+		'report',
+		'other',
 	);
 	
 	# General class properties
