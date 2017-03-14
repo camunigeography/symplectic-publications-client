@@ -27,10 +27,13 @@
 	RewriteRule ^$applicationBaseUrl/(bookcover).html$ $applicationBaseUrl/index.html?action=$1 [L]
 	RewriteRule ^$applicationBaseUrl/(retrieve).html$ $applicationBaseUrl/index.html?action=$1 [L]
 	
-	# API output formats
+	# API outputs
 	<LocationMatch ^$applicationBaseUrl/.+/(html|json)$>
 		php_value auto_prepend_file none
 		php_value auto_append_file none
+		
+		# Avoid any higher-up access controls
+		Require all granted
 	</LocationMatch>
 	
 	# Permit uploads
