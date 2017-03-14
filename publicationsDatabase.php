@@ -765,7 +765,7 @@ EOT;
 		$currentlyFiltered = ($currentlyFiltered ? explode (',', $currentlyFiltered) : array ());		// Convert to array
 		
 		# Determine whether to enable the filtering UI, and if so, specify the moniker of the group
-		$filteringUiGroup = ($this->userIsAdministrator ? ($this->action == 'group' ? $moniker : false) : false);
+		$filteringUiGroup = (($this->userIsAdministrator || ($this->user && in_array ($this->user, $group['managers']))) ? ($this->action == 'group' ? $moniker : false) : false);
 		
 		# Render as a list
 		$html = $this->publicationsList ($publications, false, $showStars, $currentlyFiltered, $filteringUiGroup);
@@ -1952,12 +1952,19 @@ EOT;
 		            [name] => Widgets research group
 		            [url] => http://www.example.com/research/widgets/
 		            [ordering] => 1
+		            [managers] => Array (
+						xyz123
+					)
 		        ),
 		    [sprockets] => Array (
 		            [id] => sprockets
 		            [name] => Sprockets research group
 		            [url] => http://www.example.com/research/sprockets/
 		            [ordering] => 1
+					[managers] => Array (
+						abc987,
+						spqr1
+					)
 		        ),
 			...
 		);

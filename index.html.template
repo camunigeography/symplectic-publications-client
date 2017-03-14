@@ -92,12 +92,19 @@ function getGroupsUpstream ()
 		            [name] => Widgets research group
 		            [url] => http://www.example.com/research/widgets/
 		            [ordering] => 1
+		            [managers] => Array (
+						xyz123
+					)
 		        ),
 		    [sprockets] => Array (
 		            [id] => sprockets
 		            [name] => Sprockets research group
 		            [url] => http://www.example.com/research/sprockets/
 		            [ordering] => 1
+					[managers] => Array (
+						abc987,
+						spqr1
+					)
 		        ),
 			...
 		);
