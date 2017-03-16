@@ -409,10 +409,10 @@ class publicationsDatabase extends frontControllerApplication
 			return true;
 		}
 		
-		# Arrange as key => title
+		# Arrange as key => title, and show whether there is currently a cover
 		$books = array ();
 		foreach ($data as $id => $book) {
-			$books[$id] = $book['title'];
+			$books[$id] = ($book['thumbnail'] ? chr(0xe2).chr(0x9c).chr(0x93) : chr(0xe2).chr(0x96).chr(0xa2)) . ' ' . $book['title'];
 		}
 		
 		# Assemble the book covers directory
