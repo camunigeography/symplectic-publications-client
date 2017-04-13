@@ -2165,55 +2165,55 @@ EOT;
 			if (!$xpathDom = $this->getData ($resultsUrlPage, 'xpathDom', true)) {continue;}
 			
 			# Extract the user's name
-			$personName = $this->XPath ($xpathDom, '//default:feed/default:title');
+			$personName = $this->XPath ($xpathDom, '/default:feed/default:title');
 			$personName = $this->extractPersonName ($personName);
 			
 			# Loop through each entry in the data; see: http://stackoverflow.com/questions/11886176/ and http://stackoverflow.com/questions/5929263/
-			$publicationsNode = $xpathDom->query ('//default:feed/default:entry');
+			$publicationsNode = $xpathDom->query ('/default:feed/default:entry');
 			foreach ($publicationsNode as $index => $publicationNode) {
 				
 				# Ensure the publication is set to be visible
-				$isVisible = ($this->XPath ($xpathDom, './/api:is-visible', $publicationNode) == 'true');
+				$isVisible = ($this->XPath ($xpathDom, './api:relationship/api:is-visible', $publicationNode) == 'true');
 				if (!$isVisible) {continue;}
 				
 				# Get values which will be reused more than once in code below
-				$id = $this->XPath ($xpathDom, './/api:object/@id', $publicationNode);
-				$type = $this->XPath ($xpathDom, './/api:object/@type', $publicationNode);
+				$id = $this->XPath ($xpathDom, './api:relationship/api:related/api:object/@id', $publicationNode);
+				$type = $this->XPath ($xpathDom, './api:relationship/api:related/api:object/@type', $publicationNode);
 				
 				# Add key details
 				$publication = array (
 					'id'					=> $id,
 					'type'					=> $type,
-					'lastModifiedWhen'		=> strtotime ($this->XPath ($xpathDom, './/api:object/@last-modified-when', $publicationNode)),
-					'doi'					=> $this->XPath ($xpathDom, './/api:field[@name="doi"]/api:text', $publicationNode),
-					'title'					=> str_replace (array ("\n", ' '), ' ', $this->XPath ($xpathDom, './/api:field[@name="title"]/api:text', $publicationNode)),
-					'journal'				=> $this->XPath ($xpathDom, './/api:field[@name="journal"]/api:text', $publicationNode),
-					'publicationYear'		=> $this->XPath ($xpathDom, './/api:field[@name="publication-date"]/api:date/api:year', $publicationNode),
-					'publicationMonth'		=> $this->XPath ($xpathDom, './/api:field[@name="publication-date"]/api:date/api:month', $publicationNode),
-					'publicationDay'		=> $this->XPath ($xpathDom, './/api:field[@name="publication-date"]/api:date/api:day', $publicationNode),
-					'volume'				=> $this->XPath ($xpathDom, './/api:field[@name="volume"]/api:text', $publicationNode),
+					'lastModifiedWhen'		=> strtotime ($this->XPath ($xpathDom, './api:relationship/api:related/api:object/@last-modified-when', $publicationNode)),
+					'doi'					=> $this->XPath ($xpathDom, './api:relationship/api:related/api:object/api:records/api:record/api:native/api:field[@name="doi"]/api:text', $publicationNode),
+					'title'					=> str_replace (array ("\n", ' '), ' ', $this->XPath ($xpathDom, './api:relationship/api:related/api:object/api:records/api:record/api:native/api:field[@name="title"]/api:text', $publicationNode)),
+					'journal'				=> $this->XPath ($xpathDom, './api:relationship/api:related/api:object/api:records/api:record/api:native/api:field[@name="journal"]/api:text', $publicationNode),
+					'publicationYear'		=> $this->XPath ($xpathDom, './api:relationship/api:related/api:object/api:records/api:record/api:native/api:field[@name="publication-date"]/api:date/api:year', $publicationNode),
+					'publicationMonth'		=> $this->XPath ($xpathDom, './api:relationship/api:related/api:object/api:records/api:record/api:native/api:field[@name="publication-date"]/api:date/api:month', $publicationNode),
+					'publicationDay'		=> $this->XPath ($xpathDom, './api:relationship/api:related/api:object/api:records/api:record/api:native/api:field[@name="publication-date"]/api:date/api:day', $publicationNode),
+					'volume'				=> $this->XPath ($xpathDom, './api:relationship/api:related/api:object/api:records/api:record/api:native/api:field[@name="volume"]/api:text', $publicationNode),
 					'pagination'			=> $this->formatPagination (
-						$this->XPath ($xpathDom, './/api:field[@name="pagination"]/api:pagination/api:begin-page', $publicationNode),
-						$this->XPath ($xpathDom, './/api:field[@name="pagination"]/api:pagination/api:end-page', $publicationNode),
-						$this->XPath ($xpathDom, './/api:field[@name="pagination"]/api:pagination/api:page-count', $publicationNode),
+						$this->XPath ($xpathDom, './api:relationship/api:related/api:object/api:records/api:record/api:native/api:field[@name="pagination"]/api:pagination/api:begin-page', $publicationNode),
+						$this->XPath ($xpathDom, './api:relationship/api:related/api:object/api:records/api:record/api:native/api:field[@name="pagination"]/api:pagination/api:end-page', $publicationNode),
+						$this->XPath ($xpathDom, './api:relationship/api:related/api:object/api:records/api:record/api:native/api:field[@name="pagination"]/api:pagination/api:page-count', $publicationNode),
 						$type
 					),
-					'publisher'				=> $this->XPath ($xpathDom, './/api:field[@name="publisher"]/api:text', $publicationNode),
-					'parentTitle'			=> $this->XPath ($xpathDom, './/api:field[@name="parent-title"]/api:text', $publicationNode),
-					'edition'				=> $this->XPath ($xpathDom, './/api:field[@name="edition"]/api:text', $publicationNode),
-					'number'				=> $this->XPath ($xpathDom, './/api:field[@name="number"]/api:text', $publicationNode),
-					'url'					=> $this->XPath ($xpathDom, './/api:field[@name="publisher-url"]/api:text', $publicationNode),
-					'isFavourite'			=> ($this->XPath ($xpathDom, './/api:is-favourite', $publicationNode) == 'false' ? NULL : 1),
+					'publisher'				=> $this->XPath ($xpathDom, './api:relationship/api:related/api:object/api:records/api:record/api:native/api:field[@name="publisher"]/api:text', $publicationNode),
+					'parentTitle'			=> $this->XPath ($xpathDom, './api:relationship/api:related/api:object/api:records/api:record/api:native/api:field[@name="parent-title"]/api:text', $publicationNode),
+					'edition'				=> $this->XPath ($xpathDom, './api:relationship/api:related/api:object/api:records/api:record/api:native/api:field[@name="edition"]/api:text', $publicationNode),
+					'number'				=> $this->XPath ($xpathDom, './api:relationship/api:related/api:object/api:records/api:record/api:native/api:field[@name="number"]/api:text', $publicationNode),
+					'url'					=> $this->XPath ($xpathDom, './api:relationship/api:related/api:object/api:records/api:record/api:native/api:field[@name="publisher-url"]/api:text', $publicationNode),
+					'isFavourite'			=> ($this->XPath ($xpathDom, './api:relationship/api:is-favourite', $publicationNode) == 'false' ? NULL : 1),
 				);
 				
 				# If relationships are enabled, for books, look for additional editors, which are in the api:relationships field
 				$additionalEditor = false;
 				if ($this->settings['enableRelationships']) {
 					if ($type == 'book') {
-						$relationshipsUrl = $this->XPath ($xpathDom, './/api:object/api:relationships/@href', $publicationNode);
+						$relationshipsUrl = $this->XPath ($xpathDom, './api:relationship/api:related/api:object/api:relationships/@href', $publicationNode);
 						if ($relationshipsUrl) {
 							if ($xpathDomRelationships = $this->getData ($relationshipsUrl, 'xpathDom', true)) {
-								$usernameEditor = $this->XPath ($xpathDomRelationships, './/api:relationship[@type-id="9"]/api:related[@direction="to"]/api:object[@category="user"]/@username');	// "Relationship type 9 means "Edited by" in this context."
+								$usernameEditor = $this->XPath ($xpathDomRelationships, '/default:feed/default:entry/api:relationship[@type-id="9"]/api:related[@direction="to"]/api:object[@category="user"]/@username');	// "Relationship type 9 means "Edited by" in this context."
 								if (strtolower ($usernameEditor) == $username) {
 									$additionalEditor = $user['displayName'];
 								}
@@ -2223,11 +2223,11 @@ EOT;
 				}
 				
 				# Get the authors
-				$authorsNode = $xpathDom->query ('.//api:record[@is-preferred-record="true"]//api:field[@name="authors"]/api:people/api:person', $publicationNode);
+				$authorsNode = $xpathDom->query ('./api:relationship/api:related/api:object/api:records/api:record[@is-preferred-record="true"]/api:native/api:field[@name="authors"]/api:people/api:person', $publicationNode);
 				list ($publication['authors'], $publication['nameAppearsAsAuthor']) = $this->processContributors ($authorsNode, $xpathDom, $user, $publication['id'], 'author', NULL, $errorHtml);
 				
 				# Get the editors
-				$editorsNode = $xpathDom->query ('.//api:record[@is-preferred-record="true"]//api:field[@name="editors"]/api:people/api:person', $publicationNode);
+				$editorsNode = $xpathDom->query ('./api:relationship/api:related/api:object/api:records/api:record[@is-preferred-record="true"]/api:native/api:field[@name="editors"]/api:people/api:person', $publicationNode);
 				list ($publication['editors'], $publication['nameAppearsAsEditor']) = $this->processContributors ($editorsNode, $xpathDom, $user, $publication['id'], 'editor', $additionalEditor, $errorHtml);
 				
 				# Create a compiled HTML version; highlighting is not applied at this stage, as that has to be done at listing runtime depending on the listing context (person/group/all)
@@ -2238,7 +2238,7 @@ EOT;
 			}
 			
 			# Determine the next page, if any
-			$resultsUrlPage = $xpathDom->evaluate ('string(' . "//default:feed/api:pagination/api:page[@position='next']/@href" . ')');
+			$resultsUrlPage = $xpathDom->evaluate ('string(' . "/default:feed/api:pagination/api:page[@position='next']/@href" . ')');
 		}
 		
 		# Return the array of publications
