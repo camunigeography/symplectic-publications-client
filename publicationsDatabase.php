@@ -2004,20 +2004,18 @@ EOT;
 	{
 		# Obtain the data
 		$url = $this->settings['apiHttps'] . '/objects?categories=users&detail=ref&page=1&per-page=20&groups=27';
-		$url = '/publications?username=mvl22';
+		$url = '/publications?username=spqr1';
 		$url = '/publications/356384';
 		
 		
 		# Get details of a user
-		$data = $this->getUser ('jd16');
+		// $data = $this->getUser ('spqr1');
 		
 		# Get publications for a user
-		// $publications = $this->retrievePublicationsOfUser ('co200');
+		$data = $this->retrievePublicationsOfUser ('spqr1');
 		
 		# Get details of a publication
-		// $publication = $this->getPublication (356384);
-		
-		
+		// $data = $this->getPublication (356384);
 		
 		
 		# Emit the data
