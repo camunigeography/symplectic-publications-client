@@ -1041,7 +1041,8 @@ EOT;
 			if (file_exists ($_SERVER['DOCUMENT_ROOT'] . $location)) {
 				list ($width, $height, $type, $attributesHtml) = getimagesize ($_SERVER['DOCUMENT_ROOT'] . $location);
 				$altHtml = htmlspecialchars ($publication['title']);
-				$data[$id]['thumbnail'] = $_SERVER['_SITE_URL'] . $location;
+				#!# Need to add a configuration option for whether book covers (and other assets) should have $_SERVER['_SITE_URL'] prepended or not
+				$data[$id]['thumbnail'] = $location;
 				$data[$id]['thumbnailHtml'] = "<img src=\"{$data[$id]['thumbnail']}\" {$attributesHtml} alt=\"{$altHtml}\" class=\"bookcover\" />";
 			}
 		}
