@@ -2215,7 +2215,7 @@ EOT;
 						if ($relationshipsUrl) {
 							if ($xpathDomRelationships = $this->getData ($relationshipsUrl, 'xpathDom', true)) {
 								$usernameEditor = $this->XPath ($xpathDomRelationships, '/default:feed/default:entry/api:relationship[@type-id="9"]/api:related[@direction="to"]/api:object[@category="user"]/@username');	// "Relationship type 9 means "Edited by" in this context."
-								if (strtolower ($usernameEditor) == $username) {
+								if (mb_strtolower ($usernameEditor) == $username) {
 									$additionalEditor = $user['displayName'];
 								}
 							}
@@ -2300,8 +2300,8 @@ EOT;
 	private function isContributorNameMatch ($surname, $initials, $user)
 	{
 		# Normalise the surname components
-		$surname = trim (strtolower ($surname));
-		$user['surname'] = trim (strtolower ($user['surname']));
+		$surname = trim (mb_strtolower ($surname));
+		$user['surname'] = trim (mb_strtolower ($user['surname']));
 		
 		# End if the surname does match
 		if ($surname != $user['surname']) {
@@ -2331,12 +2331,12 @@ EOT;
 	private function normaliseInitials ($initials, $forename = false)
 	{
 		# Trim and lower-case, and remove non-alphanumeric characters
-		$initials = preg_replace ('/[^a-z]/', '', trim (strtolower ($initials)));
+		$initials = preg_replace ('/[^a-z]/', '', trim (mb_strtolower ($initials)));
 		
 		# If no initials, use the forname(s), if any
 		if ($forename) {
 			if (!strlen ($initials)) {
-				$forenames = preg_split ('/\s+/', strtolower ($forename));
+				$forenames = preg_split ('/\s+/', mb_strtolower ($forename));
 				foreach ($forenames as $forename) {
 					$initials .= substr ($forename, 0, 1);
 				}
