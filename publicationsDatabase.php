@@ -2349,7 +2349,7 @@ EOT;
 		}
 		
 		# Explode the initials into an array
-		$initials = str_split ($initials);
+		$initials = mb_str_split ($initials);
 		
 		# Return the list
 		return $initials;
@@ -2541,7 +2541,7 @@ EOT;
 	private function formatContributor ($surname, $initials)
 	{
 		# Add dots after each initials
-		$initials = implode ('.', str_split ($initials)) . '.';
+		$initials = implode ('.', mb_str_split ($initials)) . '.';
 		
 		# Return the string
 		return $surname . ', ' . $initials;
