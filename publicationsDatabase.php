@@ -2299,16 +2299,16 @@ EOT;
 	# Helper function to match a contributor's name; this attempts to deal with the situation where two names are similar, e.g. the current user is "J. Smith" but the publication has "J. Smith" and "A. Smith" and "A.J. Smith"; this routine would match only on "J. Smith"
 	private function isContributorNameMatch ($surname, $initials, $user)
 	{
-		# Normalise the surname components
-		$surname = trim (mb_strtolower ($surname));
-		$user['surname'] = trim (mb_strtolower ($user['surname']));
+		# Normalise the surname components for comparison purposes
+		$surname = $this->normaliseSurname ($surname);
+		$user['surname'] = $this->normaliseSurname ($user['surname']);
 		
 		# End if the surname does match
 		if ($surname != $user['surname']) {
 			return false;
 		}
 		
-		# Normalise the initials components
+		# Normalise the initials components for comparison purposes
 		$initials = $this->normaliseInitials ($initials);
 		$user['initials'] = $this->normaliseInitials ($user['initials'], $user['forename']);
 		
@@ -2327,7 +2327,21 @@ EOT;
 	}
 	
 	
-	# Helper function to normalise initials lists, e.g. "A.B.C." "AB.C." "ABC" "A B C1", or no initials but forename "Anthony Ben Calix", each become array('A','B','C')
+	# Helper function to normalise names for comparison purposes
+	private function normaliseSurname ($surname)
+	{
+		# Lower-case
+		$surname = mb_strtolower ($surname);
+		
+		# Trim
+		$surname = trim ($surname);
+		
+		# Return the result
+		return $surname;
+	}
+	
+	
+	# Helper function to normalise initials lists for comparison purposes, e.g. "A.B.C." "AB.C." "ABC" "A B C1", or no initials but forename "Anthony Ben Calix", each become array('A','B','C')
 	private function normaliseInitials ($initials, $forename = false)
 	{
 		# Trim and lower-case, and remove non-alphanumeric characters
