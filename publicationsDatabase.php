@@ -139,8 +139,13 @@ class publicationsDatabase extends frontControllerApplication
 			'statistics' => array (
 				'description' => 'Statistics',
 				'url' => 'statistics/',
-				'icon' => 'application_view_columns',
 				'tab' => 'Statistics',
+				'administrator' => true,
+			),
+			'issues' => array (
+				'description' => 'Issues - data problems to be fixed',
+				'url' => 'issues.html',
+				'tab' => 'Issues',
 				'administrator' => true,
 			),
 			'import' => array (
@@ -1101,6 +1106,35 @@ EOT;
 		
 		# Show the HTML
 		echo $html;
+	}
+	
+	
+	# Issues page
+	public function issues ()
+	{
+		# Start the HTML
+		$html = '';
+		
+		# Publications without a date
+		$data = $this->getYearMissing ();
+		$list = array ();
+		foreach ($data as $publicationId => $publication) {
+			$list[$publicationId] = "<a href=\"{$this->settings['website']}viewobject.html?cid=1&amp;id={$publicationId}\" target=\"_blank\">Edit {$publication['type']}</a> | <a href=\"https://www.google.co.uk/search?q=" . htmlspecialchars (urlencode ($publication['title'])) . "\" target=\"_blank\">Google search</a>: " . $publication['html'];
+		}
+		$html .= "\n<h3>Publications without a date (" . count ($data) . ')</h3>';
+		$html .= "\n<p>This page shows publications without a date:</p>";
+		$html .= application::htmlUl ($list, false, 'spaced');
+		
+		# Show the HTML
+		echo $html;
+	}
+	
+	
+	# Function to get publications without a year
+	private function getYearMissing ()
+	{
+		# Get the data
+		return $this->databaseConnection->select ($this->settings['database'], $this->settings['table'], array ('publicationYear' => NULL), array ('id', 'type', 'title', 'html'), true, 'type, html');
 	}
 	
 	
