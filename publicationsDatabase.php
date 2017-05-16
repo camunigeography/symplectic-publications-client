@@ -2193,6 +2193,14 @@ EOT;
 		# Start an array of all publication data to return
 		$publications = array ();
 		
+		# Define alternative date fields for particular types of publications, for checking if the standard publication date is not available
+		$alternativeDateFields = array (
+			'journal-article'		=> 'online-publication-date',	// Online publication date
+			'conference'			=> 'start-date',				// "Conference start date"
+			'patent'				=> 'start-date',				// "Awarded date"
+			'thesis-dissertation'	=> 'filed-date',				// "Date submitted"
+		);
+		
 		# Loop through each page of results
 		while ($resultsUrlPage) {
 			
@@ -2215,6 +2223,16 @@ EOT;
 				$id = $this->XPath ($xpathDom, './api:relationship/api:related/api:object/@id', $publicationNode);
 				$type = $this->XPath ($xpathDom, './api:relationship/api:related/api:object/@type', $publicationNode);
 				
+				# Check alternative date fields, but prefer the default if it exists, as that relates to actual publication date (rather than e.g. date of a conference)
+				$datesField = 'publication-date';	// Default
+				if (isSet ($alternativeDateFields[$type])) {
+					if (!$this->XPath ($xpathDom, './api:relationship/api:related/api:object/api:records/api:record[@is-preferred-record="true"]/api:native/api:field[@name="' . $datesField . '"]/api:date/api:year', $publicationNode)) {
+						if ($this->XPath ($xpathDom, './api:relationship/api:related/api:object/api:records/api:record[@is-preferred-record="true"]/api:native/api:field[@name="' . $alternativeDateFields[$type] . '"]/api:date/api:year', $publicationNode)) {
+							$datesField = $alternativeDateFields[$type];
+						}
+					}
+				}
+				
 				# Add key details
 				$publication = array (
 					'id'					=> $id,
@@ -2223,9 +2241,9 @@ EOT;
 					'doi'					=> $this->XPath ($xpathDom, './api:relationship/api:related/api:object/api:records/api:record[@is-preferred-record="true"]/api:native/api:field[@name="doi"]/api:text', $publicationNode),
 					'title'					=> str_replace (array ("\n", ' '), ' ', $this->XPath ($xpathDom, './api:relationship/api:related/api:object/api:records/api:record[@is-preferred-record="true"]/api:native/api:field[@name="title"]/api:text', $publicationNode)),
 					'journal'				=> $this->XPath ($xpathDom, './api:relationship/api:related/api:object/api:records/api:record[@is-preferred-record="true"]/api:native/api:field[@name="journal"]/api:text', $publicationNode),
-					'publicationYear'		=> $this->XPath ($xpathDom, './api:relationship/api:related/api:object/api:records/api:record[@is-preferred-record="true"]/api:native/api:field[@name="publication-date"]/api:date/api:year', $publicationNode),
-					'publicationMonth'		=> $this->XPath ($xpathDom, './api:relationship/api:related/api:object/api:records/api:record[@is-preferred-record="true"]/api:native/api:field[@name="publication-date"]/api:date/api:month', $publicationNode),
-					'publicationDay'		=> $this->XPath ($xpathDom, './api:relationship/api:related/api:object/api:records/api:record[@is-preferred-record="true"]/api:native/api:field[@name="publication-date"]/api:date/api:day', $publicationNode),
+					'publicationYear'		=> $this->XPath ($xpathDom, './api:relationship/api:related/api:object/api:records/api:record[@is-preferred-record="true"]/api:native/api:field[@name="' . $datesField . '"]/api:date/api:year', $publicationNode),
+					'publicationMonth'		=> $this->XPath ($xpathDom, './api:relationship/api:related/api:object/api:records/api:record[@is-preferred-record="true"]/api:native/api:field[@name="' . $datesField . '"]/api:date/api:month', $publicationNode),
+					'publicationDay'		=> $this->XPath ($xpathDom, './api:relationship/api:related/api:object/api:records/api:record[@is-preferred-record="true"]/api:native/api:field[@name="' . $datesField . '"]/api:date/api:day', $publicationNode),
 					'volume'				=> $this->XPath ($xpathDom, './api:relationship/api:related/api:object/api:records/api:record[@is-preferred-record="true"]/api:native/api:field[@name="volume"]/api:text', $publicationNode),
 					'pagination'			=> $this->formatPagination (
 						$this->XPath ($xpathDom, './api:relationship/api:related/api:object/api:records/api:record[@is-preferred-record="true"]/api:native/api:field[@name="pagination"]/api:pagination/api:begin-page', $publicationNode),
