@@ -187,7 +187,7 @@ class publicationsDatabase extends frontControllerApplication
 	
 	
 	# Database structure definition
-	public function _databaseStructure ()
+	public function databaseStructure ()
 	{
 		return "
 			CREATE TABLE `administrators` (
