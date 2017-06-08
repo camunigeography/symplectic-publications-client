@@ -28,12 +28,14 @@ function getUsersUpstream ()
 		Array
 		(
 		    [spqr1] => Array (
-		            [id] => spqr1
-		            [name] => Sam Right
+		            [username] => spqr1
+		            [forename] => Sam
+		            [surname] => Right
 		        ),
 		    [xyz123] => Array (
-		            [id] => xyz123
-		            [name] => Xavier Yu
+		            [username] => xyz123
+		            [forename] => Xavier
+		            [surname] => Yu
 		        ),
 			...
 		);
@@ -46,12 +48,14 @@ function getUsersUpstream ()
 			'widgets' => Array
 			(
 			    [spqr1] => Array (
-			            [id] => spqr1
-			            [name] => Sam Right
+			            [username] => spqr1
+			            [forename] => Sam
+			            [surname] => Right
 			        ),
 			    [xyz123] => Array (
-			            [id] => xyz123
-			            [name] => Xavier Yu
+			            [username] => xyz123
+			            [forename] => Xavier
+			            [surname] => Yu
 			        ),
 				...
 			),
@@ -60,16 +64,19 @@ function getUsersUpstream ()
 			'sprockets' => Array
 			(
 			    [spqr2] => Array (
-			            [id] => spqr2
-			            [name] => Sam Render
+			            [username] => spqr2
+			            [forename] => Sam
+			            [surname] => Render
 			        ),
 			    [abc456] => Array (
-			            [id] => abc456
-			            [name] => Antonia Coneley
+			            [username] => abc456
+			            [forename] => Antonia
+			            [surname] => Coneley
 			        ),
 			    [xyz123] => Array (
-			            [id] => xyz123
-			            [name] => Xavier Yu
+			            [username] => xyz123
+			            [forename] => Xavier
+			            [surname] => Yu
 			        ),
 				...
 			),
