@@ -1913,61 +1913,7 @@ EOT;
 	
 	
 	# Get the users
-	/*
-		The getUsersFunction callback function must return a datastructure like this:
-		
-		Array
-		(
-		    [spqr1] => Array (
-		            [id] => spqr1
-		            [name] => Sam Right
-		        ),
-		    [xyz123] => Array (
-		            [id] => xyz123
-		            [name] => Xavier Yu
-		        ),
-			...
-		);
-		
-		or in multisite mode:
-		
-		Array
-		(
-			// Department of Widgets
-			'widgets' => Array
-			(
-			    [spqr1] => Array (
-			            [id] => spqr1
-			            [name] => Sam Right
-			        ),
-			    [xyz123] => Array (
-			            [id] => xyz123
-			            [name] => Xavier Yu
-			        ),
-				...
-			),
-			
-			// Department of Sprockets
-			'sprockets' => Array
-			(
-			    [spqr2] => Array (
-			            [id] => spqr2
-			            [name] => Sam Render
-			        ),
-			    [abc456] => Array (
-			            [id] => abc456
-			            [name] => Antonia Coneley
-			        ),
-			    [xyz123] => Array (
-			            [id] => xyz123
-			            [name] => Xavier Yu
-			        ),
-				...
-			),
-			
-			...
-		);
-	*/
+	# NB The getUsersFunction callback function must return a datastructure like that defined in the index.html.template
 	private function getUsersUpstream ()
 	{
 		# Run callback function
@@ -1977,35 +1923,7 @@ EOT;
 	
 	
 	# Get the groups
-	/*
-		The getGroupsFunction callback function must return a datastructure like this:
-		
-		Array
-		(
-		    [widgets] => Array (
-		            [id] => widgets
-		            [name] => Widgets research group
-		            [url] => http://www.example.com/research/widgets/
-		            [ordering] => 1
-		            [managers] => Array (
-						xyz123
-					)
-		        ),
-		    [sprockets] => Array (
-		            [id] => sprockets
-		            [name] => Sprockets research group
-		            [url] => http://www.example.com/research/sprockets/
-		            [ordering] => 1
-					[managers] => Array (
-						abc987,
-						spqr1
-					)
-		        ),
-			...
-		);
-		
-		or in multisite mode, nested by organisation as in getUsersUpstream
-	*/
+	# NB The getGroupsFunction callback function must return a datastructure like that defined in the index.html.template
 	private function getGroupsUpstream ()
 	{
 		# Run callback function
@@ -2016,16 +1934,7 @@ EOT;
 	
 	# Get the group members
 	#!# This is not ideal, because in multisite mode, the callback has to do string matching on the groupUrl; ideally supply the users up-front within getGroupsUpstream
-	/*
-		The getGroupMembers callback function must return a datastructure like this:
-		
-		Array
-		(
-		    spqr1,
-		    xyz123,
-			...
-		);
-	*/
+	# NB The getGroupMembers callback function must return a datastructure like that defined in the index.html.template
 	private function getGroupMembersUpstream ($groupUrl)
 	{
 		# Run callback function
