@@ -717,7 +717,9 @@ EOT;
 				$nameHtml = htmlspecialchars ($group['name']);
 				$list[$id] = "<a href=\"{$this->baseUrl}/groups/{$id}/\">{$nameHtml}</a>";
 			}
-			$html .= "\n<h3>" . htmlspecialchars ($organisation) . ':</h3>';
+			if ($organisation) {
+				$html .= "\n<h3>" . htmlspecialchars ($organisation) . ':</h3>';
+			}
 			$html .= application::htmlUl ($list);
 		}
 		
@@ -1554,7 +1556,7 @@ EOT;
 		if ($this->settings['multisite']) {
 			$groupsBySite = $groupsRaw;
 		} else {
-			$groupsBySite = array ('' => $groupsBySite);	// Unnamed, so that no title is shown
+			$groupsBySite = array ('' => $groupsRaw);	// Unnamed, so that no title is shown
 		}
 		
 		# Merge each group into the master list of groups
