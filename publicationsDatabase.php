@@ -226,7 +226,7 @@ class publicationsDatabase extends frontControllerApplication
 			  `parentTitle` text COLLATE utf8_unicode_ci DEFAULT NULL COMMENT 'Parent title',
 			  `number` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL COMMENT 'Number',
 			  `authors` text COLLATE utf8_unicode_ci COMMENT 'Authors',
-			  `url` VARCHAR(255) COLLATE utf8_unicode_ci NULL COMMENT 'URL';
+			  `url` VARCHAR(255) COLLATE utf8_unicode_ci NULL COMMENT 'URL',
 			  `html` text COLLATE utf8_unicode_ci NOT NULL COMMENT 'Compiled HTML representation of record',
 			  `savedAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Automatic timestamp'
 			) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Publications';
