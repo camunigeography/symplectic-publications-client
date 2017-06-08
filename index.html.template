@@ -25,58 +25,54 @@ function getUsersUpstream ()
 	/*	
 		Must return a datastructure like this:
 		
-		Array
-		(
-		    [spqr1] => Array (
-		            [username] => spqr1
-		            [forename] => Sam
-		            [surname] => Right
+		return array (
+		    ['spqr1'] => array (
+		            ['username'] => 'spqr1',
+		            ['forename'] => 'Sam',
+		            ['surname'] => 'Right'
 		        ),
-		    [xyz123] => Array (
-		            [username] => xyz123
-		            [forename] => Xavier
-		            [surname] => Yu
+		    ['xyz123'] => array (
+		            ['username'] => 'xyz123',
+		            ['forename'] => 'Xavier',
+		            ['surname'] => 'Yu'
 		        ),
 			...
 		);
 		
 		or in multisite mode:
 		
-		Array
-		(
+		return array (
 			// Department of Widgets
-			'widgets' => Array
-			(
-			    [spqr1] => Array (
-			            [username] => spqr1
-			            [forename] => Sam
-			            [surname] => Right
+			'widgets' => array (
+			    ['spqr1'] => array (
+			            ['username'] => 'spqr1',
+			            ['forename'] => 'Sam',
+			            ['surname'] => 'Right'
 			        ),
-			    [xyz123] => Array (
-			            [username] => xyz123
-			            [forename] => Xavier
-			            [surname] => Yu
+			    ['xyz123'] => array (
+			            ['username'] => 'xyz123',
+			            ['forename'] => 'Xavier',
+			            ['surname'] => 'Yu'
 			        ),
 				...
 			),
 			
 			// Department of Sprockets
-			'sprockets' => Array
-			(
-			    [spqr2] => Array (
-			            [username] => spqr2
-			            [forename] => Sam
-			            [surname] => Render
+			'sprockets' => array (
+			    ['spqr2'] => array (
+			            ['username'] => 'spqr2',
+			            ['forename'] => 'Sam',
+			            ['surname'] => 'Render'
 			        ),
-			    [abc456] => Array (
-			            [username] => abc456
-			            [forename] => Antonia
-			            [surname] => Coneley
+			    ['abc456'] => array (
+			            ['username'] => 'abc456',
+			            ['forename'] => 'Antonia',
+			            ['surname'] => 'Coneley'
 			        ),
-			    [xyz123] => Array (
-			            [username] => xyz123
-			            [forename] => Xavier
-			            [surname] => Yu
+			    ['xyz123'] => array (
+			            ['username'] => 'xyz123',
+			            ['forename'] => 'Xavier',
+			            ['surname'] => 'Yu'
 			        ),
 				...
 			),
@@ -92,25 +88,24 @@ function getGroupsUpstream ()
 	/*	
 		Must return a datastructure like this:
 		
-		Array
-		(
-		    [widgets] => Array (
-		            [id] => widgets
-		            [name] => Widgets research group
-		            [url] => http://www.example.com/research/widgets/
-		            [ordering] => 1
-		            [managers] => Array (
-						xyz123
+		return array (
+		    ['widgets'] => array (
+		            ['id'] => 'widgets',
+		            ['name'] => 'Widgets research group',
+		            ['url'] => 'http://www.example.com/research/widgets/',
+		            ['ordering'] => 1,
+		            ['managers'] => array (
+						'xyz123',
 					)
 		        ),
-		    [sprockets] => Array (
-		            [id] => sprockets
-		            [name] => Sprockets research group
-		            [url] => http://www.example.com/research/sprockets/
-		            [ordering] => 1
-					[managers] => Array (
-						abc987,
-						spqr1
+		    ['sprockets'] => array (
+		            ['id'] => 'sprockets',
+		            ['name'] => 'Sprockets research group',
+		            ['url'] => 'http://www.example.com/research/sprockets/',
+		            ['ordering'] => 1,
+					['managers'] => array (
+						'abc987',
+						'spqr1',
 					)
 		        ),
 			...
@@ -127,10 +122,9 @@ function getGroupMembersUpstream ($groupUrl)
 	/*	
 		Must return a datastructure like this:
 		
-		Array
-		(
-		    spqr1,
-		    xyz123,
+		return array (
+		    'spqr1',
+		    'xyz123',
 			...
 		);
 	*/
