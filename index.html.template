@@ -12,6 +12,7 @@ $settings = array (
 	'getUsersFunction' => 'getUsersUpstream',
 	'getGroupsFunction' => 'getGroupsUpstream',
 	'getGroupMembers' => 'getGroupMembersUpstream',
+	'cronUsername' => 'create_a_string_here',
 );
 
 # Run the application with the specified settings
