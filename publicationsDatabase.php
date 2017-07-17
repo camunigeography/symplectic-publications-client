@@ -300,6 +300,14 @@ class publicationsDatabase extends frontControllerApplication
 	}
 	
 	
+	# Show data date
+	public function guiSearchBox ()
+	{
+		$tableStatus = $this->databaseConnection->getTableStatus ($this->settings['database'], $this->settings['table']);
+		return $html = "\n<p class=\"small comment\">{$tableStatus['Comment']}</p>";
+	}
+	
+	
 	# API controller
 	public function api ()
 	{
@@ -1413,7 +1421,8 @@ EOT;
 		}
 		
 		# Write the lockfile
-		file_put_contents ($this->lockfile, $_SERVER['REMOTE_USER'] . ' ' . date ('Y-m-d H:i:s'));
+		$now = time ();
+		file_put_contents ($this->lockfile, $_SERVER['REMOTE_USER'] . ' ' . date ('Y-m-d H:i:s', $now));
 		
 		# Clear any existing data from the import tables; this should have been done at the end of any previous import
 		$tables = array ($this->settings['table'], 'instances', 'users', 'userorganisations');
@@ -1473,6 +1482,7 @@ EOT;
 		foreach ($tables as $table) {
 			$this->databaseConnection->truncate ($this->settings['database'], $table, true);
 			$this->databaseConnection->query ("INSERT INTO {$table} SELECT * FROM {$table}_import;");
+			$this->databaseConnection->query ("ALTER TABLE {$table} COMMENT = 'Data from Symplectic dated: " . date ('ga, jS F, Y', $now) . "';");	// Needs ALTER privileges; will silently fail otherwise
 			$this->databaseConnection->truncate ($this->settings['database'], "{$table}_import", true);
 		}
 		
