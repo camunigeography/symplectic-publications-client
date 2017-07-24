@@ -2106,7 +2106,7 @@ EOT;
 	{
 		# Define the starting point for the call
 		$call = '/users/username-' . $username . '/publications?detail=full';
-		$resultsUrlPage = $this->settings['apiHttp'] . $call;
+		$resultsUrlPage = $this->settings['apiHttp'] . $call;	// A full URL is defined here initially, because the iteration below determines the next request, which is a full URL
 		
 		# Get the user's details, or skip if they do not exist
 		if (!$user = $this->getUser ($username)) {return false;}
