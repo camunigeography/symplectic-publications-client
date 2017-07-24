@@ -25,6 +25,8 @@ class publicationsDatabase extends frontControllerApplication
 			'table' => 'publications',
 			'website' => NULL,
 			'apiUrl' => NULL,
+			'apiUsername' => false,
+			'apiPassword' => false,
 			'administrators' => 'administrators',
 			'yearsConsideredRecent' => 5,
 			'yearsConsideredRecentMainListing' => 2,
@@ -1955,6 +1957,11 @@ EOT;
 		# Assemble the URL
 		$url = ($isFullUrl ? '' : $this->settings['apiUrl']) . $call;
 		
+		# Inject the API credentials into the request URL if required
+		if ($this->settings['apiUsername'] && $this->settings['apiPassword']) {
+			$url = preg_replace ('|^(https?://)(.+)$|', "$1{$this->settings['apiUsername']}:{$this->settings['apiPassword']}@$2", $url);
+		}
+		
 		# Obtain the XML if required
 		require_once ('xml.php');
 		$data = @file_get_contents ($url);
@@ -2424,6 +2431,11 @@ EOT;
 		
 		# Assemble the URL
 		$url = $this->settings['apiUrl'] . $result['url'];
+		
+		# Inject the API credentials into the request URL if required
+		if ($this->settings['apiUsername'] && $this->settings['apiPassword']) {
+			$url = preg_replace ('|^(https?://)(.+)$|', "$1{$this->settings['apiUsername']}:{$this->settings['apiPassword']}@$2", $url);
+		}
 		
 		# Retrieve the URL
 		if (!$contents = @file_get_contents ($url)) {
