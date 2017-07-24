@@ -25,7 +25,6 @@ class publicationsDatabase extends frontControllerApplication
 			'table' => 'publications',
 			'website' => NULL,
 			'apiHttp' => NULL,
-			'apiHttps' => NULL,
 			'administrators' => 'administrators',
 			'yearsConsideredRecent' => 5,
 			'yearsConsideredRecentMainListing' => 2,
@@ -165,11 +164,6 @@ class publicationsDatabase extends frontControllerApplication
 				'description' => 'Cron hook for non-interactive processes',
 				'url' => 'cron/',
 				'authentication' => false,
-				'export' => true,
-			),
-			'data' => array (	// Used for e.g. AJAX calls, etc.
-				'description' => 'Data point',
-				'url' => 'data.json',
 				'export' => true,
 			),
 			'retrieve' => array (
@@ -1952,30 +1946,6 @@ EOT;
 		# Run callback function
 		$function = $this->settings['getGroupMembers'];
 		return $function ($groupUrl);
-	}
-	
-	
-	# Raw data viewer (for development purposes)
-	public function data ()
-	{
-		# Obtain the data
-		$url = $this->settings['apiHttps'] . '/objects?categories=users&detail=ref&page=1&per-page=20&groups=27';
-		$url = '/publications?username=spqr1';
-		$url = '/publications/356384';
-		
-		
-		# Get details of a user
-		// $data = $this->getUser ('spqr1');
-		
-		# Get publications for a user
-		$data = $this->retrievePublicationsOfUser ('spqr1');
-		
-		# Get details of a publication
-		// $data = $this->getPublication (356384);
-		
-		
-		# Emit the data
-		application::dumpData ($data);
 	}
 	
 	
