@@ -24,7 +24,7 @@ class publicationsDatabase extends frontControllerApplication
 			'database' => 'publications',
 			'table' => 'publications',
 			'website' => NULL,
-			'apiHttp' => NULL,
+			'apiUrl' => NULL,
 			'administrators' => 'administrators',
 			'yearsConsideredRecent' => 5,
 			'yearsConsideredRecentMainListing' => 2,
@@ -1953,7 +1953,7 @@ EOT;
 	private function getData ($call, $format = 'xpathDom', $isFullUrl = false)
 	{
 		# Assemble the URL
-		$url = ($isFullUrl ? '' : $this->settings['apiHttp']) . $call;
+		$url = ($isFullUrl ? '' : $this->settings['apiUrl']) . $call;
 		
 		# Obtain the XML if required
 		require_once ('xml.php');
@@ -2076,7 +2076,7 @@ EOT;
 	{
 		# Define the starting point for the call
 		$call = '/users/username-' . $username . '/publications?detail=full';
-		$resultsUrlPage = $this->settings['apiHttp'] . $call;	// A full URL is defined here initially, because the iteration below determines the next request, which is a full URL
+		$resultsUrlPage = $this->settings['apiUrl'] . $call;	// A full URL is defined here initially, because the iteration below determines the next request, which is a full URL
 		
 		# Get the user's details, or skip if they do not exist
 		if (!$user = $this->getUser ($username)) {return false;}
@@ -2415,15 +2415,17 @@ EOT;
 			'title'			=> 'URL',
 			'required'		=> true,
 			'autofocus'		=> true,
-			'prepend'		=> $this->settings['apiHttp'] . ' ',
+			'prepend'		=> $this->settings['apiUrl'] . ' ',
 		));
 		if (!$result = $form->process ($html)) {
 			echo $html;
 			return false;
 		}
 		
+		# Assemble the URL
+		$url = $this->settings['apiUrl'] . $result['url'];
+		
 		# Retrieve the URL
-		$url = $this->settings['apiHttp'] . $result['url'];
 		if (!$contents = @file_get_contents ($url)) {
 			$html .= "\n<p class=\"warning\">Could not retrieve that URL: <tt>" . htmlspecialchars ($url) . '</tt>.</p>';
 			echo $html;
