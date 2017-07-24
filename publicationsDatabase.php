@@ -1957,54 +1957,17 @@ EOT;
 		# Assemble the URL
 		$url = ($isFullUrl ? '' : $this->settings['apiUrl']) . $call;
 		
-		# Inject the API credentials into the request URL if required
-		if ($this->settings['apiUsername'] && $this->settings['apiPassword']) {
-			$url = preg_replace ('|^(https?://)(.+)$|', "$1{$this->settings['apiUsername']}:{$this->settings['apiPassword']}@$2", $url);
+		# Retrieve the data from the URL, reporting and stopping if a fatal error (inability to retrieve the URL at all) occurs
+		if (!$data = $this->urlCall ($url, $errorHtml, $isFatalError)) {
+			if ($isFatalError) {
+				$html .= $errorHtml;
+				echo $html;
+				die;
+			}
 		}
-		
-		# Obtain the XML if required
-		require_once ('xml.php');
-		$data = @file_get_contents ($url);
 		
 		# Delay to prevent API overload
 		usleep (500000);	// 0.5 seconds is requested in documentation (page 16, "500ms")
-		
-		/*
-		# Logging during development (uncomment to enable)
-		foreach ($http_response_header as $header) {
-			if (preg_match ('|^HTTP/1|i', $header)) {
-				break;	// The correct header has been found
-			}
-		}
-		file_put_contents ('/tmp/publications-api.txt', "\n" . date ('Y-m-d H:i:s') . '  ' . $url . '  ' . $header, FILE_APPEND);
-		*/
-		
-		# If no data, check if the result was a 404, by checking the auto-created variable $http_response_header
-		if (!$data) {
-			
-			# End if no response at all
-			if (!isSet ($http_response_header) || empty ($http_response_header)) {		// It appears that when a failure happens, the magic variable $http_response_header is in fact created but not populated; http://php.net/reserved.variables.httpresponseheader doesn't seem to document this.
-				echo "\n<p class=\"warning\">No response was received for <em>{$url}</em>.</p>";
-				die;
-			}
-			
-			# Find the header which contains the HTTP response code (seemingly usually the first)
-			foreach ($http_response_header as $header) {
-				if (preg_match ('|^HTTP/1|i', $header)) {
-					break;	// The correct header has been found
-				}
-			}
-			
-			# If the response was anything other than 404, report the error
-			if (!substr_count ($header, ' 404 ')) {
-				echo "\n<p class=\"warning\">An empty response was received for <em>{$url}</em>, with header response: <em>{$header}</em>.</p>";
-				// application::dumpData ($http_response_header);
-				die;
-			}
-			
-			# Signal no data
-			return false;
-		}
 		
 		# Debug if required
 		// application::dumpData (xml::xml2arrayWithNamespaces ($data));
@@ -2034,6 +1997,54 @@ EOT;
 			$xpathDom->registerNamespace ('default', 'http://www.w3.org/2005/Atom');
 			$xpathDom->registerNamespace ('api', 'http://www.symplectic.co.uk/publications/api');
 			return $xpathDom;
+		}
+		
+		# Return the data
+		return $data;
+	}
+	
+	
+	# Function to retrieve data from the URL
+	private function urlCall ($url, &$errorHtml = false, $isFatalError = false)
+	{
+		# Inject the API credentials into the request URL if required
+		if ($this->settings['apiUsername'] && $this->settings['apiPassword']) {
+			$url = preg_replace ('|^(https?://)(.+)$|', "$1{$this->settings['apiUsername']}:{$this->settings['apiPassword']}@$2", $url);
+		}
+		
+		# Attempt to retrieve the data
+		$data = @file_get_contents ($url);
+		
+		# If no data, check if the result was a 404, by checking the auto-created variable $http_response_header
+		if (!$data) {
+			
+			# End if no response at all
+			if (!isSet ($http_response_header) || empty ($http_response_header)) {		// It appears that when a failure happens, the magic variable $http_response_header is in fact created but not populated; http://php.net/reserved.variables.httpresponseheader doesn't seem to document this.
+				$errorHtml = "\n<p class=\"warning\">No response was received for <em>{$url}</em>.</p>";
+				$isFatalError = true;
+				return false;
+			}
+			
+			# Find the header which contains the HTTP response code (seemingly usually the first)
+			foreach ($http_response_header as $header) {
+				if (preg_match ('|^HTTP/1|i', $header)) {
+					break;	// The correct header has been found
+				}
+			}
+			
+			# If the response was anything other than 404, report the error
+			if (!substr_count ($header, ' 404 ')) {
+				$errorHtml = "\n<p class=\"warning\">An empty response was received for <em>{$url}</em>, with header response: <em>{$header}</em>.</p>";
+				$isFatalError = true;
+				// application::dumpData ($http_response_header);
+				return false;
+			}
+			
+			# Non-fatal error, e.g. person simply not present
+			$errorHtml = "\n<p class=\"warning\">No publications found for URL: <tt>" . htmlspecialchars ($url) . '</tt>.</p>';
+			
+			# Signal no data
+			return false;
 		}
 		
 		# Return the data
@@ -2432,21 +2443,16 @@ EOT;
 		# Assemble the URL
 		$url = $this->settings['apiUrl'] . $result['url'];
 		
-		# Inject the API credentials into the request URL if required
-		if ($this->settings['apiUsername'] && $this->settings['apiPassword']) {
-			$url = preg_replace ('|^(https?://)(.+)$|', "$1{$this->settings['apiUsername']}:{$this->settings['apiPassword']}@$2", $url);
-		}
-		
-		# Retrieve the URL
-		if (!$contents = @file_get_contents ($url)) {
-			$html .= "\n<p class=\"warning\">Could not retrieve that URL: <tt>" . htmlspecialchars ($url) . '</tt>.</p>';
+		# Retrieve the data from the URL
+		if (!$data = $this->urlCall ($url, $errorHtml)) {
+			$html .= $errorHtml;
 			echo $html;
 			return false;
 		}
 		
 		# Show the result
 		require_once ('xml.php');
-		$html .= xml::formatter ($contents);
+		$html .= xml::formatter ($data);
 		
 		# Show the HTML
 		echo $html;
