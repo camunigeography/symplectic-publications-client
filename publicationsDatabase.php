@@ -2455,7 +2455,7 @@ EOT;
 		# Retrieve the URL
 		$url = $this->settings['apiHttp'] . $result['url'];
 		if (!$contents = @file_get_contents ($url)) {
-			$html .= "\n<p class=\"warning\">Could not retrieve that URL.</p>";
+			$html .= "\n<p class=\"warning\">Could not retrieve that URL: <tt>" . htmlspecialchars ($url) . '</tt>.</p>';
 			echo $html;
 			return false;
 		}
