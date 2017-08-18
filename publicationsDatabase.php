@@ -60,7 +60,8 @@ class publicationsDatabase extends frontControllerApplication
 		'internet-publication'	=> 'Internet publications',
 		'report'				=> 'Reports',
 		'other'					=> 'Other publications',
-		
+		'thesis-dissertation'	=> 'Theses / dissertations',
+		'c-19'					=> 'Working papers',
 	//	'?'						=> 'Datasets',
 	//	'patent'				=> 'Patents',
 	//	'software'				=> 'Software',
@@ -71,8 +72,6 @@ class publicationsDatabase extends frontControllerApplication
 	//	'?'						=> 'Exhibitions',
 	//	'?'						=> 'Scholarly editions',
 	//	'?'						=> 'Posters',
-	//	'thesis-dissertation'	=> 'Theses / Dissertations',
-	//	'?'						=> 'Working papers',
 	);
 	
 	# Define the types that should use listing by year
