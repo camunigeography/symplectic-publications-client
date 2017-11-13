@@ -1651,6 +1651,9 @@ EOT;
 		# Surround with a div
 		$html = "\n\n\n<div id=\"publicationslist\">" . "\n" . $html . "\n\n</div><!-- /#publicationslist -->\n\n";
 		
+		# Add book cover CSS
+		$html = "\n\n<style type=\"text/css\">\n\t#publicationslist p.bookcovers img {margin-right: 12px; margin-bottom: 16px; box-shadow: 5px 5px 10px #888;}\n</style>" . $html;
+		
 		# Add the filtering form if required
 		if ($filteringUiGroup) {
 			$html = $this->filteringForm ($filteringUiGroup, $currentlyFiltered, $placeholders, $html);
@@ -1794,7 +1797,7 @@ EOT;
 			}
 		}
 		if ($images) {
-			$html .= "\n<p class=\"bookcovers\">" . implode (' &nbsp; ', $images) . "\n</p>";
+			$html .= "\n<p class=\"bookcovers\">" . implode (' ', $images) . "\n</p>";
 		}
 		
 		# Return the HTML
