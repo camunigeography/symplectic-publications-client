@@ -2007,7 +2007,7 @@ EOT;
 	
 	
 	# Function to retrieve data from the URL
-	private function urlCall ($url, &$errorHtml = false, $isFatalError = false)
+	private function urlCall ($url, &$errorHtml = false, &$isFatalError = false)
 	{
 		# Inject the API credentials into the request URL if required
 		if ($this->settings['apiUsername'] && $this->settings['apiPassword']) {
