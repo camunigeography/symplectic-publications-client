@@ -2438,6 +2438,7 @@ EOT;
 			'required'		=> true,
 			'autofocus'		=> true,
 			'prepend'		=> $this->settings['apiUrl'] . ' ',
+			'size'			=> 50,
 		));
 		if (!$result = $form->process ($html)) {
 			echo $html;
