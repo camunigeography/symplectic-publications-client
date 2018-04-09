@@ -1596,7 +1596,8 @@ EOT;
 		$favourites = array ();
 		foreach ($publications as $publicationId => $publication) {
 			if ($publication['isFavourite']) {
-				$favourites[$publicationId] = $publication['html'];
+				$key = 'publication' . $publicationId;
+				$favourites[$key] = $publication['html'];
 			}
 		}
 		
@@ -1622,7 +1623,7 @@ EOT;
 		if ($showFeatured) {
 			if ($favourites) {
 				$html .= "\n<h3>Featured publications</h3>";
-				$html .= application::htmlUl ($favourites);
+				$html .= application::htmlUl ($favourites, 0, NULL, true, false, false, $liClass = true);
 			}
 		}
 		
@@ -1780,7 +1781,7 @@ EOT;
 			}
 			
 			# Add the publication
-			$html .= "\n\t<li" . ($oldYear ? ' class="oldyear"' : '') . '>' . $publication['html'] . '</li>';
+			$html .= "\n\t<li id=\"publication" . htmlspecialchars ($publicationId) . '" ' . ($oldYear ? ' class="oldyear"' : '') . '>' . $publication['html'] . '</li>';
 		}
 		$html .= "\n</ul>";
 		
@@ -1849,12 +1850,13 @@ EOT;
 			$articles = array ();
 			foreach ($publicationsThisYear as $publicationId => $publication) {
 				$canSplitIfTotal--;
-				$articles[$publicationId] = $publication['html'];
+				$key = 'publication' . $publicationId;
+				$articles[$key] = $publication['html'];
 			}
 			
 			# Add the list for this year
 			$html .= "\n<h4>" . ($year ? $year : '[Unknown year]') . '</h4>';
-			$html .= application::htmlUl ($articles);
+			$html .= application::htmlUl ($articles, 0, NULL, true, false, false, $liClass = true);
 		}
 		
 		# Close the old years div if it was created
