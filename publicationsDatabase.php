@@ -2189,11 +2189,14 @@ EOT;
 				# Select the record source to use, either the record explicitly marked as is-preferred-record="true", or the next best
 				$sourceId = $this->selectRecordSource ($xpathDom, $publicationNode, $sources);
 				
+				# Zoom in on this record source node
+				$sourceNode = $xpathDom->query ('(./api:relationship/api:related/api:object/api:records/api:record[@source-id="' . $sourceId . '"])[1]/api:native', $publicationNode)->item(0);
+				
 				# Check alternative date fields, but prefer the default if it exists, as that relates to actual publication date (rather than e.g. date of a conference)
 				$datesField = 'publication-date';	// Default
 				if (isSet ($alternativeDateFields[$type])) {
-					if (!$this->XPath ($xpathDom, '(./api:relationship/api:related/api:object/api:records/api:record[@source-id="' . $sourceId . '"])[1]/api:native/api:field[@name="' . $datesField . '"]/api:date/api:year', $publicationNode)) {
-						if ($this->XPath ($xpathDom, '(./api:relationship/api:related/api:object/api:records/api:record[@source-id="' . $sourceId . '"])[1]/api:native/api:field[@name="' . $alternativeDateFields[$type] . '"]/api:date/api:year', $publicationNode)) {
+					if (!$this->XPath ($xpathDom, './api:field[@name="' . $datesField . '"]/api:date/api:year', $sourceNode)) {
+						if ($this->XPath ($xpathDom, './api:field[@name="' . $alternativeDateFields[$type] . '"]/api:date/api:year', $sourceNode)) {
 							$datesField = $alternativeDateFields[$type];
 						}
 					}
@@ -2204,24 +2207,24 @@ EOT;
 					'id'					=> $id,
 					'type'					=> $type,
 					'lastModifiedWhen'		=> strtotime ($this->XPath ($xpathDom, './api:relationship/api:related/api:object/@last-modified-when', $publicationNode)),
-					'doi'					=> $this->XPath ($xpathDom, '(./api:relationship/api:related/api:object/api:records/api:record[@source-id="' . $sourceId . '"])[1]/api:native/api:field[@name="doi"]/api:text', $publicationNode),
-					'title'					=> str_replace (array ("\n", ' '), ' ', $this->XPath ($xpathDom, '(./api:relationship/api:related/api:object/api:records/api:record[@source-id="' . $sourceId . '"])[1]/api:native/api:field[@name="title"]/api:text', $publicationNode)),
-					'journal'				=> $this->XPath ($xpathDom, '(./api:relationship/api:related/api:object/api:records/api:record[@source-id="' . $sourceId . '"])[1]/api:native/api:field[@name="journal"]/api:text', $publicationNode),
-					'publicationYear'		=> $this->XPath ($xpathDom, '(./api:relationship/api:related/api:object/api:records/api:record[@source-id="' . $sourceId . '"])[1]/api:native/api:field[@name="' . $datesField . '"]/api:date/api:year', $publicationNode),
-					'publicationMonth'		=> $this->XPath ($xpathDom, '(./api:relationship/api:related/api:object/api:records/api:record[@source-id="' . $sourceId . '"])[1]/api:native/api:field[@name="' . $datesField . '"]/api:date/api:month', $publicationNode),
-					'publicationDay'		=> $this->XPath ($xpathDom, '(./api:relationship/api:related/api:object/api:records/api:record[@source-id="' . $sourceId . '"])[1]/api:native/api:field[@name="' . $datesField . '"]/api:date/api:day', $publicationNode),
-					'volume'				=> $this->XPath ($xpathDom, '(./api:relationship/api:related/api:object/api:records/api:record[@source-id="' . $sourceId . '"])[1]/api:native/api:field[@name="volume"]/api:text', $publicationNode),
+					'doi'					=> $this->XPath ($xpathDom, './api:field[@name="doi"]/api:text', $sourceNode),
+					'title'					=> str_replace (array ("\n", ' '), ' ', $this->XPath ($xpathDom, './api:field[@name="title"]/api:text', $sourceNode)),
+					'journal'				=> $this->XPath ($xpathDom, './api:field[@name="journal"]/api:text', $sourceNode),
+					'publicationYear'		=> $this->XPath ($xpathDom, './api:field[@name="' . $datesField . '"]/api:date/api:year', $sourceNode),
+					'publicationMonth'		=> $this->XPath ($xpathDom, './api:field[@name="' . $datesField . '"]/api:date/api:month', $sourceNode),
+					'publicationDay'		=> $this->XPath ($xpathDom, './api:field[@name="' . $datesField . '"]/api:date/api:day', $sourceNode),
+					'volume'				=> $this->XPath ($xpathDom, './api:field[@name="volume"]/api:text', $sourceNode),
 					'pagination'			=> $this->formatPagination (
-						$this->XPath ($xpathDom, '(./api:relationship/api:related/api:object/api:records/api:record[@source-id="' . $sourceId . '"])[1]/api:native/api:field[@name="pagination"]/api:pagination/api:begin-page', $publicationNode),
-						$this->XPath ($xpathDom, '(./api:relationship/api:related/api:object/api:records/api:record[@source-id="' . $sourceId . '"])[1]/api:native/api:field[@name="pagination"]/api:pagination/api:end-page', $publicationNode),
-						$this->XPath ($xpathDom, '(./api:relationship/api:related/api:object/api:records/api:record[@source-id="' . $sourceId . '"])[1]/api:native/api:field[@name="pagination"]/api:pagination/api:page-count', $publicationNode),
+						$this->XPath ($xpathDom, './api:field[@name="pagination"]/api:pagination/api:begin-page', $sourceNode),
+						$this->XPath ($xpathDom, './api:field[@name="pagination"]/api:pagination/api:end-page', $sourceNode),
+						$this->XPath ($xpathDom, './api:field[@name="pagination"]/api:pagination/api:page-count', $sourceNode),
 						$type
 					),
-					'publisher'				=> $this->XPath ($xpathDom, '(./api:relationship/api:related/api:object/api:records/api:record[@source-id="' . $sourceId . '"])[1]/api:native/api:field[@name="publisher"]/api:text', $publicationNode),
-					'parentTitle'			=> $this->XPath ($xpathDom, '(./api:relationship/api:related/api:object/api:records/api:record[@source-id="' . $sourceId . '"])[1]/api:native/api:field[@name="parent-title"]/api:text', $publicationNode),
-					'edition'				=> $this->XPath ($xpathDom, '(./api:relationship/api:related/api:object/api:records/api:record[@source-id="' . $sourceId . '"])[1]/api:native/api:field[@name="edition"]/api:text', $publicationNode),
-					'number'				=> $this->XPath ($xpathDom, '(./api:relationship/api:related/api:object/api:records/api:record[@source-id="' . $sourceId . '"])[1]/api:native/api:field[@name="number"]/api:text', $publicationNode),
-					'url'					=> $this->XPath ($xpathDom, '(./api:relationship/api:related/api:object/api:records/api:record[@source-id="' . $sourceId . '"])[1]/api:native/api:field[@name="publisher-url"]/api:text', $publicationNode),
+					'publisher'				=> $this->XPath ($xpathDom, './api:field[@name="publisher"]/api:text', $sourceNode),
+					'parentTitle'			=> $this->XPath ($xpathDom, './api:field[@name="parent-title"]/api:text', $sourceNode),
+					'edition'				=> $this->XPath ($xpathDom, './api:field[@name="edition"]/api:text', $sourceNode),
+					'number'				=> $this->XPath ($xpathDom, './api:field[@name="number"]/api:text', $sourceNode),
+					'url'					=> $this->XPath ($xpathDom, './api:field[@name="publisher-url"]/api:text', $sourceNode),
 					'isFavourite'			=> ($this->XPath ($xpathDom, './api:relationship/api:is-favourite', $publicationNode) == 'false' ? NULL : 1),
 				);
 				
@@ -2252,11 +2255,11 @@ EOT;
 				}
 				
 				# Get the authors
-				$authorsNode = $xpathDom->query ('(./api:relationship/api:related/api:object/api:records/api:record[@source-id="' . $sourceId . '"])[1]/api:native/api:field[@name="authors"]/api:people/api:person', $publicationNode);
+				$authorsNode = $xpathDom->query ('./api:field[@name="authors"]/api:people/api:person', $sourceNode);
 				list ($publication['authors'], $publication['nameAppearsAsAuthor']) = $this->processContributors ($authorsNode, $xpathDom, $user, $publication['id'], 'author', NULL, $errorHtml);
 				
 				# Get the editors
-				$editorsNode = $xpathDom->query ('(./api:relationship/api:related/api:object/api:records/api:record[@source-id="' . $sourceId . '"])[1]/api:native/api:field[@name="editors"]/api:people/api:person', $publicationNode);
+				$editorsNode = $xpathDom->query ('./api:field[@name="editors"]/api:people/api:person', $sourceNode);
 				list ($publication['editors'], $publication['nameAppearsAsEditor']) = $this->processContributors ($editorsNode, $xpathDom, $user, $publication['id'], 'editor', $additionalEditor, $errorHtml);
 				
 				# Create a compiled HTML version; highlighting is not applied at this stage, as that has to be done at listing runtime depending on the listing context (person/group/all)
