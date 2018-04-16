@@ -1957,22 +1957,26 @@ EOT;
 	
 	
 	# Function to get data from the Symplectic API
-	private function getData ($call, $format = 'xpathDom', $isFullUrl = false)
+	private function getData ($call, $format = 'xpathDom', $isFullUrl = false, /* already retrieved */ $data = false)
 	{
-		# Assemble the URL
-		$url = ($isFullUrl ? '' : $this->settings['apiUrl']) . $call;
-		
-		# Retrieve the data from the URL, reporting and stopping if a fatal error (inability to retrieve the URL at all) occurs
-		if (!$data = $this->urlCall ($url, $errorHtml, $isFatalError)) {
-			if ($isFatalError) {
-				$html .= $errorHtml;
-				echo $html;
-				die;
+		# If data is already received use that, else retrieve the data
+		if (!$data) {
+			
+			# Assemble the URL
+			$url = ($isFullUrl ? '' : $this->settings['apiUrl']) . $call;
+			
+			# Retrieve the data from the URL, reporting and stopping if a fatal error (inability to retrieve the URL at all) occurs
+			if (!$data = $this->urlCall ($url, $errorHtml, $isFatalError)) {
+				if ($isFatalError) {
+					$html .= $errorHtml;
+					echo $html;
+					die;
+				}
 			}
+			
+			# Delay to prevent API overload
+			usleep (500000);	// 0.5 seconds is requested in documentation (page 16, "500ms")
 		}
-		
-		# Delay to prevent API overload
-		usleep (500000);	// 0.5 seconds is requested in documentation (page 16, "500ms")
 		
 		# Debug if required
 		// application::dumpData (xml::xml2arrayWithNamespaces ($data));
@@ -1981,6 +1985,16 @@ EOT;
 		# Convert the XML to an array, maintaining namespaced objects
 		if ($format == 'json' || $format == 'data') {
 			$data = xml::xml2arrayWithNamespaces ($data);
+		}
+		
+		# Return an XPath DOM object if required; see: http://stackoverflow.com/a/20318801 and a good explanation of the default namespace at http://web.archive.org/web/20090414184326/http://people.ischool.berkeley.edu/~felix/xml/php-and-xmlns.html
+		if ($format == 'xpathDom') {
+			$dom = new DOMDocument ();
+			$dom->loadXml ($data);
+			$xpathDom = new DOMXpath ($dom);
+			$xpathDom->registerNamespace ('default', 'http://www.w3.org/2005/Atom');
+			$xpathDom->registerNamespace ('api', 'http://www.symplectic.co.uk/publications/api');
+			return $xpathDom;
 		}
 		
 		# Convert the array to JSON
@@ -1992,16 +2006,6 @@ EOT;
 		# Send XML header if required
 		if ($format == 'xml') {
 			header ('Content-Type: application/xml; charset=utf-8');
-		}
-		
-		# Return an XPath DOM object if required; see: http://stackoverflow.com/a/20318801 and a good explanation of the default namespace at http://web.archive.org/web/20090414184326/http://people.ischool.berkeley.edu/~felix/xml/php-and-xmlns.html
-		if ($format == 'xpathDom') {
-			$dom = new DOMDocument ();
-			$dom->loadXml ($data);
-			$xpathDom = new DOMXpath ($dom);
-			$xpathDom->registerNamespace ('default', 'http://www.w3.org/2005/Atom');
-			$xpathDom->registerNamespace ('api', 'http://www.symplectic.co.uk/publications/api');
-			return $xpathDom;
 		}
 		
 		# Return the data
