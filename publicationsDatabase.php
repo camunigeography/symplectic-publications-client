@@ -2188,6 +2188,16 @@ EOT;
 					'isFavourite'			=> ($this->XPath ($xpathDom, './api:relationship/api:is-favourite', $publicationNode) == 'false' ? NULL : 1),
 				);
 				
+				# Detect no title, as this indicates an upstream data issue
+				if (!strlen ($publication['title'])) {
+					$errorHtml  = "\n<p class=\"warning\">Publication <em>#{$id}</em> has no title, representing a data error, at: " . htmlspecialchars ($resultsUrlPage) . '</p>';
+					$errorHtml .= "\n<p class=\"warning\">The record is as follows:</p>";
+					$errorHtml .= print_r ($publication, true);
+					continue;
+					// $isFatalError = true;
+					// return false;
+				}
+				
 				# If relationships are enabled, for books, look for additional editors, which are in the api:relationships field
 				$additionalEditor = false;
 				if ($this->settings['enableRelationships']) {
