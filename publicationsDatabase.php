@@ -107,6 +107,7 @@ class publicationsDatabase extends frontControllerApplication
 				'url' => 'bookcover.html',
 				'icon' => 'book',
 				'tab' => 'Book cover',
+				'authentication' => true,
 			),
 			'recent' => array (
 				'description' => 'Most recent publications',
