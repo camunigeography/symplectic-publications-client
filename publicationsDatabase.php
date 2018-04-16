@@ -2205,7 +2205,7 @@ EOT;
 			}
 			
 			# Determine the next page, if any
-			$resultsUrlPage = $xpathDom->evaluate ('string(' . "/default:feed/api:pagination/api:page[@position='next']/@href" . ')');
+			$resultsUrlPage = $this->XPath ($xpathDom, "/default:feed/api:pagination/api:page[@position='next']/@href");
 		}
 		
 		# Return the array of publications
