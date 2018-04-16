@@ -1447,10 +1447,10 @@ EOT;
 			
 			# Get the publications of this user, or skip
 			if (!$publications = $this->retrievePublicationsOfUser ($username, $sources, $errorHtml, $isFatalError)) {
+				$html .= $errorHtml;
 				
 				# Report fatal errors for this user
 				if ($isFatalError) {
-					$html .= $errorHtml;
 					unlink ($this->lockfile);
 					return false;
 				}
