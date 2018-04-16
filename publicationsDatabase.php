@@ -2424,7 +2424,7 @@ EOT;
 			<ul>
 				<li>/users/username-<span class=\"comment\">&lt;crsid&gt;</span>?detail=full</li>
 				<li>/users/username-<span class=\"comment\">&lt;crsid&gt;</span>/publications?detail=full</li>
-				<li>/users/username-<span class=\"comment\">&lt;crsid&gt;</span>/publications?detail=full&amp;after-id=publicationid (see position=\"next\" in results)</li>
+				<li>/users/username-<span class=\"comment\">&lt;crsid&gt;</span>/publications?detail=full&amp;modified-since=...&amp;after-id=publicationid (see position=\"next\" in results, or click link)</li>
 				<li>/publications/<span class=\"comment\">&lt;id&gt;</span></li>
 				<li>/publications/<span class=\"comment\">&lt;id&gt;</span>/relationships</li>
 			</ul>
@@ -2462,6 +2462,13 @@ EOT;
 			return false;
 		}
 		
+		# For paginated results, create a link for the next page
+		$xpathDom = $this->getData (false, 'xpathDom', false, $data);
+		if ($next = $this->XPath ($xpathDom, "/default:feed/api:pagination/api:page[@position='next']/@href")) {
+			$url = $this->baseUrl . '/' . $this->actions[$this->action]['url'] . '?url=' . urlencode (str_replace ($this->settings['apiUrl'], '', $next));
+			$html .= "\n<p class=\"alignright\"><a href=\"{$url}\">Next &raquo;</a></p>";
+		}
+			
 		# Show the result
 		require_once ('xml.php');
 		$html .= xml::formatter ($data);
