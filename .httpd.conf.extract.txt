@@ -24,7 +24,8 @@
 	RedirectMatch permanent ^$applicationBaseUrl/(people)/([a-z]+[0-9]+)$ $applicationBaseUrl/$1/$2/
 	RewriteRule ^$applicationBaseUrl/(group)s/([a-z0-9]+)/(|json|html)$ $applicationBaseUrl/index.html?action=$1&item=$2&api=$3 [L,QSA]
 	RedirectMatch permanent ^$applicationBaseUrl/(groups)/([a-z0-9]+)$ $applicationBaseUrl/$1/$2/
-	RewriteRule ^$applicationBaseUrl/(bookcover|issues|retrieve).html$ $applicationBaseUrl/index.html?action=$1 [L]
+	RewriteRule ^$applicationBaseUrl/(bookcover|issues).html$ $applicationBaseUrl/index.html?action=$1 [L]
+	RewriteRule ^$applicationBaseUrl/(retrieve).html$ $applicationBaseUrl/index.html?action=$1 [L,QSA]
 	
 	# API outputs
 	<LocationMatch ^$applicationBaseUrl/.+/(html|json)$>

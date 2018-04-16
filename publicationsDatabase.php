@@ -2432,6 +2432,8 @@ EOT;
 			'div' => 'graybox ultimateform',
 			'display' => 'paragraphs',
 			'reappear' => true,
+			'get' => true,
+			'name' => false,
 		));
 		$form->input (array (
 			'name'			=> 'url',
