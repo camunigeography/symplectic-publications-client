@@ -1443,7 +1443,18 @@ EOT;
 		foreach ($users as $username => $user) {
 			
 			# Get the publications of this user, or skip
-			if (!$publications = $this->retrievePublicationsOfUser ($username, $html)) {continue;}
+			if (!$publications = $this->retrievePublicationsOfUser ($username, $errorHtml, $isFatalError)) {
+				
+				# Report fatal errors for this user
+				if ($isFatalError) {
+					$html .= $errorHtml;
+					unlink ($this->lockfile);
+					return false;
+				}
+				
+				# Continue to next user for non-fatal errors
+				continue;
+			}
 			
 			# Assemble the publications IDs for this user
 			$instances = array ();
@@ -2099,7 +2110,7 @@ EOT;
 	
 	
 	# Get the publications for a user
-	private function retrievePublicationsOfUser ($username, &$errorHtml = '')
+	private function retrievePublicationsOfUser ($username, &$errorHtml = '', &$isFatalError = false)
 	{
 		# Define the starting point for the call
 		$call = '/users/username-' . $username . '/publications?detail=full';
