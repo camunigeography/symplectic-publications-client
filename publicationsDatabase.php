@@ -1382,7 +1382,7 @@ EOT;
 		
 		# Confirm success
 		$html .= "\n<div class=\"graybox\">";
-		$html .= "\n\t<p>{$this->tick} {$totalPublications} publications were imported.</p>";
+		$html .= "\n\t<p>{$this->tick} " . number_format ($totalPublications) . ' publications were imported.</p>';
 		$html .= "\n\t<p>The import took: {$seconds} seconds.</p>";
 		$html .= "\n</div>";
 		
