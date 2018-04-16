@@ -2420,7 +2420,7 @@ EOT;
 			<ul>
 				<li>/users/username-<span class=\"comment\">&lt;crsid&gt;</span>?detail=full</li>
 				<li>/users/username-<span class=\"comment\">&lt;crsid&gt;</span>/publications?detail=full</li>
-				<li>/users/username-<span class=\"comment\">&lt;crsid&gt;</span>/publications?detail=full&amp;page=2</li>
+				<li>/users/username-<span class=\"comment\">&lt;crsid&gt;</span>/publications?detail=full&amp;after-id=publicationid (see position=\"next\" in results)</li>
 				<li>/publications/<span class=\"comment\">&lt;id&gt;</span></li>
 				<li>/publications/<span class=\"comment\">&lt;id&gt;</span>/relationships</li>
 			</ul>
