@@ -1439,11 +1439,14 @@ EOT;
 		# Add the user organisations to the database
 		$this->databaseConnection->insertMany ($this->settings['database'], 'userorganisations' . '_import', $userOrganisations, $chunking = false);
 		
+		# Obtain the sources list, ordered by precedence
+		$sources = $this->getSources ();
+		
 		# Import the publications of each user
 		foreach ($users as $username => $user) {
 			
 			# Get the publications of this user, or skip
-			if (!$publications = $this->retrievePublicationsOfUser ($username, $errorHtml, $isFatalError)) {
+			if (!$publications = $this->retrievePublicationsOfUser ($username, $sources, $errorHtml, $isFatalError)) {
 				
 				# Report fatal errors for this user
 				if ($isFatalError) {
@@ -1560,6 +1563,37 @@ EOT;
 		
 		# Return the two arrays
 		return array ($users, $userOrganisations);
+	}
+	
+	
+	# Function to obtain the sources list, ordered by precedence
+	private function getSources ()
+	{
+		# Start a list of sources
+		$sources = array ();
+		
+		# Get the data
+		if (!$xpathDom = $this->getData ('/publication/sources')) {return $sources;}
+		
+		# Loop through each entry in the data; see: http://stackoverflow.com/questions/11886176/ and http://stackoverflow.com/questions/5929263/
+		$entriesNode = $xpathDom->query ('/default:feed/default:entry');
+		foreach ($entriesNode as $index => $entryNode) {
+			
+			# Obtain the properties
+			$precedence = $this->XPath ($xpathDom, './api:data-source/api:precedence/api:type[@name="default"]/@precedence-value', $entryNode);
+			$sources[$precedence] = array (
+				'id' => $this->XPath ($xpathDom, './api:data-source/@id', $entryNode),
+				'name' => $this->XPath ($xpathDom, './api:data-source/@name', $entryNode),
+				'title' => $this->XPath ($xpathDom, './api:data-source/api:display-name', $entryNode),
+				'precedence' => $precedence,
+			);
+		}
+		
+		# Order by precedence
+		ksort ($sources);
+		
+		# Return the data
+		return $sources;
 	}
 	
 	
@@ -1979,7 +2013,7 @@ EOT;
 			# Retrieve the data from the URL, reporting and stopping if a fatal error (inability to retrieve the URL at all) occurs
 			if (!$data = $this->urlCall ($url, $errorHtml, $isFatalError)) {
 				if ($isFatalError) {
-					$html .= $errorHtml;
+					$html = $errorHtml;
 					echo $html;
 					die;
 				}
@@ -2110,7 +2144,7 @@ EOT;
 	
 	
 	# Get the publications for a user
-	private function retrievePublicationsOfUser ($username, &$errorHtml = '', &$isFatalError = false)
+	private function retrievePublicationsOfUser ($username, $sources, &$errorHtml = '', &$isFatalError = false)
 	{
 		# Define the starting point for the call
 		$call = '/users/username-' . $username . '/publications?detail=full';
@@ -2153,7 +2187,7 @@ EOT;
 				$type = $this->XPath ($xpathDom, './api:relationship/api:related/api:object/@type', $publicationNode);
 				
 				# Select the record source to use, either the record explicitly marked as is-preferred-record="true", or the next best
-				$sourceId = $this->selectRecordSource ($xpathDom, $publicationNode);
+				$sourceId = $this->selectRecordSource ($xpathDom, $publicationNode, $sources);
 				
 				# Check alternative date fields, but prefer the default if it exists, as that relates to actual publication date (rather than e.g. date of a conference)
 				$datesField = 'publication-date';	// Default
@@ -2242,14 +2276,21 @@ EOT;
 	
 	
 	# Helper function to select the record source
-	private function selectRecordSource ($xpathDom, $publicationNode)
+	private function selectRecordSource ($xpathDom, $publicationNode, $sources)
 	{
 		# Look for is-preferred-record="true", which is explicitly marked by the user as the preferred record
 		if ($sourceId = $this->XPath ($xpathDom, './api:relationship/api:related/api:object/api:records/api:record[@is-preferred-record="true"]/@source-id', $publicationNode)) {
 			return $sourceId;
 		}
 		
-		# Otherwise, fall back to the first record
+		# Work through the sources in precedence order, and stop when/if found
+		foreach ($sources as $precedence => $source) {
+			if ($sourceId = $this->XPath ($xpathDom, './api:relationship/api:related/api:object/api:records/api:record[@source-id="' . $source['id'] . '"]/@source-id', $publicationNode)) {
+				return $sourceId;
+			}
+		}
+		
+		# Otherwise (which should never happen), fall back to the first record
 		$sourceId = $this->XPath ($xpathDom, './api:relationship/api:related/api:object/api:records/api:record[1]/@source-id', $publicationNode);
 		return $sourceId;
 	}
@@ -2465,6 +2506,7 @@ EOT;
 				<li>/users/username-<span class=\"comment\">&lt;crsid&gt;</span>/publications?detail=full&amp;modified-since=...&amp;after-id=publicationid (see position=\"next\" in results, or click link)</li>
 				<li>/publications/<span class=\"comment\">&lt;id&gt;</span></li>
 				<li>/publications/<span class=\"comment\">&lt;id&gt;</span>/relationships</li>
+				<li>/publication/sources</li>
 			</ul>
 		";
 		
