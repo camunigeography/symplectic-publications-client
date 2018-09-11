@@ -2479,7 +2479,9 @@ EOT;
 				$html .= ' (' . $this->formatDate ($publication) . ')';
 			}
 		}
-		$html .= '.';
+		if (substr ($html, -1) != '.') {		// Do not add . after if already present
+			$html .= '.';
+		}
 		$html .= (strlen ($publication['journal']) ? " <em>{$publication['journal']}</em>," : '');
 		$html .= (strlen ($publication['volume']) ? " v. {$publication['volume']}," : '');
 		$html .= (strlen ($publication['pagination']) ? " {$publication['pagination']}." : '');
