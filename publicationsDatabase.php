@@ -2127,6 +2127,7 @@ EOT;
 		# Assemble the data
 		$data = array (
 			'id'			=> $this->XPath ($xpathDom, '//default:feed/default:entry/api:object/@id'),
+			'username'		=> $username,
 			'is-academic'	=> $this->XPath ($xpathDom, '//default:feed/default:entry/api:object/api:is-academic'),
 			'title'			=> $this->XPath ($xpathDom, '//default:feed/default:entry/api:object/api:title'),
 			'surname'		=> $this->XPath ($xpathDom, '//default:feed/default:entry/api:object/api:last-name'),
@@ -2156,14 +2157,6 @@ EOT;
 		# Start an array of all publication data to return
 		$publications = array ();
 		
-		# Define alternative date fields for particular types of publications, for checking if the standard publication date is not available
-		$alternativeDateFields = array (
-			'journal-article'		=> 'online-publication-date',	// Online publication date
-			'conference'			=> 'start-date',				// "Conference start date"
-			'patent'				=> 'start-date',				// "Awarded date"
-			'thesis-dissertation'	=> 'filed-date',				// "Date submitted"
-		);
-		
 		# Loop through each page of results
 		while ($resultsUrlPage) {
 			
@@ -2178,92 +2171,8 @@ EOT;
 			$publicationsNode = $xpathDom->query ('/default:feed/default:entry');
 			foreach ($publicationsNode as $index => $publicationNode) {
 				
-				# Ensure the publication is set to be visible
-				$isVisible = ($this->XPath ($xpathDom, './api:relationship/api:is-visible', $publicationNode) == 'true');
-				if (!$isVisible) {continue;}
-				
-				# Get values which will be reused more than once in code below
-				$id = $this->XPath ($xpathDom, './api:relationship/api:related/api:object/@id', $publicationNode);
-				$type = $this->XPath ($xpathDom, './api:relationship/api:related/api:object/@type', $publicationNode);
-				
-				# Select the record source to use, either the record explicitly marked as is-preferred-record="true", or the next best
-				$sourceId = $this->selectRecordSource ($xpathDom, $publicationNode, $sources);
-				
-				# Zoom in on this record source node
-				$sourceNode = $xpathDom->query ('(./api:relationship/api:related/api:object/api:records/api:record[@source-id="' . $sourceId . '"])[1]/api:native', $publicationNode)->item(0);
-				
-				# Check alternative date fields, but prefer the default if it exists, as that relates to actual publication date (rather than e.g. date of a conference)
-				$datesField = 'publication-date';	// Default
-				if (isSet ($alternativeDateFields[$type])) {
-					if (!$this->XPath ($xpathDom, './api:field[@name="' . $datesField . '"]/api:date/api:year', $sourceNode)) {
-						if ($this->XPath ($xpathDom, './api:field[@name="' . $alternativeDateFields[$type] . '"]/api:date/api:year', $sourceNode)) {
-							$datesField = $alternativeDateFields[$type];
-						}
-					}
-				}
-				
-				# Add key details
-				$publication = array (
-					'id'					=> $id,
-					'type'					=> $type,
-					'lastModifiedWhen'		=> strtotime ($this->XPath ($xpathDom, './api:relationship/api:related/api:object/@last-modified-when', $publicationNode)),
-					'doi'					=> $this->XPath ($xpathDom, './api:field[@name="doi"]/api:text', $sourceNode),
-					'title'					=> str_replace (array ("\n", ' '), ' ', $this->XPath ($xpathDom, './api:field[@name="title"]/api:text', $sourceNode)),
-					'journal'				=> $this->XPath ($xpathDom, './api:field[@name="journal"]/api:text', $sourceNode),
-					'publicationYear'		=> $this->XPath ($xpathDom, './api:field[@name="' . $datesField . '"]/api:date/api:year', $sourceNode),
-					'publicationMonth'		=> $this->XPath ($xpathDom, './api:field[@name="' . $datesField . '"]/api:date/api:month', $sourceNode),
-					'publicationDay'		=> $this->XPath ($xpathDom, './api:field[@name="' . $datesField . '"]/api:date/api:day', $sourceNode),
-					'volume'				=> $this->XPath ($xpathDom, './api:field[@name="volume"]/api:text', $sourceNode),
-					'pagination'			=> $this->formatPagination (
-						$this->XPath ($xpathDom, './api:field[@name="pagination"]/api:pagination/api:begin-page', $sourceNode),
-						$this->XPath ($xpathDom, './api:field[@name="pagination"]/api:pagination/api:end-page', $sourceNode),
-						$this->XPath ($xpathDom, './api:field[@name="pagination"]/api:pagination/api:page-count', $sourceNode),
-						$type
-					),
-					'publisher'				=> $this->XPath ($xpathDom, './api:field[@name="publisher"]/api:text', $sourceNode),
-					'parentTitle'			=> $this->XPath ($xpathDom, './api:field[@name="parent-title"]/api:text', $sourceNode),
-					'edition'				=> $this->XPath ($xpathDom, './api:field[@name="edition"]/api:text', $sourceNode),
-					'number'				=> $this->XPath ($xpathDom, './api:field[@name="number"]/api:text', $sourceNode),
-					'url'					=> $this->XPath ($xpathDom, './api:field[@name="publisher-url"]/api:text', $sourceNode),
-					'isFavourite'			=> ($this->XPath ($xpathDom, './api:relationship/api:is-favourite', $publicationNode) == 'false' ? NULL : 1),
-				);
-				
-				# Detect no title, as this indicates an upstream data issue
-				if (!strlen ($publication['title'])) {
-					$errorHtml  = "\n<p class=\"warning\">Publication <em>#{$id}</em> has no title, representing a data error, at: " . htmlspecialchars ($resultsUrlPage) . '</p>';
-					$errorHtml .= "\n<p class=\"warning\">The record is as follows:</p>";
-					$errorHtml .= print_r ($publication, true);
-					continue;
-					// $isFatalError = true;
-					// return false;
-				}
-				
-				# If relationships are enabled, for books, look for additional editors, which are in the api:relationships field
-				$additionalEditor = false;
-				if ($this->settings['enableRelationships']) {
-					if ($type == 'book') {
-						$relationshipsUrl = $this->XPath ($xpathDom, './api:relationship/api:related/api:object/api:relationships/@href', $publicationNode);
-						if ($relationshipsUrl) {
-							if ($xpathDomRelationships = $this->getData ($relationshipsUrl, 'xpathDom', true)) {
-								$usernameEditor = $this->XPath ($xpathDomRelationships, '/default:feed/default:entry/api:relationship[@type-id="9"]/api:related[@direction="to"]/api:object[@category="user"]/@username');	// "Relationship type 9 means "Edited by" in this context."
-								if (mb_strtolower ($usernameEditor) == $username) {
-									$additionalEditor = $user['displayName'];
-								}
-							}
-						}
-					}
-				}
-				
-				# Get the authors
-				$authorsNode = $xpathDom->query ('./api:field[@name="authors"]/api:people/api:person', $sourceNode);
-				list ($publication['authors'], $publication['nameAppearsAsAuthor']) = $this->processContributors ($authorsNode, $xpathDom, $user, $publication['id'], 'author', NULL, $errorHtml);
-				
-				# Get the editors
-				$editorsNode = $xpathDom->query ('./api:field[@name="editors"]/api:people/api:person', $sourceNode);
-				list ($publication['editors'], $publication['nameAppearsAsEditor']) = $this->processContributors ($editorsNode, $xpathDom, $user, $publication['id'], 'editor', $additionalEditor, $errorHtml);
-				
-				# Create a compiled HTML version; highlighting is not applied at this stage, as that has to be done at listing runtime depending on the listing context (person/group/all)
-				$publication['html'] = $this->compilePublicationHtml ($publication, $errorHtml);
+				# Parse the publication, or skip if not visible (or other problem)
+				if (!$publication = $this->parsePublication ($publicationNode, $xpathDom, $sources, $user, $username, $id /* returned by reference */, $isFatalError /* returned by reference */, $errorHtml /* returned by reference */)) {continue;}
 				
 				# Add this publication
 				$publications[$id] = $publication;
@@ -2275,6 +2184,108 @@ EOT;
 		
 		# Return the array of publications
 		return $publications;
+	}
+	
+	
+	# Function to parse a publication's data
+	private function parsePublication ($publicationNode, $xpathDom, $sources, $user, $username, &$id = false, &$isFatalError, &$errorHtml)
+	{
+		# Ensure the publication is set to be visible
+		$isVisible = ($this->XPath ($xpathDom, './api:relationship/api:is-visible', $publicationNode) == 'true');
+		if (!$isVisible) {return false;}
+		
+		# Get values which will be reused more than once in code below
+		$id = $this->XPath ($xpathDom, './api:relationship/api:related/api:object/@id', $publicationNode);
+		$type = $this->XPath ($xpathDom, './api:relationship/api:related/api:object/@type', $publicationNode);
+		
+		# Select the record source to use, either the record explicitly marked as is-preferred-record="true", or the next best
+		$sourceId = $this->selectRecordSource ($xpathDom, $publicationNode, $sources);
+		
+		# Zoom in on this record source node
+		$sourceNode = $xpathDom->query ('(./api:relationship/api:related/api:object/api:records/api:record[@source-id="' . $sourceId . '"])[1]/api:native', $publicationNode)->item(0);
+		
+		# Define alternative date fields for particular types of publications, for checking if the standard publication date is not available
+		$alternativeDateFields = array (
+			'journal-article'		=> 'online-publication-date',	// Online publication date
+			'conference'			=> 'start-date',				// "Conference start date"
+			'patent'				=> 'start-date',				// "Awarded date"
+			'thesis-dissertation'	=> 'filed-date',				// "Date submitted"
+		);
+		
+		# Check alternative date fields, but prefer the default if it exists, as that relates to actual publication date (rather than e.g. date of a conference)
+		$datesField = 'publication-date';	// Default
+		if (isSet ($alternativeDateFields[$type])) {
+			if (!$this->XPath ($xpathDom, './api:field[@name="' . $datesField . '"]/api:date/api:year', $sourceNode)) {
+				if ($this->XPath ($xpathDom, './api:field[@name="' . $alternativeDateFields[$type] . '"]/api:date/api:year', $sourceNode)) {
+					$datesField = $alternativeDateFields[$type];
+				}
+			}
+		}
+		
+		# Add key details
+		$publication = array (
+			'id'					=> $id,
+			'type'					=> $type,
+			'lastModifiedWhen'		=> strtotime ($this->XPath ($xpathDom, './api:relationship/api:related/api:object/@last-modified-when', $publicationNode)),
+			'doi'					=> $this->XPath ($xpathDom, './api:field[@name="doi"]/api:text', $sourceNode),
+			'title'					=> str_replace (array ("\n", ' '), ' ', $this->XPath ($xpathDom, './api:field[@name="title"]/api:text', $sourceNode)),
+			'journal'				=> $this->XPath ($xpathDom, './api:field[@name="journal"]/api:text', $sourceNode),
+			'publicationYear'		=> $this->XPath ($xpathDom, './api:field[@name="' . $datesField . '"]/api:date/api:year', $sourceNode),
+			'publicationMonth'		=> $this->XPath ($xpathDom, './api:field[@name="' . $datesField . '"]/api:date/api:month', $sourceNode),
+			'publicationDay'		=> $this->XPath ($xpathDom, './api:field[@name="' . $datesField . '"]/api:date/api:day', $sourceNode),
+			'volume'				=> $this->XPath ($xpathDom, './api:field[@name="volume"]/api:text', $sourceNode),
+			'pagination'			=> $this->formatPagination (
+				$this->XPath ($xpathDom, './api:field[@name="pagination"]/api:pagination/api:begin-page', $sourceNode),
+				$this->XPath ($xpathDom, './api:field[@name="pagination"]/api:pagination/api:end-page', $sourceNode),
+				$this->XPath ($xpathDom, './api:field[@name="pagination"]/api:pagination/api:page-count', $sourceNode),
+				$type
+			),
+			'publisher'				=> $this->XPath ($xpathDom, './api:field[@name="publisher"]/api:text', $sourceNode),
+			'parentTitle'			=> $this->XPath ($xpathDom, './api:field[@name="parent-title"]/api:text', $sourceNode),
+			'edition'				=> $this->XPath ($xpathDom, './api:field[@name="edition"]/api:text', $sourceNode),
+			'number'				=> $this->XPath ($xpathDom, './api:field[@name="number"]/api:text', $sourceNode),
+			'url'					=> $this->XPath ($xpathDom, './api:field[@name="publisher-url"]/api:text', $sourceNode),
+			'isFavourite'			=> ($this->XPath ($xpathDom, './api:relationship/api:is-favourite', $publicationNode) == 'false' ? NULL : 1),
+		);
+		
+		# Detect no title, as this indicates an upstream data issue
+		if (!strlen ($publication['title'])) {
+			$errorHtml  = "\n<p class=\"warning\">Publication <em>#{$id}</em> has no title, representing a data error, at: " . htmlspecialchars ($resultsUrlPage) . '</p>';
+			$errorHtml .= "\n<p class=\"warning\">The record is as follows:</p>";
+			$errorHtml .= print_r ($publication, true);
+			// $isFatalError = true;
+			return false;
+		}
+		
+		# If relationships are enabled, for books, look for additional editors, which are in the api:relationships field
+		$additionalEditor = false;
+		if ($this->settings['enableRelationships']) {
+			if ($type == 'book') {
+				$relationshipsUrl = $this->XPath ($xpathDom, './api:relationship/api:related/api:object/api:relationships/@href', $publicationNode);
+				if ($relationshipsUrl) {
+					if ($xpathDomRelationships = $this->getData ($relationshipsUrl, 'xpathDom', true)) {
+						$usernameEditor = $this->XPath ($xpathDomRelationships, '/default:feed/default:entry/api:relationship[@type-id="9"]/api:related[@direction="to"]/api:object[@category="user"]/@username');	// "Relationship type 9 means "Edited by" in this context."
+						if (mb_strtolower ($usernameEditor) == $user['username']) {
+							$additionalEditor = $user['displayName'];
+						}
+					}
+				}
+			}
+		}
+		
+		# Get the authors
+		$authorsNode = $xpathDom->query ('./api:field[@name="authors"]/api:people/api:person', $sourceNode);
+		list ($publication['authors'], $publication['nameAppearsAsAuthor']) = $this->processContributors ($authorsNode, $xpathDom, $user, $publication['id'], 'author', NULL, $errorHtml);
+		
+		# Get the editors
+		$editorsNode = $xpathDom->query ('./api:field[@name="editors"]/api:people/api:person', $sourceNode);
+		list ($publication['editors'], $publication['nameAppearsAsEditor']) = $this->processContributors ($editorsNode, $xpathDom, $user, $publication['id'], 'editor', $additionalEditor, $errorHtml);
+		
+		# Create a compiled HTML version; highlighting is not applied at this stage, as that has to be done at listing runtime depending on the listing context (person/group/all)
+		$publication['html'] = $this->compilePublicationHtml ($publication, $errorHtml);
+		
+		# Return the publication data
+		return $publication;
 	}
 	
 	
