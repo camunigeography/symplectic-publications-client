@@ -1474,8 +1474,7 @@ EOT;
 		foreach ($users as $username => $user) {
 			
 			# Get the publications of this user, or skip
-			if (!$publications = $this->retrievePublicationsOfUser ($username, $sources, $errorHtml, $isFatalError)) {
-				$html .= $errorHtml;
+			if (!$publications = $this->retrievePublicationsOfUser ($username, $sources, $html, $isFatalError)) {
 				
 				# Report fatal errors for this user
 				if ($isFatalError) {
@@ -2173,7 +2172,7 @@ EOT;
 	
 	
 	# Get the publications for a user
-	private function retrievePublicationsOfUser ($username, $sources, &$errorHtml = '', &$isFatalError = false)
+	private function retrievePublicationsOfUser ($username, $sources, &$errorHtml, &$isFatalError = false)
 	{
 		# Define the starting point for the call
 		$call = '/users/username-' . $username . '/publications?detail=full';
@@ -2282,9 +2281,7 @@ EOT;
 		
 		# Detect no title, as this indicates an upstream data issue
 		if (!strlen ($publication['title'])) {
-			$errorHtml  = "\n<p class=\"warning\">Publication <em>#{$id}</em> has no title, representing a data error, at: " . htmlspecialchars ($resultsUrlPage) . '</p>';
-			$errorHtml .= "\n<p class=\"warning\">The record is as follows:</p>";
-			$errorHtml .= print_r ($publication, true);
+			$errorHtml .= "\n<p class=\"warning\">There is no title for <a href=\"{$this->settings['website']}viewobject.html?cid=1&amp;id={$publicationId}\" target=\"_blank\">publication #{$publicationId}</a> ({$sourceDisplayName}), representing a data error.</p>";
 			// $isFatalError = true;
 			return false;
 		}
