@@ -1123,16 +1123,29 @@ EOT;
 		
 		# Publications without a date
 		$data = $this->getYearMissing ();
+		$html .= "\n<h3>Publications without a date (" . count ($data) . ')</h3>';
+		$html .= "\n<p>This page shows publications without a date:</p>";
+		$html .= $this->publicationsToDebugList ($data);
+		
+		# Show the HTML
+		echo $html;
+	}
+	
+	
+	# Function to render a list of publications for debugging as a list
+	private function publicationsToDebugList ($data)
+	{
+		# Convert to list
 		$list = array ();
 		foreach ($data as $publicationId => $publication) {
 			$list[$publicationId] = "<a href=\"{$this->settings['website']}viewobject.html?cid=1&amp;id={$publicationId}\" target=\"_blank\">Edit {$publication['type']}</a> | <a href=\"https://www.google.co.uk/search?q=" . htmlspecialchars (urlencode ($publication['title'])) . "\" target=\"_blank\">Google search</a>: " . $publication['html'];
 		}
-		$html .= "\n<h3>Publications without a date (" . count ($data) . ')</h3>';
-		$html .= "\n<p>This page shows publications without a date:</p>";
-		$html .= application::htmlUl ($list, false, 'spaced');
 		
-		# Show the HTML
-		echo $html;
+		# Compile to HTML
+		$html = application::htmlUl ($list, false, 'spaced');
+		
+		# Return the HTML
+		return $html;
 	}
 	
 	
