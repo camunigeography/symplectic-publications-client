@@ -1854,7 +1854,7 @@ EOT;
 			}
 			
 			# Add the publication
-			$html .= "\n\t<li id=\"publication" . htmlspecialchars ($publicationId) . '" ' . ($oldYear ? ' class="oldyear"' : '') . '>' . $publication['html'] . '</li>';
+			$html .= "\n\t<li class=\"publication" . htmlspecialchars ($publicationId) . '" ' . ($oldYear ? ' class="oldyear"' : '') . '>' . $publication['html'] . '</li>';
 		}
 		$html .= "\n</ul>";
 		
