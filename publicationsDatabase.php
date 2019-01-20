@@ -1127,6 +1127,12 @@ EOT;
 		$html .= "\n<p>This page shows publications without a date:</p>";
 		$html .= $this->publicationsToDebugList ($data);
 		
+		# Publications without any authors
+		$data = $this->getAuthorsMissing ();
+		$html .= "\n<h3>Publications without any authors (" . count ($data) . ')</h3>';
+		$html .= "\n<p>This page shows publications without any authors:</p>";
+		$html .= $this->publicationsToDebugList ($data);
+		
 		# Show the HTML
 		echo $html;
 	}
@@ -1154,6 +1160,14 @@ EOT;
 	{
 		# Get the data
 		return $this->databaseConnection->select ($this->settings['database'], $this->settings['table'], array ('publicationYear' => NULL), array ('id', 'type', 'title', 'html'), true, 'type, html');
+	}
+	
+	
+	# Function to get publications without any authors
+	private function getAuthorsMissing ()
+	{
+		# Get the data
+		return $this->databaseConnection->select ($this->settings['database'], $this->settings['table'], array ('authors' => NULL), array ('id', 'type', 'title', 'html'), true, 'type, html');
 	}
 	
 	
