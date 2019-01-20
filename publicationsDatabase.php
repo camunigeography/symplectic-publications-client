@@ -206,6 +206,7 @@ class publicationsDatabase extends frontControllerApplication
 			
 			CREATE TABLE `publications` (
 			  `id` int(11) NOT NULL COMMENT 'ID in original datasource' PRIMARY KEY,
+			  `sourceName` varchar(255) NOT NULL COLLATE utf8_unicode_ci COMMENT 'Source',
 			  `type` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL COMMENT 'Type',
 			  `lastModifiedWhen` int(11) NOT NULL COMMENT 'Last modified when (Unixtime)',
 			  `doi` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL COMMENT 'DOI',
@@ -1144,7 +1145,7 @@ EOT;
 		# Convert to list
 		$list = array ();
 		foreach ($data as $publicationId => $publication) {
-			$list[$publicationId] = "<a href=\"{$this->settings['website']}viewobject.html?cid=1&amp;id={$publicationId}\" target=\"_blank\">Edit {$publication['type']}</a> | <a href=\"https://www.google.co.uk/search?q=" . htmlspecialchars (urlencode ($publication['title'])) . "\" target=\"_blank\">Google search</a>: " . $publication['html'];
+			$list[$publicationId] = "<a href=\"{$this->settings['website']}viewobject.html?cid=1&amp;id={$publicationId}\" target=\"_blank\">Edit {$publication['type']}</a> (" . htmlspecialchars ($publication['sourceName']) . ") | <a href=\"https://www.google.co.uk/search?q=" . htmlspecialchars (urlencode ($publication['title'])) . "\" target=\"_blank\">Google search</a>: " . $publication['html'];
 		}
 		
 		# Compile to HTML
@@ -1159,7 +1160,7 @@ EOT;
 	private function getYearMissing ()
 	{
 		# Get the data
-		return $this->databaseConnection->select ($this->settings['database'], $this->settings['table'], array ('publicationYear' => NULL), array ('id', 'type', 'title', 'html'), true, 'type, html');
+		return $this->databaseConnection->select ($this->settings['database'], $this->settings['table'], array ('publicationYear' => NULL), array ('id', 'sourceName', 'type', 'title', 'html'), true, 'type, html');
 	}
 	
 	
@@ -1167,7 +1168,7 @@ EOT;
 	private function getAuthorsMissing ()
 	{
 		# Get the data
-		return $this->databaseConnection->select ($this->settings['database'], $this->settings['table'], array ('authors' => NULL), array ('id', 'type', 'title', 'html'), true, 'type, html');
+		return $this->databaseConnection->select ($this->settings['database'], $this->settings['table'], array ('authors' => NULL), array ('id', 'sourceName', 'type', 'title', 'html'), true, 'type, html');
 	}
 	
 	
@@ -1854,7 +1855,7 @@ EOT;
 			}
 			
 			# Add the publication
-			$html .= "\n\t<li class=\"publication" . htmlspecialchars ($publicationId) . '" ' . ($oldYear ? ' class="oldyear"' : '') . '>' . $publication['html'] . '</li>';
+			$html .= "\n\t<li class=\"publication" . htmlspecialchars ($publicationId) . '-' . htmlspecialchars ($publication['sourceName']) . '" ' . ($oldYear ? ' class="oldyear"' : '') . '>' . $publication['html'] . '</li>';
 		}
 		$html .= "\n</ul>";
 		
@@ -1923,7 +1924,7 @@ EOT;
 			$articles = array ();
 			foreach ($publicationsThisYear as $publicationId => $publication) {
 				$canSplitIfTotal--;
-				$key = 'publication' . $publicationId;
+				$key = 'publication' . $publicationId . '-' . $publication['sourceName'];
 				$articles[$key] = $publication['html'];
 			}
 			
@@ -2228,6 +2229,9 @@ EOT;
 		# Select the record source to use, either the record explicitly marked as is-preferred-record="true", or the next best
 		$sourceId = $this->selectRecordSource ($xpathDom, $publicationNode, $sources);
 		
+		# Obtain the source display name for error-reporting purposes
+		$sourceDisplayName = $this->XPath ($xpathDom, './api:relationship/api:related/api:object/api:records/api:record[@source-id="' . $sourceId . '"]/@source-display-name', $publicationNode);
+		
 		# Zoom in on this record source node
 		$sourceNode = $xpathDom->query ('(./api:relationship/api:related/api:object/api:records/api:record[@source-id="' . $sourceId . '"])[1]/api:native', $publicationNode)->item(0);
 		
@@ -2252,6 +2256,7 @@ EOT;
 		# Add key details
 		$publication = array (
 			'id'					=> $id,
+			'sourceName'			=> $this->XPath ($xpathDom, './api:relationship/api:related/api:object/api:records/api:record[@source-id="' . $sourceId . '"]/@source-name', $publicationNode),
 			'type'					=> $type,
 			'lastModifiedWhen'		=> strtotime ($this->XPath ($xpathDom, './api:relationship/api:related/api:object/@last-modified-when', $publicationNode)),
 			'doi'					=> $this->XPath ($xpathDom, './api:field[@name="doi"]/api:text', $sourceNode),
@@ -2302,11 +2307,11 @@ EOT;
 		
 		# Get the authors
 		$authorsNode = $xpathDom->query ('./api:field[@name="authors"]/api:people/api:person', $sourceNode);
-		list ($publication['authors'], $publication['nameAppearsAsAuthor']) = $this->processContributors ($authorsNode, $xpathDom, $user, $publication['id'], 'author', NULL, $errorHtml);
+		list ($publication['authors'], $publication['nameAppearsAsAuthor']) = $this->processContributors ($authorsNode, $xpathDom, $user, $publication['id'], 'author', $sourceDisplayName, NULL, $errorHtml);
 		
 		# Get the editors
 		$editorsNode = $xpathDom->query ('./api:field[@name="editors"]/api:people/api:person', $sourceNode);
-		list ($publication['editors'], $publication['nameAppearsAsEditor']) = $this->processContributors ($editorsNode, $xpathDom, $user, $publication['id'], 'editor', $additionalEditor, $errorHtml);
+		list ($publication['editors'], $publication['nameAppearsAsEditor']) = $this->processContributors ($editorsNode, $xpathDom, $user, $publication['id'], 'editor', $sourceDisplayName, $additionalEditor, $errorHtml);
 		
 		# Create a compiled HTML version; highlighting is not applied at this stage, as that has to be done at listing runtime depending on the listing context (person/group/all)
 		$publication['html'] = $this->compilePublicationHtml ($publication, $errorHtml);
@@ -2338,7 +2343,7 @@ EOT;
 	
 	
 	# Helper function to process contributors (authors/editors)
-	private function processContributors ($contributorsNode, $xpathDom, $user, $publicationId, $type, $additionalPerson = false, &$errorHtml)
+	private function processContributors ($contributorsNode, $xpathDom, $user, $publicationId, $type, $sourceDisplayName, $additionalPerson = false, &$errorHtml)
 	{
 		# Start a list of contributors and how their name appears
 		$contributors = array ();
@@ -2371,12 +2376,10 @@ EOT;
 		$contributorsString = implode ('|', $contributors);
 		
 		# Register what the name is formatted as, reporting any errors detected
-		if (!$nameAppearsAs) {
-			$errorHtml .= "\n<p class=\"warning\">The {$type}s list for <a href=\"{$this->settings['website']}viewobject.html?cid=1&amp;id={$publicationId}\" target=\"_blank\">publication #{$publicationId}</a> does not appear to contain a match for <em>{$user['displayName']}</em> even though that publication is registered to that user; the {$type}s found were: <em>" . implode ('</em>, <em>', $contributors) . "</em>.</p>";
-			$nameAppearsAs = array ();
+			$errorHtml .= "\n<p class=\"warning\">The {$type}s list for <a href=\"{$this->settings['website']}viewobject.html?cid=1&amp;id={$publicationId}\" target=\"_blank\">publication #{$publicationId}</a> ({$sourceDisplayName}) does not appear to contain a match for <em>{$user['displayName']}</em> even though that publication is registered to that user; the {$type}s found were: <em>" . implode ('</em>, <em>', $contributors) . "</em>.</p>";
 		}
 		if (count ($nameAppearsAs) > 1) {
-			$errorHtml .= "\n<p class=\"warning\">A single unique {$type} match for <a href=\"{$this->settings['website']}viewobject.html?cid=1&amp;id={$publicationId}\" target=\"_blank\">publication #{$publicationId}</a> could not be made against <em>{$user['displayName']}</em>; the matches were: <em>" . implode ('</em>, <em>', $nameAppearsAs) . "</em>.</p>";
+			$errorHtml .= "\n<p class=\"warning\">A single unique {$type} match for <a href=\"{$this->settings['website']}viewobject.html?cid=1&amp;id={$publicationId}\" target=\"_blank\">publication #{$publicationId}</a> ({$sourceDisplayName}) could not be made against <em>{$user['displayName']}</em>; the matches were: <em>" . implode ('</em>, <em>', $nameAppearsAs) . "</em>.</p>";
 			$nameAppearsAs = array ();
 		}
 		$nameAppearsAsString = ($nameAppearsAs ? $nameAppearsAs[0] : NULL);	// Convert the single item to a string, or the empty array to a database NULL
