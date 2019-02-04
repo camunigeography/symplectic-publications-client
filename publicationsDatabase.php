@@ -2373,7 +2373,9 @@ EOT;
 		$contributorsString = implode ('|', $contributors);
 		
 		# Register what the name is formatted as, reporting any errors detected
+		if (!$nameAppearsAs) {
 			$errorHtml .= "\n<p class=\"warning\">The {$type}s list for <a href=\"{$this->settings['website']}viewobject.html?cid=1&amp;id={$publicationId}\" target=\"_blank\">publication #{$publicationId}</a> ({$sourceDisplayName}) does not appear to contain a match for <em>{$user['displayName']}</em> even though that publication is registered to that user; the {$type}s found were: <em>" . implode ('</em>, <em>', $contributors) . "</em>.</p>";
+			$nameAppearsAs = array ();
 		}
 		if (count ($nameAppearsAs) > 1) {
 			$errorHtml .= "\n<p class=\"warning\">A single unique {$type} match for <a href=\"{$this->settings['website']}viewobject.html?cid=1&amp;id={$publicationId}\" target=\"_blank\">publication #{$publicationId}</a> ({$sourceDisplayName}) could not be made against <em>{$user['displayName']}</em>; the matches were: <em>" . implode ('</em>, <em>', $nameAppearsAs) . "</em>.</p>";
