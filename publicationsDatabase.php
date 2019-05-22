@@ -218,7 +218,7 @@ class publicationsDatabase extends frontControllerApplication
 			  `volume` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL COMMENT 'Volume',
 			  `pagination` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL COMMENT 'Pagination',
 			  `publisher` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL COMMENT 'Publisher',
-			  `edition` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL COMMENT 'Publisher',
+			  `edition` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL COMMENT 'Edition',
 			  `editors` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL COMMENT 'Editors',
 			  `parentTitle` text COLLATE utf8_unicode_ci DEFAULT NULL COMMENT 'Parent title',
 			  `number` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL COMMENT 'Number',
@@ -2524,6 +2524,7 @@ EOT;
 		}
 		$html .= (strlen ($publication['journal']) ? " <em>{$publication['journal']}</em>," : '');
 		$html .= (strlen ($publication['volume']) ? " v. {$publication['volume']}," : '');
+		$html .= (strlen ($publication['number']) ? " art. {$publication['number']}," : '');
 		$html .= (strlen ($publication['pagination']) ? " {$publication['pagination']}." : '');
 		$html .= (strlen ($publication['doi']) ? " <a href=\"http://doi.org/{$publication['doi']}\" title=\"Link to publication\" target=\"_blank\">doi:{$publication['doi']}</a>" : '');
 		
