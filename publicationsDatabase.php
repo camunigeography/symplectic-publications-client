@@ -215,6 +215,7 @@ class publicationsDatabase extends frontControllerApplication
 			  `publicationYear` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL COMMENT 'Publication year',
 			  `publicationMonth` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL COMMENT 'Publication month',
 			  `publicationDay` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL COMMENT 'Publication day',
+			  `dateIsAcceptance` INT(1) NULL DEFAULT NULL COMMENT 'Date is acceptance date',
 			  `volume` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL COMMENT 'Volume',
 			  `pagination` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL COMMENT 'Pagination',
 			  `publisher` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL COMMENT 'Publisher',
@@ -2252,6 +2253,13 @@ EOT;
 			}
 		}
 		
+		# If there is no date present, look for an acceptance date
+		$isAcceptanceDate = false;
+		if (!$this->XPath ($xpathDom, './api:field[@name="' . $datesField . '"]/api:date/api:year', $sourceNode)) {
+			$datesField = 'acceptance-date';
+			$isAcceptanceDate = true;
+		}
+		
 		# Add key details
 		$publication = array (
 			'id'					=> $id,
@@ -2264,6 +2272,7 @@ EOT;
 			'publicationYear'		=> $this->XPath ($xpathDom, './api:field[@name="' . $datesField . '"]/api:date/api:year', $sourceNode),
 			'publicationMonth'		=> $this->XPath ($xpathDom, './api:field[@name="' . $datesField . '"]/api:date/api:month', $sourceNode),
 			'publicationDay'		=> $this->XPath ($xpathDom, './api:field[@name="' . $datesField . '"]/api:date/api:day', $sourceNode),
+			'dateIsAcceptance'		=> ($isAcceptanceDate ? 1 : NULL),
 			'volume'				=> $this->XPath ($xpathDom, './api:field[@name="volume"]/api:text', $sourceNode),
 			'pagination'			=> $this->formatPagination (
 				$this->XPath ($xpathDom, './api:field[@name="pagination"]/api:pagination/api:begin-page', $sourceNode),
@@ -2486,7 +2495,7 @@ EOT;
 		} else {
 			$html .= $authors;
 		}
-		$html .= ($publication['publicationYear'] ? ', ' . $publication['publicationYear'] : '') . '. ';
+		$html .= ($publication['publicationYear'] ? ', ' . ($publication['dateIsAcceptance'] ? 'accepted ' : '') . $publication['publicationYear'] : '') . '. ';
 		if (strlen ($publication['url'])) {
 			$html .= '<a href="' . htmlspecialchars ($publication['url']) . '" target="_blank">';
 		}
