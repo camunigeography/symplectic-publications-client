@@ -2293,7 +2293,7 @@ EOT;
 		
 		# Detect no title, as this indicates an upstream data issue
 		if (!strlen ($publication['title'])) {
-			$errorHtml .= "\n<p class=\"warning\">There is no title for <a href=\"{$this->settings['website']}viewobject.html?cid=1&amp;id={$publicationId}\" target=\"_blank\">publication #{$publicationId}</a> ({$sourceDisplayName}), representing a data error.</p>";
+			$errorHtml .= "\n<p class=\"warning\">There is no title for <a href=\"{$this->settings['website']}viewobject.html?cid=1&amp;id={$id}\" target=\"_blank\">publication #{$id}</a> ({$sourceDisplayName}), representing a data error.</p>";
 			// $isFatalError = true;
 			return false;
 		}
