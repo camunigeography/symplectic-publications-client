@@ -2055,6 +2055,9 @@ EOT;
 		// application::dumpData (xml::xml2arrayWithNamespaces ($data));
 		// echo $data; die;
 		
+		# Take no action if no data, e.g. the user has no publications
+		if (!$data) {return false;}
+		
 		# Convert the XML to an array, maintaining namespaced objects
 		if ($format == 'json' || $format == 'data') {
 			$data = xml::xml2arrayWithNamespaces ($data);
