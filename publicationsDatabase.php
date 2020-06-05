@@ -2500,7 +2500,7 @@ EOT;
 		}
 		$html .= ($publication['publicationYear'] ? ', ' . ($publication['dateIsAcceptance'] ? 'accepted ' : '') . $publication['publicationYear'] : '') . '. ';
 		if (strlen ($publication['url'])) {
-			$html .= '<a href="' . htmlspecialchars ($publication['url']) . '" target="_blank">';
+			$html .= '<a href="' . $publication['url'] . '" target="_blank">';
 		}
 		if (($publication['type'] == 'book') || ($publication['type'] == 'internet-publication')) {
 			$html .= '<em>';
