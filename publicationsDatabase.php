@@ -28,6 +28,7 @@ class publicationsDatabase extends frontControllerApplication
 			'apiUsername' => false,
 			'apiPassword' => false,
 			'administrators' => 'administrators',
+			'tabUlClass' => 'tabsflat',
 			'yearsConsideredRecent' => 5,
 			'yearsConsideredRecentMainListing' => 2,
 			'canSplitIfTotal' => 10,
