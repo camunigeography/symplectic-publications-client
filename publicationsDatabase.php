@@ -657,7 +657,14 @@ class publicationsDatabase extends frontControllerApplication
 							}
 							
 							// Add helpful links
-							$('#symplecticpublications').prepend('<ul class="actions spaced">' + (previewMode ? '<li>This listing goes live {$goLiveDate}.</li>' : '') + '<li><a href="{$this->settings['website']}" target="_blank"><img src="/images/icons/pencil.png" /> Add/edit this list</a></li><li><a href="{$baseUrl}/bookcover.html" target="_blank"><img src="/images/icons/book_open.png" /> Add book cover(s)</a></li><li><a href="{$baseUrl}/quickstart.pdf" target="_blank" class="noautoicon"><img src="/images/icons/page.png" /> Help guide (PDF)</a></li></div>');
+							var helpfulLinks = '';
+							helpfulLinks += '<ul class="nobullet right spaced">';
+							helpfulLinks += (previewMode ? '<li>This listing goes live {$goLiveDate}.</li>' : '');
+							helpfulLinks += '<li class="primaryaction"><a href="{$this->settings['website']}" title="Edit this list, by making changes in the University\'s publications database, Symplectic"><img src="/images/icons/pencil.png" /> Add/edit this list</a></li>';
+							helpfulLinks += '<li class="primaryaction"><a href="{$baseUrl}/bookcover.html" title="Add a book cover"><img src="/images/icons/book_open.png" /> Add book cover(s)</a></li>';
+							helpfulLinks += '<li class="primaryaction"><a href="{$baseUrl}/quickstart.pdf?"><img src="/images/icons/page.png" /> Help guide (PDF)</a></li>';
+							helpfulLinks += '</ul>';
+							$('#symplecticpublications').prepend(helpfulLinks);
 							
 							// Toggle div blocks when checkbox is on
 							$('#symplectic').click(function(){
