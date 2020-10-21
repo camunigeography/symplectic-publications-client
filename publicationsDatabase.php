@@ -416,7 +416,8 @@ class publicationsDatabase extends frontControllerApplication
 		
 		# Get the publications for that user
 		if (!$data = $this->getPerson ($this->user, 'book')) {
-			$html .= "\n<p>You do not appear to have any books in the Symplectic system. However, if you have added a book to Symplectic just now, please check back here in a few hours, as there is a slight delay for this website to pick up new publications from Symplectic.</p>";
+			$html .= "\n<p>You do not appear to have any books in the Symplectic system.</p>";
+			$html .= "\n<p>However, if you have added a book to Symplectic just now, please check back here in a few hours, as there is a slight delay for this website to pick up new publications from Symplectic.</p>";
 			echo $html;
 			return true;
 		}
