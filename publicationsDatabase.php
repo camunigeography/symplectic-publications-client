@@ -789,8 +789,14 @@ EOT;
 		# Determine whether to enable the filtering UI, and if so, specify the moniker of the group
 		$filteringUiGroup = (($this->userIsAdministrator || ($this->user && in_array ($this->user, $group['managers']))) ? ($this->action == 'group' ? $moniker : false) : false);
 		
+		# If a remote user has been passed through, add an editing link
+		if (isSet ($_GET['REMOTE_USER'])) {
+			$editingPageUrl = $_SERVER['_SITE_URL'] . $this->baseUrl . '/groups/' . $moniker . '/';
+			$html .= "\n<p class=\"primaryaction right\"><a href=\"{$editingPageUrl}\" title=\"Edit the publications in this list, by filtering out unwanted items\"><img src=\"/images/icons/pencil.png\" class=\"icon\" /> Edit publications</a></p>";
+		}
+		
 		# Render as a list
-		$html = $this->publicationsList ($publications, false, $showStars, $currentlyFiltered, $filteringUiGroup);
+		$html .= $this->publicationsList ($publications, false, $showStars, $currentlyFiltered, $filteringUiGroup);
 		
 		# API output
 		if ($this->action == 'api') {return array ('json' => $publications, 'html' => $html);}
