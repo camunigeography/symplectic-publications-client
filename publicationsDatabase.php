@@ -1462,7 +1462,7 @@ EOT;
 		
 		# Write the lockfile
 		$now = time ();
-		file_put_contents ($this->lockfile, $_SERVER['REMOTE_USER'] . ' ' . date ('Y-m-d H:i:s', $now));
+		file_put_contents ($this->lockfile, 'full' . ' ' . $_SERVER['REMOTE_USER'] . ' ' . date ('Y-m-d H:i:s', $now));
 		
 		# Clear any existing data from the import tables; this should have been done at the end of any previous import
 		$tables = array ($this->settings['table'], 'instances', 'users', 'userorganisations');
