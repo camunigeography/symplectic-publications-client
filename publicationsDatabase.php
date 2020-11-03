@@ -64,6 +64,7 @@ class publicationsDatabase extends frontControllerApplication
 		'thesis-dissertation'	=> 'Theses / dissertations',
 		'c-19'					=> 'Working papers',
 		'software'				=> 'Software',
+		'presentation'			=> 'Presentations',
 	//	'?'						=> 'Datasets',
 	//	'patent'				=> 'Patents',
 	//	'?'						=> 'Performances',
