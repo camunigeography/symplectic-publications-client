@@ -1415,7 +1415,7 @@ EOT;
 		$startTime = time ();
 		
 		# Run the import
-		if (!$totalPublications = $this->doImport ($importOutputHtml)) {
+		if (!$totalPublications = $this->doImport ($_SERVER['REMOTE_USER'], $importOutputHtml)) {
 			$html .= $importOutputHtml;
 			echo $importOutputHtml;
 			return false;
@@ -1445,12 +1445,12 @@ EOT;
 	protected function cronJobs ()
 	{
 		# Run the import
-		$this->doImport ();
+		$this->doImport ('cron');
 	}
 	
 	
 	# Function to run the import
-	private function doImport (&$html = '')
+	private function doImport ($user, &$html = '')
 	{
 		# Start the HTML
 		$html = '';
@@ -1463,7 +1463,7 @@ EOT;
 		
 		# Write the lockfile
 		$now = time ();
-		file_put_contents ($this->lockfile, 'full' . ' ' . $_SERVER['REMOTE_USER'] . ' ' . date ('Y-m-d H:i:s', $now));
+		file_put_contents ($this->lockfile, 'full' . ' ' . $user . ' ' . date ('Y-m-d H:i:s', $now));
 		
 		# Clear any existing data from the import tables; this should have been done at the end of any previous import
 		$tables = array ($this->settings['table'], 'instances', 'users', 'userorganisations');
