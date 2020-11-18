@@ -661,7 +661,7 @@ class publicationsDatabase extends frontControllerApplication
 							var helpfulLinks = '';
 							helpfulLinks += '<ul class="nobullet right spaced">';
 							helpfulLinks += (previewMode ? '<li>This listing goes live {$goLiveDate}.</li>' : '');
-							helpfulLinks += '<li class="primaryaction"><a href="{$this->settings['website']}" title="Edit this list, by making changes in the University\'s publications database, Symplectic"><img src="/images/icons/pencil.png" /> Add/edit this list</a></li>';
+							helpfulLinks += '<li class="primaryaction"><a href="{$this->settings['website']}" title="Edit this list, by making changes in the University\'s publications database, Symplectic"><img src="/images/icons/pencil.png" /> Edit my publications</a></li>';
 							helpfulLinks += '<li class="primaryaction"><a href="{$baseUrl}/bookcover.html" title="Add a book cover"><img src="/images/icons/book_open.png" /> Add book cover(s)</a></li>';
 							helpfulLinks += '<li class="primaryaction"><a href="{$baseUrl}/quickstart.pdf?"><img src="/images/icons/page.png" /> Help guide (PDF)</a></li>';
 							helpfulLinks += '</ul>';
