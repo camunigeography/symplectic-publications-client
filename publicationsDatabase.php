@@ -502,7 +502,7 @@ class publicationsDatabase extends frontControllerApplication
 		$list = array ();
 		foreach ($users as $username => $user) {
 			$nameHtml = htmlspecialchars ($user['forename']) . ' <strong>' . htmlspecialchars ($user['surname']) . '</strong>';
-			$list[$username] = "<a href=\"{$this->baseUrl}/people/{$username}/\">{$nameHtml} ({$user['total']})" . ($user['favourites'] ? " ({$user['favourites']}<img src=\"/images/general/star.png\" class=\"icon favourite\" />)" : '') . '</a>';
+			$list[$username] = "<a href=\"{$this->baseUrl}/people/{$username}/\">{$nameHtml} &lt;{$username}&gt; ({$user['total']})" . ($user['favourites'] ? " ({$user['favourites']}<img src=\"/images/general/star.png\" class=\"icon favourite\" />)" : '') . '</a>';
 		}
 		$html = application::htmlUl ($list);
 		
