@@ -65,9 +65,9 @@ class publicationsDatabase extends frontControllerApplication
 		'c-19'					=> 'Working papers',
 		'software'				=> 'Software',
 		'presentation'			=> 'Presentations',
+		'performance'			=> 'Performances',
 	//	'?'						=> 'Datasets',
 	//	'patent'				=> 'Patents',
-	//	'?'						=> 'Performances',
 	//	'?'						=> 'Compositions',
 	//	'?'						=> 'Designs',
 	//	'?'						=> 'Artefacts',
@@ -2260,6 +2260,7 @@ EOT;
 			'conference'			=> 'start-date',				// "Conference start date"
 			'patent'				=> 'start-date',				// "Awarded date"
 			'thesis-dissertation'	=> 'filed-date',				// "Date submitted"
+			'performance'			=> 'start-date',				// "Start date"
 		);
 		
 		# Check alternative date fields, but prefer the default if it exists, as that relates to actual publication date (rather than e.g. date of a conference)
