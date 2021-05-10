@@ -991,7 +991,7 @@ EOT;
 		# Assemble the username list into a regexp
 		$usernames = '^(' . implode ('|', $usernames) . ')$';
 		
-		# Get the data; uses GROUP_CONCAT method as described at http://www.mysqlperformanceblog.com/2013/10/22/the-power-of-mysqls-group_concat/
+		# Get the data; uses GROUP_CONCAT method as described at https://www.percona.com/blog/2013/10/22/the-power-of-mysql-group_concat/
 		$query = "SELECT
 				publications.*,
 				GROUP_CONCAT(DISTINCT instances.isFavourite) AS isFavourite,
@@ -1441,7 +1441,7 @@ EOT;
 	
 	
 	# Define cron jobs; run using:
-	# 55 4,9,11,13,15,17,19,21 * * * wget -q -O - http://theusername:@example.com/baseUrl/cron/
+	# 55 4,9,11,13,15,17,19,21 * * * wget -q -O - https://theusername:@example.com/baseUrl/cron/
 	protected function cronJobs ()
 	{
 		# Run the import
@@ -1619,7 +1619,7 @@ EOT;
 		# Get the data
 		if (!$xpathDom = $this->getData ('/publication/sources')) {return $sources;}
 		
-		# Loop through each entry in the data; see: http://stackoverflow.com/questions/11886176/ and http://stackoverflow.com/questions/5929263/
+		# Loop through each entry in the data; see: https://stackoverflow.com/questions/11886176/ and https://stackoverflow.com/questions/5929263/
 		$entriesNode = $xpathDom->query ('/default:feed/default:entry');
 		foreach ($entriesNode as $index => $entryNode) {
 			
@@ -2079,7 +2079,7 @@ EOT;
 			$data = xml::xml2arrayWithNamespaces ($data);
 		}
 		
-		# Return an XPath DOM object if required; see: http://stackoverflow.com/a/20318801 and a good explanation of the default namespace at http://web.archive.org/web/20090414184326/http://people.ischool.berkeley.edu/~felix/xml/php-and-xmlns.html
+		# Return an XPath DOM object if required; see: https://stackoverflow.com/a/20318801 and a good explanation of the default namespace at https://web.archive.org/web/20090414184326/http://people.ischool.berkeley.edu/~felix/xml/php-and-xmlns.html
 		if ($format == 'xpathDom') {
 			$dom = new DOMDocument ();
 			$dom->loadXml ($data);
@@ -2120,7 +2120,7 @@ EOT;
 		if (!$data) {
 			
 			# End if no response at all
-			if (!isSet ($http_response_header) || empty ($http_response_header)) {		// It appears that when a failure happens, the magic variable $http_response_header is in fact created but not populated; http://php.net/reserved.variables.httpresponseheader doesn't seem to document this.
+			if (!isSet ($http_response_header) || empty ($http_response_header)) {		// It appears that when a failure happens, the magic variable $http_response_header is in fact created but not populated; https://php.net/reserved.variables.httpresponseheader doesn't seem to document this.
 				$errorHtml = "\n<p class=\"warning\">No response was received for <em>{$url}</em>.</p>";
 				$isFatalError = true;
 				return false;
@@ -2214,7 +2214,7 @@ EOT;
 			$personName = $this->XPath ($xpathDom, '/default:feed/default:title');
 			$personName = $this->extractPersonName ($personName);
 			
-			# Loop through each entry in the data; see: http://stackoverflow.com/questions/11886176/ and http://stackoverflow.com/questions/5929263/
+			# Loop through each entry in the data; see: https://stackoverflow.com/questions/11886176/ and https://stackoverflow.com/questions/5929263/
 			$publicationsNode = $xpathDom->query ('/default:feed/default:entry');
 			foreach ($publicationsNode as $index => $publicationNode) {
 				
