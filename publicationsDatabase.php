@@ -2555,7 +2555,7 @@ EOT;
 		$html .= (strlen ($publication['volume']) ? " v. {$publication['volume']}," : '');
 		$html .= (strlen ($publication['number']) ? " art. {$publication['number']}," : '');
 		$html .= (strlen ($publication['pagination']) ? " {$publication['pagination']}." : '');
-		$html .= (strlen ($publication['doi']) ? " <a href=\"http://doi.org/{$publication['doi']}\" title=\"Link to publication\" target=\"_blank\">doi:{$publication['doi']}</a>" : '');
+		$html .= (strlen ($publication['doi']) ? " <a href=\"https://doi.org/{$publication['doi']}\" title=\"Link to publication\" target=\"_blank\">doi:{$publication['doi']}</a>" : '');
 		
 		# Ensure ends with a dot
 		if (substr ($html, -1) == ',') {$html = substr ($html, 0, -1);}
