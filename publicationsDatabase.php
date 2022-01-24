@@ -2522,7 +2522,7 @@ EOT;
 		if (($publication['type'] == 'book') || ($publication['type'] == 'internet-publication')) {
 			$html .= '<em>';
 		}
-		$html .= "{$publication['title']}";
+		$html .= $publication['title'];
 		if (($publication['type'] == 'book') || ($publication['type'] == 'internet-publication')) {
 			$html .= '</em>';
 		}
