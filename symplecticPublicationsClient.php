@@ -5,14 +5,14 @@
 
 # Licence: GPL
 # (c) Martin Lucas-Smith, University of Cambridge
-# More info: https://github.com/camunigeog/publications-database
+# More info: https://github.com/camunigeog/symplectic-publications-client
 
 
 #!# Consider adding support for direct upload of MP3 files, etc., in the same way as book covers
 
 
 require_once ('frontControllerApplication.php');
-class publicationsDatabase extends frontControllerApplication
+class symplecticPublicationsClient extends frontControllerApplication
 {
 	# Function to assign defaults additional to the general application defaults
 	public function defaults ()
@@ -20,6 +20,7 @@ class publicationsDatabase extends frontControllerApplication
 		# Specify available arguments as defaults or as NULL (to represent a required argument)
 		$defaults = array (
 			'div' => strtolower (__CLASS__),
+			'applicationName' => 'Publications database',
 			'authentication' => true,
 			'database' => 'publications',
 			'table' => 'publications',

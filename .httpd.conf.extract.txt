@@ -3,11 +3,11 @@
 #   Example usage in httpd.conf:
 #   
 #   # Publications database
-#   Include /path/to/publications-database/.httpd.conf.extract.txt
-#   Use MacroPublicationsDatabase "/research/publications" "/path/to/publications-database/:/path/to/php/libraries/"
+#   Include /path/to/symplectic-publications-client/.httpd.conf.extract.txt
+#   Use MacroPublicationsDatabase "/research/publications" "/path/to/symplectic-publications-client/:/path/to/php/libraries/"
 
 
-<Macro MacroPublicationsDatabase $applicationBaseUrl $includePath>
+<Macro MacroSymplecticPublicationsClient $applicationBaseUrl $includePath>
 	
 	<Location $applicationBaseUrl>
 		php_value include_path "$includePath"

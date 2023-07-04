@@ -17,8 +17,8 @@ $settings = array (
 );
 
 # Run the application with the specified settings
-require_once ('publicationsDatabase.php');
-new publicationsDatabase ($settings);
+require_once ('symplecticPublicationsClient.php');
+new symplecticPublicationsClient ($settings);
 
 
 # Define the users callback function
