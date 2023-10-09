@@ -222,6 +222,7 @@ class symplecticPublicationsClient extends frontControllerApplication
 			  `volume` varchar(255) DEFAULT NULL COMMENT 'Volume',
 			  `pagination` varchar(255) DEFAULT NULL COMMENT 'Pagination',
 			  `publisher` varchar(255) DEFAULT NULL COMMENT 'Publisher',
+			  `place` varchar(255) DEFAULT NULL COMMENT 'Place of publication',
 			  `edition` varchar(255) DEFAULT NULL COMMENT 'Edition',
 			  `editors` varchar(255) DEFAULT NULL COMMENT 'Editors',
 			  `parentTitle` text DEFAULT NULL COMMENT 'Parent title',
@@ -2302,6 +2303,7 @@ EOT;
 				$type
 			),
 			'publisher'				=> $this->XPath ($xpathDom, './api:field[@name="publisher"]/api:text', $sourceNode),
+			'place'					=> $this->XPath ($xpathDom, './api:field[@name="place-of-publication"]/api:text', $sourceNode),
 			'parentTitle'			=> $this->XPath ($xpathDom, './api:field[@name="parent-title"]/api:text', $sourceNode),
 			'edition'				=> $this->XPath ($xpathDom, './api:field[@name="edition"]/api:text', $sourceNode),
 			'number'				=> $this->XPath ($xpathDom, './api:field[@name="number"]/api:text', $sourceNode),
@@ -2542,7 +2544,10 @@ EOT;
 			if (strlen ($publication['edition'])) {$html .= ", {$publication['edition']} edition";}
 		}
 		if (($publication['type'] == 'book') || ($publication['type'] == 'chapter') || ($publication['type'] == 'internet-publication')) {
-			if (strlen ($publication['publisher'])) {$html .= ", {$publication['publisher']}";}
+			if (strlen ($publication['publisher'])) {
+				$html .= ", {$publication['publisher']}";
+				if (strlen ($publication['place'])) {$html .= ", {$publication['place']}";}
+			}
 		}
 		if ($publication['type'] == 'internet-publication') {
 			if ($publication['publicationYear']) {
