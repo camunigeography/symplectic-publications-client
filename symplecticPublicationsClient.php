@@ -194,7 +194,7 @@ class symplecticPublicationsClient extends frontControllerApplication
 			  `active` enum('Y','N') NOT NULL DEFAULT 'Y',
 			  `name` varchar(255) NOT NULL,
 			  `email` varchar(255) NOT NULL
-			) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8mb4_unicode_ci COMMENT='Administrators';
+			) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Administrators';
 			
 			CREATE TABLE `instances` (
 			`id` int(11) NOT NULL AUTO_INCREMENT COMMENT 'Automatic key' PRIMARY KEY,
@@ -205,7 +205,7 @@ class symplecticPublicationsClient extends frontControllerApplication
 			  `isFavourite` int(1) DEFAULT NULL COMMENT 'Favourite publication',
 			  `savedAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Automatic timestamp',
 			  INDEX publicationId (publicationId)
-			) ENGINE=MyISAM  DEFAULT CHARSET=utf8 COLLATE=utf8mb4_unicode_ci COMMENT='Table of publications for each user';
+			) ENGINE=MyISAM  DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Table of publications for each user';
 			
 			CREATE TABLE `publications` (
 			  `id` int(11) NOT NULL COMMENT 'ID in original datasource' PRIMARY KEY,
@@ -230,21 +230,21 @@ class symplecticPublicationsClient extends frontControllerApplication
 			  `url` VARCHAR(255) NULL COMMENT 'URL',
 			  `html` text NOT NULL COMMENT 'Compiled HTML representation of record',
 			  `savedAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Automatic timestamp'
-			) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8mb4_unicode_ci COMMENT='Publications';
+			) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Publications';
 			
 			CREATE TABLE `userorganisations` (
 			  `id` int(11) NOT NULL AUTO_INCREMENT COMMENT 'Automatic key' PRIMARY KEY,
 			  `userId` varchar(10) NOT NULL COMMENT 'User ID (join to users.id)',
 			  `organisation` varchar(255) NOT NULL COMMENT 'Organisation',
 			  INDEX userId (userId)
-			) ENGINE=MyISAM  DEFAULT CHARSET=utf8 COLLATE=utf8mb4_unicode_ci COMMENT='Table of organisations of each user';
+			) ENGINE=MyISAM  DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Table of organisations of each user';
 			
 			CREATE TABLE `users` (
 			  `id` varchar(10) NOT NULL COMMENT 'Username' PRIMARY KEY,
 			  `forename` varchar(255) NOT NULL COMMENT 'Forename',
 			  `surname` varchar(255) NOT NULL COMMENT 'Surname',
 			  `savedAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Automatic timestamp'
-			) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8mb4_unicode_ci COMMENT='Table of data of users who have publications';
+			) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Table of data of users who have publications';
 			
 			CREATE TABLE `instances_import` LIKE `instances`;
 			CREATE TABLE `publications_import` LIKE `publications`;
@@ -255,7 +255,7 @@ class symplecticPublicationsClient extends frontControllerApplication
 			  `id` varchar(191) NOT NULL COMMENT 'Group' PRIMARY KEY,
 			  `exclude` text COMMENT 'Publications to exclude, comma-separated',
 			  `savedAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Automatic timestamp'
-			) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8mb4_unicode_ci COMMENT='Table of publications to be excluded for a group';
+			) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Table of publications to be excluded for a group';
 		";
 	}
 	
