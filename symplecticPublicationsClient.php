@@ -1089,8 +1089,8 @@ EOT;
 	public function highlightContributors ($publication, $field, $highlightField)
 	{
 		# Convert the full list of contributors and the list of contributors to be highlighted into arrays
-		$contributorsOriginal = explode ('|', $publication[$field]);
-		$highlightContributors = explode ('|', $publication[$highlightField]);
+		$contributorsOriginal = (strlen ($publication[$field]) ? explode ('|', $publication[$field]) : array ());
+		$highlightContributors = (strlen ($publication[$highlightField]) ? explode ('|', $publication[$highlightField]) : array ());
 		
 		# Add bold to any contributor which is set to be highlighted
 		$contributors = $contributorsOriginal;
