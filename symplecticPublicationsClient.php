@@ -454,6 +454,7 @@ class symplecticPublicationsClient extends frontControllerApplication
 			'allowedExtensions'	=> array ('jpg', 'gif', 'png', ),
 			'forcedFileName'	=> $this->user,		// Avoids race condition issues
 			'required'			=> true,
+			'thumbnail'			=> true,
 		));
 		if (!$result = $form->process ()) {
 			echo $html;
