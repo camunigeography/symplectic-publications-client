@@ -306,7 +306,7 @@ class symplecticPublicationsClient extends frontControllerApplication
 	public function guiSearchBox ()
 	{
 		$tableStatus = $this->databaseConnection->getTableStatus ($this->settings['database'], $this->settings['table']);
-		return $html = "\n<p class=\"small comment\">{$tableStatus['Comment']}</p>";
+		return $html = "\n<p class=\"small comment\"><!-- ignore-changes -->{$tableStatus['Comment']}<!-- /ignore-changes --></p>";
 	}
 	
 	
