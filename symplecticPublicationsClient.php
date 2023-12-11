@@ -220,6 +220,7 @@ class symplecticPublicationsClient extends frontControllerApplication
 			  `publicationDay` varchar(255) DEFAULT NULL COMMENT 'Publication day',
 			  `dateIsAcceptance` INT(1) NULL DEFAULT NULL COMMENT 'Date is acceptance date',
 			  `volume` varchar(255) DEFAULT NULL COMMENT 'Volume',
+			  `issue` varchar(255) DEFAULT NULL COMMENT 'Issue',
 			  `pagination` varchar(255) DEFAULT NULL COMMENT 'Pagination',
 			  `publisher` varchar(255) DEFAULT NULL COMMENT 'Publisher',
 			  `place` varchar(255) DEFAULT NULL COMMENT 'Place of publication',
@@ -2297,6 +2298,7 @@ EOT;
 			'publicationDay'		=> $this->XPath ($xpathDom, './api:field[@name="' . $datesField . '"]/api:date/api:day', $sourceNode),
 			'dateIsAcceptance'		=> ($isAcceptanceDate ? 1 : NULL),
 			'volume'				=> $this->XPath ($xpathDom, './api:field[@name="volume"]/api:text', $sourceNode),
+			'issue'					=> $this->XPath ($xpathDom, './api:field[@name="issue"]/api:text', $sourceNode),
 			'pagination'			=> $this->formatPagination (
 				$this->XPath ($xpathDom, './api:field[@name="pagination"]/api:pagination/api:begin-page', $sourceNode),
 				$this->XPath ($xpathDom, './api:field[@name="pagination"]/api:pagination/api:end-page', $sourceNode),
@@ -2560,6 +2562,7 @@ EOT;
 		}
 		$html .= (strlen ($publication['journal']) ? " <em>{$publication['journal']}</em>," : '');
 		$html .= (strlen ($publication['volume']) ? " v. {$publication['volume']}," : '');
+		$html .= (strlen ($publication['issue']) ? " issue {$publication['issue']}," : '');
 		$html .= (strlen ($publication['number']) ? " art. {$publication['number']}," : '');
 		$html .= (strlen ($publication['pagination']) ? " {$publication['pagination']}." : '');
 		$html .= (strlen ($publication['doi']) ? " <a href=\"https://doi.org/{$publication['doi']}\" title=\"Link to publication\" target=\"_blank\">doi:{$publication['doi']}</a>" : '');
