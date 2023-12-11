@@ -2561,7 +2561,7 @@ EOT;
 			$html .= '.';
 		}
 		$html .= (strlen ($publication['journal']) ? " <em>{$publication['journal']}</em>," : '');
-		$html .= (strlen ($publication['volume']) ? " v. {$publication['volume']}," : '');
+		$html .= (strlen ($publication['volume']) ? " vol. {$publication['volume']}," : '');
 		$html .= (strlen ($publication['issue']) ? " issue {$publication['issue']}," : '');
 		$html .= (strlen ($publication['number']) ? " art. {$publication['number']}," : '');
 		$html .= (strlen ($publication['pagination']) ? " {$publication['pagination']}." : '');
