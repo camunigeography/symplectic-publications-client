@@ -33,15 +33,7 @@
 		php_value auto_append_file none
 		
 		# Avoid any higher-up access controls
-		#  Apache 2.2:
-		<IfModule !mod_authz_core.c>
-			Satisfy Any
-		</IfModule>
-		#  Apache 2.4:
-		<IfModule mod_authz_core.c>
-			Require all granted
-		</IfModule>
-
+		Require all granted
 	</LocationMatch>
 	
 	# Permit uploads
