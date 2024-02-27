@@ -1,1 +1,1 @@
-55 4,9,11,13,15,17,19,21 * * * wget -q -O - http://theusername:@example.com/baseUrl/cron/
+0 1,3,5,7,9,11,13,15,17,19,21,23 * * *  root  cd /var/www/mysite/publications/ && DOCUMENT_ROOT="/var/www/mysite/" SERVER_ADMIN="webmaster@example.com" php -d include_path="/var/www/mysite/:/path/to/repo/symplectic-publications-client/:/path/to/libraries/" index.html cron

@@ -1444,8 +1444,7 @@ EOT;
 	}
 	
 	
-	# Define cron jobs; run using:
-	# 55 4,9,11,13,15,17,19,21 * * * wget -q -O - https://theusername:@example.com/baseUrl/cron/
+	# Define cron jobs; run as per example file .cron-example.job
 	protected function cronJobs ()
 	{
 		# Run the import
