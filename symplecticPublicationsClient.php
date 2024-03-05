@@ -11,7 +11,6 @@
 #!# Consider adding support for direct upload of MP3 files, etc., in the same way as book covers
 
 
-require_once ('frontControllerApplication.php');
 class symplecticPublicationsClient extends frontControllerApplication
 {
 	# Function to assign defaults additional to the general application defaults
@@ -469,7 +468,6 @@ class symplecticPublicationsClient extends frontControllerApplication
 		
 		# Resize
 		$thumbnailFile = $_SERVER['DOCUMENT_ROOT'] . $this->settings['bookcoversLocation'] . $result['book'] . '.' . $this->settings['bookcoversFormat'];
-		require_once ('image.php');
 		image::resize ($uploadedFile, $outputFormat = 'jpg', $newWidth = '', $this->settings['bookcoversHeight'], $thumbnailFile, false);
 		
 		# Confirm success
@@ -2634,7 +2632,6 @@ EOT;
 		}
 			
 		# Show the result
-		require_once ('xml.php');
 		$html .= xml::formatter ($data);
 		
 		# Show the HTML

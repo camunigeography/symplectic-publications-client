@@ -4,14 +4,10 @@
 #   
 #   # Publications database
 #   Include /path/to/symplectic-publications-client/.httpd.conf.extract.txt
-#   Use MacroPublicationsDatabase "/research/publications" "/path/to/symplectic-publications-client/:/path/to/php/libraries/"
+#   Use MacroPublicationsDatabase "/research/publications"
 
 
-<Macro MacroSymplecticPublicationsClient $applicationBaseUrl $includePath>
-	
-	<Location $applicationBaseUrl>
-		php_value include_path "$includePath"
-	</Location>
+<Macro MacroSymplecticPublicationsClient $applicationBaseUrl>
 	
 	Use MacroFrontControllerApplication "$applicationBaseUrl/" "Publications database"
 	

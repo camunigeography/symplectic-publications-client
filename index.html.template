@@ -17,7 +17,7 @@ $settings = array (
 );
 
 # Run the application with the specified settings
-require_once ('symplecticPublicationsClient.php');
+require_once ('vendor/autoload.php');
 new symplecticPublicationsClient ($settings);
 
 

@@ -1,0 +1,18 @@
+{
+    "name": "camunigeography/symplectic-publications-client",
+    "description": "Publications database (Symplectic integration)",
+    "type": "project",
+    "license": "GPL-3.0-only",
+    "minimum-stability": "stable",
+    "require": {
+        "libpurecontent/frontcontrollerapplication": "^1.13",
+        "libpurecontent/image": "^1.4",
+        "libpurecontent/xml": "^1.11",
+        "libpurecontent/application": "^1.9",
+        "libpurecontent/ultimateform": "^1.29"
+    },
+    "autoload": {
+        "files": ["symplecticPublicationsClient.php"]
+    }
+
+}
