@@ -1940,26 +1940,25 @@ EOT;
 	# Helper function to create a show/hidden link for a list
 	private function showHideLinkUl ($namespace, $label, $hasRecent)
 	{
-		# Enable jQuery
-		$this->jQueryEnabled = true;
-		
 		# Compile the expansion message
 		$message = 'Show ' . ($hasRecent ? 'earlier ' : '') . lcfirst ($label);
 		
 		# Compile the HTML
+		$selector = "#publications{$namespace} li.oldyear";
 		$html  = "\n\n<!-- Show/hide link -->";
-		$html .= "\n" . '<script type="text/javascript">
-			$(document).ready(function(){
-				$("#publications' . $namespace . ' li.oldyear").hide();
-				$("#publications' . $namespace . '").after("<p class=\"showall\" id=\"showall' . $namespace . '\"><a href=\"#showall' . $namespace . '\">&#9660; ' . $message . ' &hellip;</a></p>");
-				$("#showall' . $namespace . ' a").click(function(e){
-					e.preventDefault();
-					$("#showall' . $namespace . '").hide();
-					$("#publications' . $namespace . ' li.oldyear").show();
+		$html .= "\n" . "<script type=\"text/javascript\">
+			document.addEventListener ('DOMContentLoaded', function () {
+				document.querySelectorAll ('{$selector}').forEach (function (element) {element.style.display = 'none';});
+				const showButtonHtml = '<p class=\"showall\" id=\"showall" . $namespace . "\"><a href=\"#showall" . $namespace . "\">&#9660; " . $message . " &hellip;</a></p>';
+				document.querySelector ('#publications" . $namespace . "').insertAdjacentHTML ('beforeend', showButtonHtml);
+				document.querySelector ('#showall" . $namespace . " a').addEventListener ('click', function (e) {
+					e.preventDefault ();
+					document.querySelector ('#showall" . $namespace . "').style.display = 'none';
+					document.querySelectorAll ('{$selector}').forEach (function (element) {element.style.display = 'block';});
 				});
 			});
 		</script>
-		';
+		";
 		
 		# Return the HTML
 		return $html;
@@ -1969,23 +1968,22 @@ EOT;
 	# Helper function to create a show/hidden link for a div
 	private function showHideLinkDiv ($namespace, $label)
 	{
-		# Enable jQuery
-		$this->jQueryEnabled = true;
-		
 		# Compile the HTML
+		$selector = "#olderpublications{$namespace}";
 		$html  = "\n\n<!-- Show/hide link -->";
-		$html .= "\n" . '<script type="text/javascript">
-			$(document).ready(function(){
-				$("#olderpublications' . $namespace . '").hide();
-				$("#olderpublications' . $namespace . '").before("<p class=\"showall\" id=\"showall' . $namespace . '\"><a href=\"#showall' . $namespace . '\">&#9660; Show earlier ' . lcfirst ($label) . ' &hellip;</a></p>");
-				$("#showall' . $namespace . ' a").click(function(e){
-					e.preventDefault();
-					$("#showall' . $namespace . '").hide();
-					$("#olderpublications' . $namespace . '").show();
+		$html .= "\n" . "<script type=\"text/javascript\">
+			document.addEventListener ('DOMContentLoaded', function () {
+				document.querySelector ('{$selector}').style.display = 'none';
+				const showButtonHtml = '<p class=\"showall\" id=\"showall" . $namespace . "\"><a href=\"#showall" . $namespace . "\">&#9660; Show earlier " . lcfirst ($label) . " &hellip;</a></p>';
+				document.querySelector ('#olderpublications" . $namespace . "').insertAdjacentHTML ('beforebegin', showButtonHtml);
+				document.querySelector ('#showall" . $namespace . " a').addEventListener ('click', function (e) {
+					e.preventDefault ();
+					document.querySelector ('#showall" . $namespace . "').style.display = 'none';
+					document.querySelector ('{$selector}').style.display = 'block';
 				});
 			});
 		</script>
-		';
+		";
 		
 		# Return the HTML
 		return $html;
