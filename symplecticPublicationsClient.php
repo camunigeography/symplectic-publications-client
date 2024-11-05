@@ -612,13 +612,13 @@ class symplecticPublicationsClient extends frontControllerApplication
 				$(function(){
 					
 					// Define username
-					var username = '{$username}';
+					const username = '{$username}';
 					
 					// Whether to show the toggle button
-					var showTools = {$showToolsJs};
+					const showTools = {$showToolsJs};
 					
 					// Whether to enable preview mode
-					var previewMode = {$previewModeJs};
+					const previewMode = {$previewModeJs};
 					
 					// Add checkbox container
 					$('#publications').before('<div id="symplecticswitch" />');
@@ -660,7 +660,7 @@ class symplecticPublicationsClient extends frontControllerApplication
 							}
 							
 							// Add helpful links
-							var helpfulLinks = '';
+							let helpfulLinks = '';
 							helpfulLinks += '<ul class="nobullet right spaced">';
 							helpfulLinks += (previewMode ? '<li>This listing goes live {$goLiveDate}.</li>' : '');
 							helpfulLinks += '<li class="primaryaction"><a href="{$this->settings['website']}" title="Edit this list, by making changes in the University\'s publications database, Symplectic"><img src="/images/icons/pencil.png" /> Edit my publications</a></li>';
@@ -1824,7 +1824,7 @@ EOT;
 			$(document).ready(function(){
 				
 				// Fade out pre-checked checkboxes
-				var fadedOpacity = 0.25;
+				const fadedOpacity = 0.25;
 				$(':checkbox').each(function () {
 					if (this.checked) {
 						$(this).parent('li').css( 'opacity', fadedOpacity );
@@ -1833,7 +1833,7 @@ EOT;
 				
 				// Fade/unfade if checked
 				$(':checkbox').click(function() {
-					var opacity = ($(this).is(':checked') ? fadedOpacity : 1);
+					const opacity = ($(this).is(':checked') ? fadedOpacity : 1);
 					$(this).parent('li').css( 'opacity', opacity );
 				});
 			});
