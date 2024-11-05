@@ -5,11 +5,11 @@
     "license": "GPL-3.0-only",
     "minimum-stability": "stable",
     "require": {
-        "libpurecontent/frontcontrollerapplication": "^1.13",
-        "libpurecontent/image": "^1.4",
-        "libpurecontent/xml": "^1.11",
-        "libpurecontent/application": "^1.9",
-        "libpurecontent/ultimateform": "^1.29"
+        "libpurecontent/frontcontrollerapplication": "^1.13.7",
+        "libpurecontent/image": "^1.4.2",
+        "libpurecontent/xml": "^1.11.1",
+        "libpurecontent/application": "^1.9.4",
+        "libpurecontent/ultimateform": "^1.29.7"
     },
     "autoload": {
         "files": ["symplecticPublicationsClient.php"]
