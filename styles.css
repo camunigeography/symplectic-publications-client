@@ -3,6 +3,7 @@
 /* #publicationslist #olderpublications {opacity: 0.5;} */
 #symplecticpublicationsclient #publicationslist ul li {text-align: left;}
 #symplecticpublicationsclient #publicationslist ul li img.favourite, #symplecticpublicationsclient img.favourite {position: relative; top: -2px;}
+#symplecticpublicationsclient #publicationslist ul li:has(input:checked) {opacity: 0.25;}
 #symplecticpublicationsclient div.code pre {white-space: pre; overflow-x: scroll;}
 #symplecticpublicationsclient table.statistics th {background-color: #f7f7f7;}
 #symplecticpublicationsclient table.statistics td {min-width: 60px; padding-right: 1.5em;}

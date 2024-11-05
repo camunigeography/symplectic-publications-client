@@ -1817,29 +1817,6 @@ EOT;
 			$html = $confirmationHtml . $html;
 		}
 		
-		# Add javascript to fade out publications as they are ticked
-		$this->jQueryEnabled = true;
-		$html .= "\n\n<!-- Show/hide link -->";
-		$html .= "\n" . "<script type=\"text/javascript\">
-			$(document).ready(function(){
-				
-				// Fade out pre-checked checkboxes
-				const fadedOpacity = 0.25;
-				$(':checkbox').each(function () {
-					if (this.checked) {
-						$(this).parent('li').css( 'opacity', fadedOpacity );
-					}
-				});
-				
-				// Fade/unfade if checked
-				$(':checkbox').click(function() {
-					const opacity = ($(this).is(':checked') ? fadedOpacity : 1);
-					$(this).parent('li').css( 'opacity', opacity );
-				});
-			});
-		</script>
-		";
-		
 		# Return the HTML
 		return $html;
 	}
