@@ -56,6 +56,7 @@ class symplecticPublicationsClient extends frontControllerApplication
 	private $types = array (
 		'book'					=> 'Books',
 		'journal-article'		=> 'Journal articles',
+		'preprint'				=> 'Pre-prints',
 		'chapter'				=> 'Book chapters',
 		'conference'			=> 'Conference proceedings',
 		'internet-publication'	=> 'Internet publications',
