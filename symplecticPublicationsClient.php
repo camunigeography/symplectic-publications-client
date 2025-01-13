@@ -65,6 +65,7 @@ class symplecticPublicationsClient extends frontControllerApplication
 		'c-19'					=> 'Working papers',
 		'software'				=> 'Software',
 		'presentation'			=> 'Presentations',
+		'media'					=> 'Media',
 		'performance'			=> 'Performances',
 	//	'?'						=> 'Datasets',
 	//	'patent'				=> 'Patents',
