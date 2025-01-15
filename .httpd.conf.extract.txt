@@ -7,10 +7,15 @@
 #   Use MacroPublicationsDatabase "/research/publications"
 
 
-<Macro MacroSymplecticPublicationsClient $applicationBaseUrl>
+<Macro MacroSymplecticPublicationsClient $applicationBaseUrl $repoDirectory>
 	
+	# Load assets
+	Alias $applicationBaseUrl/dist $repoDirectory/dist
+	
+	# Front controller application support
 	Use MacroFrontControllerApplication "$applicationBaseUrl/" "Publications database"
 	
+	# Application routing
 	RewriteRule ^$applicationBaseUrl/(people|groups|import|statistics)/(|json|html)$ $applicationBaseUrl/index.html?action=$1&api=$2 [L]
 	RedirectMatch permanent ^$applicationBaseUrl/(people|groups|recent|import|statistics)$ $applicationBaseUrl/$1/
 	RewriteRule ^$applicationBaseUrl/(recent)/(|json|html)$ $applicationBaseUrl/index.html?action=$1&api=$2 [L,QSA]
