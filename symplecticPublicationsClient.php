@@ -1828,11 +1828,8 @@ class symplecticPublicationsClient extends frontControllerApplication
 				if (!$oldYearsOpened && ($year <= $this->firstOldYear) && $canSplitIfTotal <= 0) {
 					$oldYearsOpened = true;
 					
-					# Add a show/hide link for the div
-					$html .= $this->showHideLinkDiv ($namespace, $label);
-					
 					# Add the div
-					$html .= "\n\n<div id=\"olderpublications" . $namespace . "\">\n";
+					$html .= "\n\n" . '<div class="olderpublications" data-type="' . $type . '" data-label="' . htmlspecialchars ($label)	 . '">' . "\n";
 				}
 			}
 			
@@ -1852,6 +1849,11 @@ class symplecticPublicationsClient extends frontControllerApplication
 		# Close the old years div if it was created
 		if ($oldYearsOpened) {
 			$html .= "\n\n</div><!-- /#olderpublications -->\n";
+		}
+		
+		# Add JS for show/hide links if required
+		if ($oldYearsOpened) {
+			$html .= $this->showHideLinkDivJs ();
 		}
 		
 		# Return the HTML
@@ -1886,19 +1888,25 @@ class symplecticPublicationsClient extends frontControllerApplication
 	
 	
 	# Helper function to create a show/hidden link for a div
-	private function showHideLinkDiv ($namespace, $label)
+	private function showHideLinkDivJs ()
 	{
 		# Compile the HTML
-		$selector = "#olderpublications{$namespace}";
-		$html  = "\n\n<!-- Show/hide link -->";
 		$html .= "\n" . "<script>
-			document.querySelector ('{$selector}').style.display = 'none';
-			var showButtonHtml = '<p class=\"showall\" id=\"showall" . $namespace . "\"><a href=\"#showall" . $namespace . "\">&#9660; Show earlier " . lcfirst ($label) . " &hellip;</a></p>';
-			document.querySelector ('#olderpublications" . $namespace . "').insertAdjacentHTML ('beforebegin', showButtonHtml);
-			document.querySelector ('#showall" . $namespace . " a').addEventListener ('click', function (e) {
-				e.preventDefault ();
-				document.querySelector ('#showall" . $namespace . "').style.display = 'none';
-				document.querySelector ('{$selector}').style.display = 'block';
+			// Show/hide link for each set of expandable publications type
+			document.querySelectorAll ('.olderpublications').forEach (function (olderPublicationsDiv) {
+				olderPublicationsDiv.style.display = 'none';
+				
+				const type = olderPublicationsDiv.dataset.type;
+				const label = olderPublicationsDiv.dataset.label;
+				
+				const showButtonHtml = '<p class=\"showall\" data-type=\"' + type + '\"><a href=\"#\">&#9660; Show earlier ' + label + ' &hellip;</a></p>';
+				olderPublicationsDiv.insertAdjacentHTML ('beforebegin', showButtonHtml);
+				
+				document.querySelector ('.showall[data-type=\"' + type + '\"] a').addEventListener ('click', function (e) {
+					e.preventDefault ();
+					document.querySelector ('.showall[data-type=\"' + type + '\"]').style.display = 'none';
+					olderPublicationsDiv.style.display = 'block';
+				});
 			});
 		</script>
 		";
