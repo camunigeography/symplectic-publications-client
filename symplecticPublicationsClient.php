@@ -609,14 +609,15 @@ class symplecticPublicationsClient extends frontControllerApplication
 			<script>
 				document.addEventListener ('DOMContentLoaded', function () {
 					
-					// Define username
-					const username = '{$username}';
-					
-					// Whether to show the toggle button
-					const showTools = {$showToolsJs};
-					
-					// Whether to enable preview mode
-					const previewMode = {$previewModeJs};
+					// Define settings
+					const settings = {
+						username: '{$username}',
+						showTools: {$showToolsJs},
+						previewMode: {$previewModeJs},
+						baseUrl: '{$baseUrl}',
+						goLiveDate: '{$goLiveDate}',
+						website: '{$this->settings['website']}'
+					};
 					
 					// Add checkbox container
 					document.querySelector ('#publications').insertAdjacentHTML ('beforebegin', '<div id="symplecticswitch" />');
@@ -646,7 +647,7 @@ class symplecticPublicationsClient extends frontControllerApplication
 					};
 					
 					// Attempt to get the HTML (will be run asyncronously) from the API for this user, or return 404
-					const apiUrl = '{$baseUrl}/people/' + username + '/html';
+					const apiUrl = settings.baseUrl + '/people/' + settings.username + '/html';
 					fetch (apiUrl)
 					.then (function (response) {
 						if (response.ok) {return response.text ();}
@@ -663,12 +664,12 @@ class symplecticPublicationsClient extends frontControllerApplication
 						
 						// Add a location for the new publications block
 						document.querySelector ('#manualpublications').insertAdjacentHTML ('afterend', '<div id="symplecticpublications" />');
-						if (previewMode) {
+						if (settings.previewMode) {
 							document.querySelector ('#symplecticpublications').classList.add ('proposed');
 						}
 						
 						// Determine whether to show or hide by default
-						if (previewMode) {
+						if (settings.previewMode) {
 							document.querySelector ('#symplecticpublications').style.display = 'none';
 						} else {
 							document.querySelector ('#manualpublications').style.display = 'none';
@@ -687,23 +688,23 @@ class symplecticPublicationsClient extends frontControllerApplication
 						});
 						
 						// Show tools if required
-						if (showTools) {
+						if (settings.showTools) {
 							
 							// Add checkbox
 							document.querySelector ('#symplecticswitch').innerHTML = '<p><label for="symplectic">Show Symplectic version? </label><input type="checkbox" id="symplectic" name="symplectic" /></p>';
 							
 							// Check by default when live
-							if (!previewMode) {
+							if (!settings.previewMode) {
 								document.querySelector ('#symplecticswitch input[type="checkbox"]').checked = true;
 							}
 							
 							// Add helpful links
 							let helpfulLinks = '';
 							helpfulLinks += '<ul class="nobullet right spaced">';
-							helpfulLinks += (previewMode ? '<li>This listing goes live {$goLiveDate}.</li>' : '');
-							helpfulLinks += '<li class="primaryaction"><a href="{$this->settings['website']}" title="Edit this list, by making changes in the University\'s publications database, Symplectic"><img src="/images/icons/pencil.png" /> Edit my publications</a></li>';
-							helpfulLinks += '<li class="primaryaction"><a href="{$baseUrl}/bookcover.html" title="Add a book cover"><img src="/images/icons/book_open.png" /> Add book cover(s)</a></li>';
-							helpfulLinks += '<li class="primaryaction"><a href="{$baseUrl}/quickstart.pdf?"><img src="/images/icons/page.png" /> Help guide (PDF)</a></li>';
+							helpfulLinks += (settings.previewMode ? '<li>This listing goes live ' + settings.goLiveDate + '.</li>' : '');
+							helpfulLinks += '<li class="primaryaction"><a href="' + settings.website + '" title="Edit this list, by making changes in the University\'s publications database, Symplectic"><img src="/images/icons/pencil.png" /> Edit my publications</a></li>';
+							helpfulLinks += '<li class="primaryaction"><a href="' + settings.baseUrl + '/bookcover.html" title="Add a book cover"><img src="/images/icons/book_open.png" /> Add book cover(s)</a></li>';
+							helpfulLinks += '<li class="primaryaction"><a href="' + settings.baseUrl + '/quickstart.pdf?"><img src="/images/icons/page.png" /> Help guide (PDF)</a></li>';
 							helpfulLinks += '</ul>';
 							document.querySelector ('#symplecticpublications').insertAdjacentHTML ('beforebegin', helpfulLinks);
 							
