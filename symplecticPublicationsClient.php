@@ -91,9 +91,6 @@ class symplecticPublicationsClient extends frontControllerApplication
 		'other',
 	);
 	
-	# General class properties
-	private $jQueryEnabled = false;
-	
 	
 	# Function to assign additional actions
 	public function actions ()
@@ -609,9 +606,8 @@ class symplecticPublicationsClient extends frontControllerApplication
 				#symplecticpublications.proposed {border-top: 1px dashed #ccc; border-bottom: 1px dashed #ccc; padding: 5px 0; background-color: #f7f7f7;}
 				#symplecticpublications img.bookcover {min-width: 170px; margin: 5px 10px 12px 0; box-shadow: 5px 5px 10px 0 #aaa;}
 			</style>
-			<script type="text/javascript" src="/javascripts/libs/jquery-min.js"></script>
-			<script type="text/javascript">
-				$(function(){
+			<script>
+				document.addEventListener ('DOMContentLoaded', function () {
 					
 					// Define username
 					const username = '{$username}';
@@ -623,42 +619,82 @@ class symplecticPublicationsClient extends frontControllerApplication
 					const previewMode = {$previewModeJs};
 					
 					// Add checkbox container
-					$('#publications').before('<div id="symplecticswitch" />');
+					document.querySelector ('#publications').insertAdjacentHTML ('beforebegin', '<div id="symplecticswitch" />');
+					
+					// Function to get the elements until a selector; see: https://gomakethings.com/how-to-get-all-sibling-elements-until-a-match-is-found-with-vanilla-javascript/
+					const nextUntil = function (element, selector)
+					{
+						const siblings = [];
+						element = element.nextElementSibling;
+						while (element) {
+							if (element.matches (selector)) break;
+							siblings.push (element);
+							element = element.nextElementSibling;
+						}
+						return siblings;
+					};
+					
+					// Function to wrapper elements in a div; see: https://stackoverflow.com/a/48389433
+					const wrapAll = function (elements, wrapperId)
+					{
+						const wrapper = document.createElement ('div');
+						wrapper.setAttribute ('id', wrapperId);
+						elements.forEach (function (child) {
+							wrapper.appendChild (child);
+						});
+						return wrapper;
+					};
 					
 					// Attempt to get the HTML (will be run asyncronously) from the API for this user, or return 404
-					$.get('{$baseUrl}/people/' + username + '/html', function (symplecticpublicationsHtml) {
+					const apiUrl = '{$baseUrl}/people/' + username + '/html';
+					fetch (apiUrl)
+					.then (function (response) {
+						if (response.ok) {return response.text ();}
+						else {throw new Error ('Error: ' + response.status);}
+					})
+					.then (function (symplecticpublicationsHtml) {
 						
 						// Surround existing (manual) publications block with a div, automatically, unless already present
-						if($('#manualpublications').length == 0) {
-							$('h2#publications').nextUntil('h2').wrapAll('<div id="manualpublications" />');
+						if (!document.querySelector ('#manualpublications')) {
+							const publicationSectionElements = nextUntil (document.querySelector ('h2#publications'), 'h2');
+							const manualPublicationsDiv = wrapAll (publicationSectionElements, 'manualpublications');
+							document.querySelector ('h2#publications').after (manualPublicationsDiv);
 						}
 						
 						// Add a location for the new publications block
-						$('#manualpublications').after('<div id="symplecticpublications" />');
+						document.querySelector ('#manualpublications').insertAdjacentHTML ('afterend', '<div id="symplecticpublications" />');
 						if (previewMode) {
-							$('#symplecticpublications').addClass('proposed');
+							document.querySelector ('#symplecticpublications').classList.add ('proposed');
 						}
 						
 						// Determine whether to show or hide by default
 						if (previewMode) {
-							$('#symplecticpublications').hide();
+							document.querySelector ('#symplecticpublications').style.display = 'none';
 						} else {
-							$('#manualpublications').hide();
-							$('#symplecticpublications').show();
+							document.querySelector ('#manualpublications').style.display = 'none';
+							document.querySelector ('#symplecticpublications').style.display = 'block';
 						}
 						
 						// Add the HTML from the API
-						$('#symplecticpublications').html(symplecticpublicationsHtml);
+						document.querySelector ('#symplecticpublications').innerHTML = symplecticpublicationsHtml;
+						
+						// Execute scripts, as innerHTML will not execute <script> tags; see: https://stackoverflow.com/questions/1197575/
+						var parser = new DOMParser ();
+						var documentHtml = parser.parseFromString (symplecticpublicationsHtml, 'text/html');
+						var scriptTags = documentHtml.getElementsByTagName ('script');
+						Array.from (scriptTags).forEach (function (scriptTag) {
+							eval (scriptTag.innerHTML);		// Known source
+						});
 						
 						// Show tools if required
-						if(showTools) {
+						if (showTools) {
 							
 							// Add checkbox
-							$('#symplecticswitch').html('<p><label for="symplectic">Show Symplectic version? </label><input type="checkbox" id="symplectic" name="symplectic" /></p>');
+							document.querySelector ('#symplecticswitch').innerHTML = '<p><label for="symplectic">Show Symplectic version? </label><input type="checkbox" id="symplectic" name="symplectic" /></p>';
 							
 							// Check by default when live
 							if (!previewMode) {
-								$('#symplecticswitch input[type="checkbox"]').prop('checked', true);
+								document.querySelector ('#symplecticswitch input[type="checkbox"]').checked = true;
 							}
 							
 							// Add helpful links
@@ -669,23 +705,18 @@ class symplecticPublicationsClient extends frontControllerApplication
 							helpfulLinks += '<li class="primaryaction"><a href="{$baseUrl}/bookcover.html" title="Add a book cover"><img src="/images/icons/book_open.png" /> Add book cover(s)</a></li>';
 							helpfulLinks += '<li class="primaryaction"><a href="{$baseUrl}/quickstart.pdf?"><img src="/images/icons/page.png" /> Help guide (PDF)</a></li>';
 							helpfulLinks += '</ul>';
-							$('#symplecticpublications').prepend(helpfulLinks);
+							document.querySelector ('#symplecticpublications').insertAdjacentHTML ('beforebegin', helpfulLinks);
 							
 							// Toggle div blocks when checkbox is on
-							$('#symplectic').click(function(){
-								if ($('#symplectic').is(':checked')) {
-									$('#symplecticpublications').show();
-									$('#manualpublications').hide();
-								} else {
-									$('#manualpublications').show();
-									$('#symplecticpublications').hide();
-								}
+							document.querySelector ('#symplectic').addEventListener ('click', function (e) {
+								document.querySelector ('#symplecticpublications').style.display = (e.target.checked ? 'block' : 'none');
+								document.querySelector ('#manualpublications').style.display = (e.target.checked ? 'none' : 'block');
 							});
 						}
-						
-					// No such user (error 404)
-					}).fail(function(){
-						$('#symplecticswitch').html('<p>(No publications found in Symplectic.)</p>');
+					})
+					.catch (function (error) {
+						//console.log (error);
+						document.querySelector ('#symplecticswitch').innerHTML = '<p>(No publications found in Symplectic.)</p>';
 					});
 				});
 			</script>
@@ -1737,11 +1768,6 @@ EOT;
 			}
 		}
 		
-		# Prepend with jQuery loading if required
-		if ($this->jQueryEnabled) {
-			$html = "\n" . '<script src="//code.jquery.com/jquery-1.11.1.min.js"></script>' . $html;
-		}
-		
 		# Surround with a div
 		$html = "\n\n\n<div id=\"publicationslist\">" . "\n" . $html . "\n\n</div><!-- /#publicationslist -->\n\n";
 		
@@ -1830,7 +1856,7 @@ EOT;
 		# Start the HTML with label
 		$html  = "\n<h3>{$label}</h3>";
 		
-		# Determine a namespace extension for the jQuery references
+		# Determine a namespace extension for the query selector references
 		$namespace = '_' . str_replace ('-', '', $type);
 		
 		# Compile the list
@@ -1855,7 +1881,7 @@ EOT;
 		}
 		$html .= "\n</ul>";
 		
-		# Add jQuery expandability at the end of the list
+		# Add expandability at the end of the list
 		if ($oldYear) {
 			$html .= $this->showHideLinkUl ($namespace, $label, $hasRecent);
 		}
@@ -1895,7 +1921,7 @@ EOT;
 		# Regroup the remaining items by year
 		$publications = application::regroup ($publications, 'publicationYear', false);
 		
-		# Determine a namespace extension for the jQuery references
+		# Determine a namespace extension for the query selector references
 		$namespace = '_' . str_replace ('-', '', $type);
 		
 		# Loop through each year
@@ -1948,16 +1974,14 @@ EOT;
 		# Compile the HTML
 		$selector = "#publications{$namespace} li.oldyear";
 		$html  = "\n\n<!-- Show/hide link -->";
-		$html .= "\n" . "<script type=\"text/javascript\">
-			document.addEventListener ('DOMContentLoaded', function () {
-				document.querySelectorAll ('{$selector}').forEach (function (element) {element.style.display = 'none';});
-				const showButtonHtml = '<p class=\"showall\" id=\"showall" . $namespace . "\"><a href=\"#showall" . $namespace . "\">&#9660; " . $message . " &hellip;</a></p>';
-				document.querySelector ('#publications" . $namespace . "').insertAdjacentHTML ('beforeend', showButtonHtml);
-				document.querySelector ('#showall" . $namespace . " a').addEventListener ('click', function (e) {
-					e.preventDefault ();
-					document.querySelector ('#showall" . $namespace . "').style.display = 'none';
-					document.querySelectorAll ('{$selector}').forEach (function (element) {element.style.display = 'block';});
-				});
+		$html .= "\n" . "<script>
+			document.querySelectorAll ('{$selector}').forEach (function (element) {element.style.display = 'none';});
+			var showButtonHtml = '<p class=\"showall\" id=\"showall" . $namespace . "\"><a href=\"#showall" . $namespace . "\">&#9660; " . $message . " &hellip;</a></p>';
+			document.querySelector ('#publications" . $namespace . "').insertAdjacentHTML ('beforeend', showButtonHtml);
+			document.querySelector ('#showall" . $namespace . " a').addEventListener ('click', function (e) {
+				e.preventDefault ();
+				document.querySelector ('#showall" . $namespace . "').style.display = 'none';
+				document.querySelectorAll ('{$selector}').forEach (function (element) {element.style.display = 'list-item';});
 			});
 		</script>
 		";
@@ -1973,16 +1997,14 @@ EOT;
 		# Compile the HTML
 		$selector = "#olderpublications{$namespace}";
 		$html  = "\n\n<!-- Show/hide link -->";
-		$html .= "\n" . "<script type=\"text/javascript\">
-			document.addEventListener ('DOMContentLoaded', function () {
-				document.querySelector ('{$selector}').style.display = 'none';
-				const showButtonHtml = '<p class=\"showall\" id=\"showall" . $namespace . "\"><a href=\"#showall" . $namespace . "\">&#9660; Show earlier " . lcfirst ($label) . " &hellip;</a></p>';
-				document.querySelector ('#olderpublications" . $namespace . "').insertAdjacentHTML ('beforebegin', showButtonHtml);
-				document.querySelector ('#showall" . $namespace . " a').addEventListener ('click', function (e) {
-					e.preventDefault ();
-					document.querySelector ('#showall" . $namespace . "').style.display = 'none';
-					document.querySelector ('{$selector}').style.display = 'block';
-				});
+		$html .= "\n" . "<script>
+			document.querySelector ('{$selector}').style.display = 'none';
+			var showButtonHtml = '<p class=\"showall\" id=\"showall" . $namespace . "\"><a href=\"#showall" . $namespace . "\">&#9660; Show earlier " . lcfirst ($label) . " &hellip;</a></p>';
+			document.querySelector ('#olderpublications" . $namespace . "').insertAdjacentHTML ('beforebegin', showButtonHtml);
+			document.querySelector ('#showall" . $namespace . " a').addEventListener ('click', function (e) {
+				e.preventDefault ();
+				document.querySelector ('#showall" . $namespace . "').style.display = 'none';
+				document.querySelector ('{$selector}').style.display = 'block';
 			});
 		</script>
 		";
