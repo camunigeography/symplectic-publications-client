@@ -1838,6 +1838,9 @@ class symplecticPublicationsClient extends frontControllerApplication
 	{
 		$html = "\n" . "<script>
 			
+			'use strict';
+			
+			
 			oldYearExpandabilityDiv ();
 			oldYearExpandabilityUl ();
 			
@@ -1876,7 +1879,7 @@ class symplecticPublicationsClient extends frontControllerApplication
 				document.querySelectorAll ('ul.publicationslist').forEach (function (ul) {
 					
 					// End if no hiding required
-					hiddenLis = ul.querySelectorAll ('li.oldyear');
+					const hiddenLis = ul.querySelectorAll ('li.oldyear');
 					const totalHidden = hiddenLis.length;
 					if (!totalHidden) {return; /* continue to next */}
 					
