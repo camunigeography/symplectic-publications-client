@@ -1665,8 +1665,9 @@ class symplecticPublicationsClient extends frontControllerApplication
 		# Surround with a div
 		$html = "\n\n\n<div id=\"publicationslist\">" . "\n" . $html . "\n\n</div><!-- /#publicationslist -->\n\n";
 		
-		# Add expandability function for list types
-		$html .= $this->showHideLinkUl ();
+		# Add expandability function
+		$html .= $this->showHideLinkDivJs ();	// Year-based blocks
+		$html .= $this->showHideLinkUl ();		// List items within a list
 		
 		# Add book cover CSS
 		$html = "\n\n<style type=\"text/css\">\n\t#publicationslist p.bookcovers img {margin-right: 12px; margin-bottom: 16px; box-shadow: 5px 5px 10px #888;}\n</style>" . $html;
@@ -1753,25 +1754,10 @@ class symplecticPublicationsClient extends frontControllerApplication
 		# Start the HTML with label
 		$html  = "\n<h3>{$label}</h3>";
 		
-		# Determine a namespace extension for the query selector references
-		$namespace = '_' . str_replace ('-', '', $type);
-		
 		# Compile the list
-		$oldYear = false;
-		$html .= "\n<ul id=\"publications{$namespace}\" data-type=\"{$type}\" data-label=\"{$this->types[$type]}\">";
+		$html .= "\n<ul class=\"publicationslist\" data-type=\"{$type}\" data-label=\"{$this->types[$type]}\">";
 		foreach ($publications as $publicationId => $publication) {
-			
-			# If enabled, for the first old year, open a div for Javascript filtering purposes
-			if (in_array ($type, $this->expandableTypes)) {
-				if (!$oldYear) {		// If not already found, check
-					if ($publication['publicationYear'] <= $this->firstOldYear) {
-						$oldYear = true;
-					}
-				}
-			}
-			
-			# Add the publication
-			$html .= "\n\t<li class=\"publication" . htmlspecialchars ($publicationId) . '-' . htmlspecialchars ($publication['sourceName']) . ($oldYear ? ' oldyear' : '') . '"' . ($oldYear ? " data-type=\"{$type}\"" : '') . '>' . $publication['html'] . '</li>';
+			$html .= "\n\t<li class=\"publication" . htmlspecialchars ($publicationId) . '-' . htmlspecialchars ($publication['sourceName']) . ($publication['publicationYear'] <= $this->firstOldYear ? ' oldyear' : '') . '">' . $publication['html'] . '</li>';
 		}
 		$html .= "\n</ul>";
 		
@@ -1810,9 +1796,6 @@ class symplecticPublicationsClient extends frontControllerApplication
 		# Regroup the remaining items by year
 		$publications = application::regroup ($publications, 'publicationYear', false);
 		
-		# Determine a namespace extension for the query selector references
-		$namespace = '_' . str_replace ('-', '', $type);
-		
 		# Loop through each year
 		$oldYearsOpened = false;
 		$canSplitIfTotal = $this->settings['canSplitIfTotal'];
@@ -1824,7 +1807,7 @@ class symplecticPublicationsClient extends frontControllerApplication
 					$oldYearsOpened = true;
 					
 					# Add the div
-					$html .= "\n\n" . '<div class="olderpublications" data-type="' . $type . '" data-label="' . htmlspecialchars (lcfirst ($label))	 . '">' . "\n";
+					$html .= "\n\n" . '<div class="oldyear" data-type="' . $type . '" data-label="' . htmlspecialchars (lcfirst ($label))	 . '">' . "\n";
 				}
 			}
 			
@@ -1843,12 +1826,7 @@ class symplecticPublicationsClient extends frontControllerApplication
 		
 		# Close the old years div if it was created
 		if ($oldYearsOpened) {
-			$html .= "\n\n</div><!-- /#olderpublications -->\n";
-		}
-		
-		# Add JS for show/hide links if required
-		if ($oldYearsOpened) {
-			$html .= $this->showHideLinkDivJs ();
+			$html .= "\n\n</div><!-- /#oldyear -->\n";
 		}
 		
 		# Return the HTML
@@ -1859,42 +1837,38 @@ class symplecticPublicationsClient extends frontControllerApplication
 	# Helper function to create a show/hidden link for a list
 	private function showHideLinkUl ()
 	{
-		$html  = "\n\n<!-- 	 -->";
-		$html .= "\n" . "<script>
+		$html = "\n" . "<script>
 			
-			// Find all types that have list items being hidden
-			let types = [];
-			document.querySelectorAll ('li.oldyear').forEach (function (li) {
-				li.style.display = 'none';
-				types.push (li.dataset.type);
-			});
-			types = [...new Set (types)];	// Unique the array
+			// Show/hide link for each set of expandable publications type that has list items being hidden
 			
-			// Add reveal functionality for each such type
-			types.forEach (function (type) {
+			// Check each publications list ul
+			document.querySelectorAll ('ul.publicationslist').forEach (function (ul) {
 				
 				// End if no hiding required
-				const totalHidden = document.querySelectorAll ('ul[data-type=\"' + type + '\"] li.oldyear').length;
-				console.log (type, totalHidden);
+				hiddenLis = ul.querySelectorAll ('li.oldyear');
+				const totalHidden = hiddenLis.length;
 				if (!totalHidden) {return; /* continue to next */}
 				
 				// Determine label, based on whether the set has recent publications
-				const totalPublications = document.querySelectorAll ('ul[data-type=\"' + type + '\"] li').length;
-				const label = 'Show ' + (totalHidden < totalPublications ? 'earlier ' : '') + document.querySelector ('ul[data-type=\"' + type + '\"]').dataset.label.toLowerCase ();
+				const type = ul.dataset.type;
+				const totalPublications = ul.querySelectorAll ('li').length;
+				const label = 'Show ' + (totalHidden < totalPublications ? 'earlier ' : '') + ul.dataset.label.toLowerCase ();
 				
 				// Add button
-				const showButtonHtml = '<p class=\"showall\" id=\"showall' + type + '\"><a href=\"#showall\"' + type + '\">&#9660; ' + label + ' &hellip;</a></p>';
-				document.querySelector ('ul[data-type=\"' + type + '\"]').insertAdjacentHTML ('beforeend', showButtonHtml);
+				const showButtonHtml = '<p class=\"showall\" data-type=\"' + type + '\"><a href=\"#showall\"' + type + '\">&#9660; ' + label + ' &hellip;</a></p>';
+				ul.insertAdjacentHTML ('beforeend', showButtonHtml);
 				
 				// Show items and hide the button
-				document.querySelector ('#showall' + type + ' a').addEventListener ('click', function (e) {
+				const showButton = document.querySelector ('.showall[data-type=\"' + type + '\"]');
+				showButton.querySelector ('a').addEventListener ('click', function (e) {
 					e.preventDefault ();
-					document.querySelector ('#showall' + type).style.display = 'none';
-					document.querySelectorAll ('ul[data-type=\"' + type + '\"] li').forEach (function (element) {
+					showButton.style.display = 'none';
+					hiddenLis.forEach (function (element) {
 						element.style.removeProperty ('display');	// Revert to default
 					});
 				});
 			});
+		
 		</script>
 		";
 		
@@ -1906,22 +1880,26 @@ class symplecticPublicationsClient extends frontControllerApplication
 	# Helper function to create a show/hidden link for a div
 	private function showHideLinkDivJs ()
 	{
-		# Compile the HTML
-		$html .= "\n" . "<script>
+		$html = "\n" . "<script>
+			
 			// Show/hide link for each set of expandable publications type
-			document.querySelectorAll ('.olderpublications').forEach (function (olderPublicationsDiv) {
-				olderPublicationsDiv.style.display = 'none';
+			
+			// Find all divs marked with .oldyear
+			document.querySelectorAll ('div.oldyear').forEach (function (oldyearDiv) {
+				const type = oldyearDiv.dataset.type;
 				
-				const type = olderPublicationsDiv.dataset.type;
-				const label = olderPublicationsDiv.dataset.label;
+				// Hide the year
+				oldyearDiv.style.display = 'none';
 				
-				const showButtonHtml = '<p class=\"showall\" data-type=\"' + type + '\"><a href=\"#\">&#9660; Show earlier ' + label + ' &hellip;</a></p>';
-				olderPublicationsDiv.insertAdjacentHTML ('beforebegin', showButtonHtml);
+				// Add button
+				const showButtonHtml = '<p class=\"showall\" data-type=\"' + type + '\"><a href=\"#\">&#9660; Show earlier ' + oldyearDiv.dataset.label + ' &hellip;</a></p>';
+				oldyearDiv.insertAdjacentHTML ('beforebegin', showButtonHtml);
 				
+				// Show the year
 				document.querySelector ('.showall[data-type=\"' + type + '\"] a').addEventListener ('click', function (e) {
 					e.preventDefault ();
 					document.querySelector ('.showall[data-type=\"' + type + '\"]').style.display = 'none';
-					olderPublicationsDiv.style.display = 'block';
+					oldyearDiv.style.display = 'block';
 				});
 			});
 		</script>
