@@ -11,6 +11,9 @@ const symplecticPublications = (function () {
 			const anchorPoint = 'h2#publications';
 			const publicationsHeading = document.querySelector (anchorPoint);
 			
+			// End if no anchor to attach to
+			if (!publicationsHeading) {return;}
+			
 			// Add styles
 			const styles = `<style type="text/css">
 				#symplecticswitch {margin-bottom: 20px;}
