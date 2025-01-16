@@ -564,7 +564,7 @@ class symplecticPublicationsClient extends frontControllerApplication
 	
 	
 	# Function to provide a side-by-side comparison system for migration
-	public function autoreplace ($baseUrl, $username, $previewMode, $goLiveDate = 'soon')
+	public function autoreplace ($baseUrl, $username, $previewMode)
 	{
 		# Ensure the page has a publications div
 		if (!$contents = file_get_contents ($_SERVER['SCRIPT_FILENAME'])) {return false;}
@@ -608,7 +608,6 @@ class symplecticPublicationsClient extends frontControllerApplication
 						username: '{$username}',
 						showTools: {$showToolsJs},
 						previewMode: {$previewModeJs},
-						goLiveDate: '{$goLiveDate}',
 						website: '{$this->settings['website']}'
 					};
 					symplecticPublications.init (settings);

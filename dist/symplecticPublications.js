@@ -105,7 +105,7 @@ const symplecticPublications = (function () {
 					// Add helpful links
 					let helpfulLinks = '';
 					helpfulLinks += '<ul class="nobullet right spaced">';
-					helpfulLinks += (settings.previewMode ? '<li>This listing goes live ' + settings.goLiveDate + '.</li>' : '');
+					helpfulLinks += (settings.previewMode ? '<li>This listing goes live soon.</li>' : '');
 					helpfulLinks += '<li class="primaryaction"><a href="' + settings.website + '" title="Edit this list, by making changes in the University\'s publications database, Symplectic"><img src="/images/icons/pencil.png" /> Edit my publications</a></li>';
 					helpfulLinks += '<li class="primaryaction"><a href="' + settings.baseUrl + '/bookcover.html" title="Add a book cover"><img src="/images/icons/book_open.png" /> Add book cover(s)</a></li>';
 					helpfulLinks += '<li class="primaryaction"><a href="' + settings.baseUrl + '/quickstart.pdf?"><img src="/images/icons/page.png" /> Help guide (PDF)</a></li>';
