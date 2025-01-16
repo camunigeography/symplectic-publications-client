@@ -13,7 +13,7 @@ const symplecticPublications = (function () {
 			
 			// End if no anchor to attach to
 			if (!publicationsHeading) {return;}
-			
+							
 			// Add styles
 			const styles = `<style type="text/css">
 				#symplecticswitch {margin-bottom: 20px;}
@@ -50,14 +50,21 @@ const symplecticPublications = (function () {
 				return wrapper;
 			};
 			
+			// Define a token for no publications found
+			const noPublicationsFound = 'NO_SUCH_USER';
+			
 			// Attempt to get the HTML (will be run asyncronously) from the API for this user, or return 404
 			const apiUrl = settings.baseUrl + '/people/' + settings.username + '/html';
 			fetch (apiUrl)
 			.then (function (response) {
+				if (response.status == 204) {return noPublicationsFound;}		// 204 indicates no such user; ideally this string would appear in the HTTP response, but 204 deliberately sends 0 length content
 				if (response.ok) {return response.text ();}
 				else {throw new Error ('Error: ' + response.status);}
 			})
 			.then (function (symplecticpublicationsHtml) {
+				
+				// Do nothing if no publications found
+				if (symplecticpublicationsHtml == noPublicationsFound) {return;}
 				
 				// Surround existing (manual) publications block with a div, automatically, unless already present
 				let manualPublicationsDiv = document.querySelector ('#manualpublications');

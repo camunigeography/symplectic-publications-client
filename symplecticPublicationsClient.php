@@ -529,7 +529,10 @@ class symplecticPublicationsClient extends frontControllerApplication
 		# Ensure the person is present, or end
 		if (!$user = $this->userHasPublications ($username)) {
 			$errorMessage = 'There is no such user.';
-			if ($this->action == 'api') {return array ('json' => array ('error' => $errorMessage), 'html' => $html);}
+			if ($this->action == 'api') {
+				header ('HTTP/1.1 204 No Content');		// Zero-length content will be sent as per the HTTP specification
+				return array ('json' => array (), 'html' => $html);
+			}
 			$html .= "\n<p>{$errorMessage}</p>";
 			echo $html;
 			return true;
