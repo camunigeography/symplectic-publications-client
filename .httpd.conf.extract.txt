@@ -37,6 +37,11 @@
 		Require all granted
 	</LocationMatch>
 	
+	# Distribution
+	<Location $applicationBaseUrl/dist>
+		Require all granted
+	</Location>
+	
 	# Permit uploads
 	<Location $applicationBaseUrl/bookcover.html>
 		php_admin_flag file_uploads on
