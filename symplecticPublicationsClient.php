@@ -1867,6 +1867,11 @@ class symplecticPublicationsClient extends frontControllerApplication
 			// Show/hide link for each set of expandable publications type that has list items being hidden
 			function oldYearExpandabilityUl ()
 			{
+				// Hide all .oldyear li items
+				document.querySelectorAll ('li.oldyear').forEach (function (li) {
+					li.style.display = 'none';
+				});
+			
 				// Check each publications list ul
 				document.querySelectorAll ('ul.publicationslist').forEach (function (ul) {
 					
