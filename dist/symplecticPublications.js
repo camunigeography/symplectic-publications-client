@@ -7,6 +7,10 @@ const symplecticPublications = (function () {
 		
 		init: function (settings)
 		{
+			// Locate the anchor point
+			const anchorPoint = 'h2#publications';
+			const publicationsHeading = document.querySelector (anchorPoint);
+			
 			// Add styles
 			const styles = `<style type="text/css">
 				#symplecticswitch {margin-bottom: 20px;}
@@ -14,10 +18,10 @@ const symplecticPublications = (function () {
 				#symplecticpublications.proposed {border-top: 1px dashed #ccc; border-bottom: 1px dashed #ccc; padding: 5px 0; background-color: #f7f7f7;}
 				#symplecticpublications img.bookcover {min-width: 170px; margin: 5px 10px 12px 0; box-shadow: 5px 5px 10px 0 #aaa;}
 			</style>`;
-			document.querySelector ('#publications').insertAdjacentHTML ('beforeend', styles);
+			publicationsHeading.insertAdjacentHTML ('beforeend', styles);
 			
 			// Add checkbox container
-			document.querySelector ('#publications').insertAdjacentHTML ('beforebegin', '<div id="symplecticswitch" />');
+			publicationsHeading.insertAdjacentHTML ('beforebegin', '<div id="symplecticswitch" />');
 			
 			// Function to get the elements until a selector; see: https://gomakethings.com/how-to-get-all-sibling-elements-until-a-match-is-found-with-vanilla-javascript/
 			const nextUntil = function (element, selector)
@@ -53,28 +57,30 @@ const symplecticPublications = (function () {
 			.then (function (symplecticpublicationsHtml) {
 				
 				// Surround existing (manual) publications block with a div, automatically, unless already present
-				if (!document.querySelector ('#manualpublications')) {
-					const publicationSectionElements = nextUntil (document.querySelector ('h2#publications'), 'h2');
-					const manualPublicationsDiv = wrapAll (publicationSectionElements, 'manualpublications');
-					document.querySelector ('h2#publications').after (manualPublicationsDiv);
+				let manualPublicationsDiv = document.querySelector ('#manualpublications');
+				if (!manualPublicationsDiv) {
+					const publicationSectionElements = nextUntil (publicationsHeading, 'h2');
+					manualPublicationsDiv = wrapAll (publicationSectionElements, 'manualpublications');
+					publicationsHeading.after (manualPublicationsDiv);
 				}
 				
 				// Add a location for the new publications block
-				document.querySelector ('#manualpublications').insertAdjacentHTML ('afterend', '<div id="symplecticpublications" />');
+				manualPublicationsDiv.insertAdjacentHTML ('afterend', '<div id="symplecticpublications" />');
+				const symplecticPublicationsDiv = document.querySelector ('#symplecticpublications');
 				if (settings.previewMode) {
-					document.querySelector ('#symplecticpublications').classList.add ('proposed');
+					symplecticPublicationsDiv.classList.add ('proposed');
 				}
 				
 				// Determine whether to show or hide by default
 				if (settings.previewMode) {
-					document.querySelector ('#symplecticpublications').style.display = 'none';
+					symplecticPublicationsDiv.style.display = 'none';
 				} else {
-					document.querySelector ('#manualpublications').style.display = 'none';
-					document.querySelector ('#symplecticpublications').style.display = 'block';
+					manualPublicationsDiv.style.display = 'none';
+					symplecticPublicationsDiv.style.display = 'block';
 				}
 				
 				// Add the HTML from the API
-				document.querySelector ('#symplecticpublications').innerHTML = symplecticpublicationsHtml;
+				symplecticPublicationsDiv.innerHTML = symplecticpublicationsHtml;
 				
 				// Execute scripts, as innerHTML will not execute <script> tags; see: https://stackoverflow.com/questions/1197575/
 				var parser = new DOMParser ();
@@ -88,11 +94,12 @@ const symplecticPublications = (function () {
 				if (settings.showTools) {
 					
 					// Add checkbox
-					document.querySelector ('#symplecticswitch').innerHTML = '<p><label for="symplectic">Show Symplectic version? </label><input type="checkbox" id="symplectic" name="symplectic" /></p>';
+					const symplecticSwitch = document.querySelector ('#symplecticswitch');
+					symplecticSwitch.innerHTML = '<p><label for="symplectic">Show Symplectic version? </label><input type="checkbox" id="symplectic" name="symplectic" /></p>';
 					
 					// Check by default when live
 					if (!settings.previewMode) {
-						document.querySelector ('#symplecticswitch input[type="checkbox"]').checked = true;
+						symplecticSwitch.querySelector ('input[type="checkbox"]').checked = true;
 					}
 					
 					// Add helpful links
@@ -103,12 +110,12 @@ const symplecticPublications = (function () {
 					helpfulLinks += '<li class="primaryaction"><a href="' + settings.baseUrl + '/bookcover.html" title="Add a book cover"><img src="/images/icons/book_open.png" /> Add book cover(s)</a></li>';
 					helpfulLinks += '<li class="primaryaction"><a href="' + settings.baseUrl + '/quickstart.pdf?"><img src="/images/icons/page.png" /> Help guide (PDF)</a></li>';
 					helpfulLinks += '</ul>';
-					document.querySelector ('#symplecticpublications').insertAdjacentHTML ('beforebegin', helpfulLinks);
+					symplecticPublicationsDiv.insertAdjacentHTML ('beforebegin', helpfulLinks);
 					
 					// Toggle div blocks when checkbox is on
 					document.querySelector ('#symplectic').addEventListener ('click', function (e) {
-						document.querySelector ('#symplecticpublications').style.display = (e.target.checked ? 'block' : 'none');
-						document.querySelector ('#manualpublications').style.display = (e.target.checked ? 'none' : 'block');
+						symplecticPublicationsDiv.style.display = (e.target.checked ? 'block' : 'none');
+						manualPublicationsDiv.style.display = (e.target.checked ? 'none' : 'block');
 					});
 				}
 			})
