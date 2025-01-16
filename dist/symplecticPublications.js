@@ -67,17 +67,10 @@ const symplecticPublications = (function () {
 				// Add a location for the new publications block
 				manualPublicationsDiv.insertAdjacentHTML ('afterend', '<div id="symplecticpublications" />');
 				const symplecticPublicationsDiv = document.querySelector ('#symplecticpublications');
-				if (settings.previewMode) {
-					symplecticPublicationsDiv.classList.add ('proposed');
-				}
 				
-				// Determine whether to show or hide by default
-				if (settings.previewMode) {
-					symplecticPublicationsDiv.style.display = 'none';
-				} else {
-					manualPublicationsDiv.style.display = 'none';
-					symplecticPublicationsDiv.style.display = 'block';
-				}
+				// Set initial styles
+				manualPublicationsDiv.style.display = 'none';
+				symplecticPublicationsDiv.style.display = 'block';
 				
 				// Add the HTML from the API
 				symplecticPublicationsDiv.innerHTML = symplecticpublicationsHtml;
@@ -98,14 +91,11 @@ const symplecticPublications = (function () {
 					symplecticSwitch.innerHTML = '<p><label for="symplectic">Show Symplectic version? </label><input type="checkbox" id="symplectic" name="symplectic" /></p>';
 					
 					// Check by default when live
-					if (!settings.previewMode) {
-						symplecticSwitch.querySelector ('input[type="checkbox"]').checked = true;
-					}
+					symplecticSwitch.querySelector ('input[type="checkbox"]').checked = true;
 					
 					// Add helpful links
 					let helpfulLinks = '';
 					helpfulLinks += '<ul class="nobullet right spaced">';
-					helpfulLinks += (settings.previewMode ? '<li>This listing goes live soon.</li>' : '');
 					helpfulLinks += '<li class="primaryaction"><a href="' + settings.website + '" title="Edit this list, by making changes in the University\'s publications database, Symplectic"><img src="/images/icons/pencil.png" /> Edit my publications</a></li>';
 					helpfulLinks += '<li class="primaryaction"><a href="' + settings.baseUrl + '/bookcover.html" title="Add a book cover"><img src="/images/icons/book_open.png" /> Add book cover(s)</a></li>';
 					helpfulLinks += '<li class="primaryaction"><a href="' + settings.baseUrl + '/quickstart.pdf?"><img src="/images/icons/page.png" /> Help guide (PDF)</a></li>';

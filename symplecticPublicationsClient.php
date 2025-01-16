@@ -564,16 +564,14 @@ class symplecticPublicationsClient extends frontControllerApplication
 	
 	
 	# Function to provide a side-by-side comparison system for migration
-	public function autoreplace ($baseUrl, $username, $previewMode)
+	public function autoreplace ($baseUrl, $username)
 	{
 		# Ensure the page has a publications div
 		if (!$contents = file_get_contents ($_SERVER['SCRIPT_FILENAME'])) {return false;}
 		if (!substr_count ($contents, '<h2 id="publications">')) {return false;}
 		
-		# When live, do nothing if the user has no publications
-		if (!$previewMode) {
-			if (!$this->userHasPublications ($username)) {return false;}
-		}
+		# Do nothing if the user has no publications
+		if (!$this->userHasPublications ($username)) {return false;}
 		
 		# Determine if the user is authorised for internal functions
 		$authorisedUser = false;
@@ -590,13 +588,6 @@ class symplecticPublicationsClient extends frontControllerApplication
 		}
 		$showToolsJs = ($authorisedUser ? 'true' : 'false');
 		
-		# In preview mode, require an authorised user
-		if ($previewMode) {
-			if (!$authorisedUser) {return false;}
-		}
-		
-		$previewModeJs = ($previewMode ? 'true' : 'false');
-		
 		# Define the HTML
 		$html = "\n\n
 		<!-- Load publications -->
@@ -607,7 +598,6 @@ class symplecticPublicationsClient extends frontControllerApplication
 						baseUrl: '{$baseUrl}',
 						username: '{$username}',
 						showTools: {$showToolsJs},
-						previewMode: {$previewModeJs},
 						website: '{$this->settings['website']}'
 					};
 					symplecticPublications.init (settings);
