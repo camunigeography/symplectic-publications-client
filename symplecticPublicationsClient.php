@@ -569,13 +569,6 @@ class symplecticPublicationsClient extends frontControllerApplication
 	# Function to provide a side-by-side comparison system for migration
 	public function autoreplace ($baseUrl, $username)
 	{
-		# Ensure the page has a publications div
-		if (!$contents = file_get_contents ($_SERVER['SCRIPT_FILENAME'])) {return false;}
-		if (!substr_count ($contents, '<h2 id="publications">')) {return false;}
-		
-		# Do nothing if the user has no publications
-		if (!$this->userHasPublications ($username)) {return false;}
-		
 		# Determine if the user is authorised for internal functions
 		$authorisedUser = false;
 		if ($_SERVER['REMOTE_USER']) {
