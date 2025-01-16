@@ -1665,9 +1665,8 @@ class symplecticPublicationsClient extends frontControllerApplication
 		# Surround with a div
 		$html = "\n\n\n<div id=\"publicationslist\">" . "\n" . $html . "\n\n</div><!-- /#publicationslist -->\n\n";
 		
-		# Add expandability function
-		$html .= $this->showHideLinkDivJs ();	// Year-based blocks
-		$html .= $this->showHideLinkUl ();		// List items within a list
+		# Add expandability JS functions
+		$html .= $this->oldYearExpandabilityJs ();
 		
 		# Add book cover CSS
 		$html = "\n\n<style type=\"text/css\">\n\t#publicationslist p.bookcovers img {margin-right: 12px; margin-bottom: 16px; box-shadow: 5px 5px 10px #888;}\n</style>" . $html;
@@ -1835,73 +1834,68 @@ class symplecticPublicationsClient extends frontControllerApplication
 	
 	
 	# Helper function to create a show/hidden link for a list
-	private function showHideLinkUl ()
+	private function oldYearExpandabilityJs ()
 	{
 		$html = "\n" . "<script>
 			
-			// Show/hide link for each set of expandable publications type that has list items being hidden
-			
-			// Check each publications list ul
-			document.querySelectorAll ('ul.publicationslist').forEach (function (ul) {
-				
-				// End if no hiding required
-				hiddenLis = ul.querySelectorAll ('li.oldyear');
-				const totalHidden = hiddenLis.length;
-				if (!totalHidden) {return; /* continue to next */}
-				
-				// Determine label, based on whether the set has recent publications
-				const type = ul.dataset.type;
-				const totalPublications = ul.querySelectorAll ('li').length;
-				const label = 'Show ' + (totalHidden < totalPublications ? 'earlier ' : '') + ul.dataset.label.toLowerCase ();
-				
-				// Add button
-				const showButtonHtml = '<p class=\"showall\" data-type=\"' + type + '\"><a href=\"#showall\"' + type + '\">&#9660; ' + label + ' &hellip;</a></p>';
-				ul.insertAdjacentHTML ('beforeend', showButtonHtml);
-				
-				// Show items and hide the button
-				const showButton = document.querySelector ('.showall[data-type=\"' + type + '\"]');
-				showButton.querySelector ('a').addEventListener ('click', function (e) {
-					e.preventDefault ();
-					showButton.style.display = 'none';
-					hiddenLis.forEach (function (element) {
-						element.style.removeProperty ('display');	// Revert to default
-					});
-				});
-			});
-		
-		</script>
-		";
-		
-		# Return the HTML
-		return $html;
-	}
-	
-	
-	# Helper function to create a show/hidden link for a div
-	private function showHideLinkDivJs ()
-	{
-		$html = "\n" . "<script>
+			oldYearExpandabilityDiv ();
+			oldYearExpandabilityUl ();
 			
 			// Show/hide link for each set of expandable publications type
-			
-			// Find all divs marked with .oldyear
-			document.querySelectorAll ('div.oldyear').forEach (function (oldyearDiv) {
-				const type = oldyearDiv.dataset.type;
-				
-				// Hide the year
-				oldyearDiv.style.display = 'none';
-				
-				// Add button
-				const showButtonHtml = '<p class=\"showall\" data-type=\"' + type + '\"><a href=\"#\">&#9660; Show earlier ' + oldyearDiv.dataset.label + ' &hellip;</a></p>';
-				oldyearDiv.insertAdjacentHTML ('beforebegin', showButtonHtml);
-				
-				// Show the year
-				document.querySelector ('.showall[data-type=\"' + type + '\"] a').addEventListener ('click', function (e) {
-					e.preventDefault ();
-					document.querySelector ('.showall[data-type=\"' + type + '\"]').style.display = 'none';
-					oldyearDiv.style.display = 'block';
+			function oldYearExpandabilityDiv ()
+			{
+				// Find all divs marked with .oldyear
+				document.querySelectorAll ('div.oldyear').forEach (function (oldyearDiv) {
+					const type = oldyearDiv.dataset.type;
+					
+					// Hide the year
+					oldyearDiv.style.display = 'none';
+					
+					// Add button
+					const showButtonHtml = '<p class=\"showall\" data-type=\"' + type + '\"><a href=\"#\">&#9660; Show earlier ' + oldyearDiv.dataset.label + ' &hellip;</a></p>';
+					oldyearDiv.insertAdjacentHTML ('beforebegin', showButtonHtml);
+					
+					// Show the year
+					document.querySelector ('.showall[data-type=\"' + type + '\"] a').addEventListener ('click', function (e) {
+						e.preventDefault ();
+						document.querySelector ('.showall[data-type=\"' + type + '\"]').style.display = 'none';
+						oldyearDiv.style.display = 'block';
+					});
 				});
-			});
+			}
+
+			// Show/hide link for each set of expandable publications type that has list items being hidden
+			function oldYearExpandabilityUl ()
+			{
+				// Check each publications list ul
+				document.querySelectorAll ('ul.publicationslist').forEach (function (ul) {
+					
+					// End if no hiding required
+					hiddenLis = ul.querySelectorAll ('li.oldyear');
+					const totalHidden = hiddenLis.length;
+					if (!totalHidden) {return; /* continue to next */}
+					
+					// Determine label, based on whether the set has recent publications
+					const type = ul.dataset.type;
+					const totalPublications = ul.querySelectorAll ('li').length;
+					const label = 'Show ' + (totalHidden < totalPublications ? 'earlier ' : '') + ul.dataset.label.toLowerCase ();
+					
+					// Add button
+					const showButtonHtml = '<p class=\"showall\" data-type=\"' + type + '\"><a href=\"#showall\"' + type + '\">&#9660; ' + label + ' &hellip;</a></p>';
+					ul.insertAdjacentHTML ('beforeend', showButtonHtml);
+					
+					// Show items and hide the button
+					const showButton = document.querySelector ('.showall[data-type=\"' + type + '\"]');
+					showButton.querySelector ('a').addEventListener ('click', function (e) {
+						e.preventDefault ();
+						showButton.style.display = 'none';
+						hiddenLis.forEach (function (element) {
+							element.style.removeProperty ('display');	// Revert to default
+						});
+					});
+				});
+			}
+			
 		</script>
 		";
 		
