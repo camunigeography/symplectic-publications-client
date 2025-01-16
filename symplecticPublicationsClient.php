@@ -1665,6 +1665,9 @@ class symplecticPublicationsClient extends frontControllerApplication
 		# Surround with a div
 		$html = "\n\n\n<div id=\"publicationslist\">" . "\n" . $html . "\n\n</div><!-- /#publicationslist -->\n\n";
 		
+		# Add expandability function for list types
+		$html .= $this->showHideLinkUl ();
+		
 		# Add book cover CSS
 		$html = "\n\n<style type=\"text/css\">\n\t#publicationslist p.bookcovers img {margin-right: 12px; margin-bottom: 16px; box-shadow: 5px 5px 10px #888;}\n</style>" . $html;
 		
@@ -1755,8 +1758,7 @@ class symplecticPublicationsClient extends frontControllerApplication
 		
 		# Compile the list
 		$oldYear = false;
-		$hasRecent = false;
-		$html .= "\n<ul id=\"publications{$namespace}\">";
+		$html .= "\n<ul id=\"publications{$namespace}\" data-type=\"{$type}\" data-label=\"{$this->types[$type]}\">";
 		foreach ($publications as $publicationId => $publication) {
 			
 			# If enabled, for the first old year, open a div for Javascript filtering purposes
@@ -1764,21 +1766,14 @@ class symplecticPublicationsClient extends frontControllerApplication
 				if (!$oldYear) {		// If not already found, check
 					if ($publication['publicationYear'] <= $this->firstOldYear) {
 						$oldYear = true;
-					} else {
-						$hasRecent = true;
 					}
 				}
 			}
 			
 			# Add the publication
-			$html .= "\n\t<li class=\"publication" . htmlspecialchars ($publicationId) . '-' . htmlspecialchars ($publication['sourceName']) . ($oldYear ? ' oldyear' : '') . '">' . $publication['html'] . '</li>';
+			$html .= "\n\t<li class=\"publication" . htmlspecialchars ($publicationId) . '-' . htmlspecialchars ($publication['sourceName']) . ($oldYear ? ' oldyear' : '') . '"' . ($oldYear ? " data-type=\"{$type}\"" : '') . '>' . $publication['html'] . '</li>';
 		}
 		$html .= "\n</ul>";
-		
-		# Add expandability at the end of the list
-		if ($oldYear) {
-			$html .= $this->showHideLinkUl ($namespace, $label, $hasRecent);
-		}
 		
 		# If there are book covers show these, as a block at the end of the books
 		$images = array ();
@@ -1829,7 +1824,7 @@ class symplecticPublicationsClient extends frontControllerApplication
 					$oldYearsOpened = true;
 					
 					# Add the div
-					$html .= "\n\n" . '<div class="olderpublications" data-type="' . $type . '" data-label="' . htmlspecialchars ($label)	 . '">' . "\n";
+					$html .= "\n\n" . '<div class="olderpublications" data-type="' . $type . '" data-label="' . htmlspecialchars (lcfirst ($label))	 . '">' . "\n";
 				}
 			}
 			
@@ -1862,22 +1857,43 @@ class symplecticPublicationsClient extends frontControllerApplication
 	
 	
 	# Helper function to create a show/hidden link for a list
-	private function showHideLinkUl ($namespace, $label, $hasRecent)
+	private function showHideLinkUl ()
 	{
-		# Compile the expansion message
-		$message = 'Show ' . ($hasRecent ? 'earlier ' : '') . lcfirst ($label);
-		
-		# Compile the HTML
-		$selector = "#publications{$namespace} li.oldyear";
-		$html  = "\n\n<!-- Show/hide link -->";
+		$html  = "\n\n<!-- 	 -->";
 		$html .= "\n" . "<script>
-			document.querySelectorAll ('{$selector}').forEach (function (element) {element.style.display = 'none';});
-			var showButtonHtml = '<p class=\"showall\" id=\"showall" . $namespace . "\"><a href=\"#showall" . $namespace . "\">&#9660; " . $message . " &hellip;</a></p>';
-			document.querySelector ('#publications" . $namespace . "').insertAdjacentHTML ('beforeend', showButtonHtml);
-			document.querySelector ('#showall" . $namespace . " a').addEventListener ('click', function (e) {
-				e.preventDefault ();
-				document.querySelector ('#showall" . $namespace . "').style.display = 'none';
-				document.querySelectorAll ('{$selector}').forEach (function (element) {element.style.display = 'list-item';});
+			
+			// Find all types that have list items being hidden
+			let types = [];
+			document.querySelectorAll ('li.oldyear').forEach (function (li) {
+				li.style.display = 'none';
+				types.push (li.dataset.type);
+			});
+			types = [...new Set (types)];	// Unique the array
+			
+			// Add reveal functionality for each such type
+			types.forEach (function (type) {
+				
+				// End if no hiding required
+				const totalHidden = document.querySelectorAll ('ul[data-type=\"' + type + '\"] li.oldyear').length;
+				console.log (type, totalHidden);
+				if (!totalHidden) {return; /* continue to next */}
+				
+				// Determine label, based on whether the set has recent publications
+				const totalPublications = document.querySelectorAll ('ul[data-type=\"' + type + '\"] li').length;
+				const label = 'Show ' + (totalHidden < totalPublications ? 'earlier ' : '') + document.querySelector ('ul[data-type=\"' + type + '\"]').dataset.label.toLowerCase ();
+				
+				// Add button
+				const showButtonHtml = '<p class=\"showall\" id=\"showall' + type + '\"><a href=\"#showall\"' + type + '\">&#9660; ' + label + ' &hellip;</a></p>';
+				document.querySelector ('ul[data-type=\"' + type + '\"]').insertAdjacentHTML ('beforeend', showButtonHtml);
+				
+				// Show items and hide the button
+				document.querySelector ('#showall' + type + ' a').addEventListener ('click', function (e) {
+					e.preventDefault ();
+					document.querySelector ('#showall' + type).style.display = 'none';
+					document.querySelectorAll ('ul[data-type=\"' + type + '\"] li').forEach (function (element) {
+						element.style.removeProperty ('display');	// Revert to default
+					});
+				});
 			});
 		</script>
 		";
