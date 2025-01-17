@@ -24,30 +24,6 @@ const symplecticPublications = (function () {
 			// Add checkbox container
 			publicationsHeading.insertAdjacentHTML ('beforebegin', '<div id="symplecticswitch" />');
 			
-			// Function to get the elements until a selector; see: https://gomakethings.com/how-to-get-all-sibling-elements-until-a-match-is-found-with-vanilla-javascript/
-			const nextUntil = function (element, selector)
-			{
-				const siblings = [];
-				element = element.nextElementSibling;
-				while (element) {
-					if (element.matches (selector)) break;
-					siblings.push (element);
-					element = element.nextElementSibling;
-				}
-				return siblings;
-			};
-			
-			// Function to wrapper elements in a div; see: https://stackoverflow.com/a/48389433
-			const wrapAll = function (elements, wrapperId)
-			{
-				const wrapper = document.createElement ('div');
-				wrapper.setAttribute ('id', wrapperId);
-				elements.forEach (function (child) {
-					wrapper.appendChild (child);
-				});
-				return wrapper;
-			};
-			
 			// Define a token for no publications found
 			const noPublicationsFound = 'NO_SUCH_USER';
 			
@@ -67,8 +43,8 @@ const symplecticPublications = (function () {
 				// Surround existing (manual) publications block with a div, automatically, unless already present
 				let manualPublicationsDiv = document.querySelector ('#manualpublications');
 				if (!manualPublicationsDiv) {
-					const publicationSectionElements = nextUntil (publicationsHeading, 'h2');
-					manualPublicationsDiv = wrapAll (publicationSectionElements, 'manualpublications');
+					const publicationSectionElements = symplecticPublications.nextUntil (publicationsHeading, 'h2');
+					manualPublicationsDiv = symplecticPublications.wrapAll (publicationSectionElements, 'manualpublications');
 					publicationsHeading.after (manualPublicationsDiv);
 				}
 				
@@ -121,6 +97,32 @@ const symplecticPublications = (function () {
 				//console.log (error);
 				document.querySelector ('#symplecticswitch').innerHTML = '<p>(No publications found in Symplectic.)</p>';
 			});
+		},
+		
+		
+		// Helper function to get the elements until a selector; see: https://gomakethings.com/how-to-get-all-sibling-elements-until-a-match-is-found-with-vanilla-javascript/
+		nextUntil: function (element, selector)
+		{
+			const siblings = [];
+			element = element.nextElementSibling;
+			while (element) {
+				if (element.matches (selector)) break;
+				siblings.push (element);
+				element = element.nextElementSibling;
+			}
+			return siblings;
+		},
+		
+		
+		// Helper function to wrapper elements in a div; see: https://stackoverflow.com/a/48389433
+		wrapAll: function (elements, wrapperId)
+		{
+			const wrapper = document.createElement ('div');
+			wrapper.setAttribute ('id', wrapperId);
+			elements.forEach (function (child) {
+				wrapper.appendChild (child);
+			});
+			return wrapper;
 		}
 	}
 }) ();
