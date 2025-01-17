@@ -1653,8 +1653,11 @@ class symplecticPublicationsClient extends frontControllerApplication
 		# Add expandability JS functions
 		$html .= $this->oldYearExpandabilityJs ();
 		
-		# Add book cover CSS
-		$html = "\n\n<style type=\"text/css\">\n\t#publicationslist p.bookcovers img {margin-right: 12px; margin-bottom: 16px; box-shadow: 5px 5px 10px #888;}\n</style>" . $html;
+		# Add CSS
+		$cssHtml = "\n\n" .'<style type="text/css">
+			#publicationslist p.bookcovers img {min-width: 170px; margin: 0 12px 12px 0; margin-bottom: 16px; box-shadow: 5px 5px 10px #888;}
+		</style>';
+		$html = $cssHtml . $html;
 		
 		# Add the filtering form if required
 		if ($filteringUiGroup) {

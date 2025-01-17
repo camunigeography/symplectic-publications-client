@@ -18,8 +18,6 @@ const symplecticPublications = (function () {
 			const styles = `<style type="text/css">
 				#symplecticswitch {margin-bottom: 20px;}
 				#symplecticswitch p {float: right; border: 1px solid #603; background-color: #f7f7f7; padding: 5px;}
-				#symplecticpublications.proposed {border-top: 1px dashed #ccc; border-bottom: 1px dashed #ccc; padding: 5px 0; background-color: #f7f7f7;}
-				#symplecticpublications img.bookcover {min-width: 170px; margin: 5px 10px 12px 0; box-shadow: 5px 5px 10px 0 #aaa;}
 			</style>`;
 			publicationsHeading.insertAdjacentHTML ('beforeend', styles);
 			
