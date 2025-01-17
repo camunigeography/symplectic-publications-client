@@ -13,16 +13,6 @@ const symplecticPublications = (function () {
 			
 			// End if no anchor to attach to
 			if (!publicationsHeading) {return;}
-							
-			// Add styles
-			const styles = `<style type="text/css">
-				#symplecticswitch {margin-bottom: 20px;}
-				#symplecticswitch p {float: right; border: 1px solid #603; background-color: #f7f7f7; padding: 5px;}
-			</style>`;
-			publicationsHeading.insertAdjacentHTML ('beforeend', styles);
-			
-			// Add checkbox container
-			publicationsHeading.insertAdjacentHTML ('beforebegin', '<div id="symplecticswitch" />');
 			
 			// Define a token for no publications found
 			const noPublicationsFound = 'NO_SUCH_USER';
@@ -39,6 +29,16 @@ const symplecticPublications = (function () {
 				
 				// Do nothing if no publications found
 				if (symplecticpublicationsHtml == noPublicationsFound) {return;}
+				
+				// Add styles
+				const styles = `<style type="text/css">
+					#symplecticswitch {margin-bottom: 20px;}
+					#symplecticswitch p {float: right; border: 1px solid #603; background-color: #f7f7f7; padding: 5px;}
+				</style>`;
+				publicationsHeading.insertAdjacentHTML ('beforebegin', styles);
+				
+				// Add checkbox container
+				publicationsHeading.insertAdjacentHTML ('beforebegin', '<div id="symplecticswitch" />');
 				
 				// Surround existing (manual) publications block with a div, automatically, unless already present
 				let manualPublicationsDiv = document.querySelector ('#manualpublications');
