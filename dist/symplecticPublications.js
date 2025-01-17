@@ -30,16 +30,6 @@ const symplecticPublications = (function () {
 					// Do nothing if no publications found
 					if (symplecticpublicationsHtml == noPublicationsFound) {return;}
 					
-					// Add styles
-					const styles = `<style type="text/css">
-						#symplecticswitch {margin-bottom: 20px;}
-						#symplecticswitch p {float: right; border: 1px solid #603; background-color: #f7f7f7; padding: 5px;}
-					</style>`;
-					publicationsHeading.insertAdjacentHTML ('beforebegin', styles);
-					
-					// Add checkbox container
-					publicationsHeading.insertAdjacentHTML ('beforebegin', '<div id="symplecticswitch" />');
-					
 					// Surround existing (manual) publications block with a div, automatically, unless already present
 					let manualPublicationsDiv = document.querySelector ('#manualpublications');
 					if (!manualPublicationsDiv) {
@@ -52,9 +42,19 @@ const symplecticPublications = (function () {
 					manualPublicationsDiv.insertAdjacentHTML ('afterend', '<div id="symplecticpublications" />');
 					const symplecticPublicationsDiv = document.querySelector ('#symplecticpublications');
 					
-					// Set initial styles
+					// Set initial visibility
 					manualPublicationsDiv.style.display = 'none';
 					symplecticPublicationsDiv.style.display = 'block';
+					
+					// Add checkbox container
+					publicationsHeading.insertAdjacentHTML ('afterend', '<div id="symplecticswitch" />');
+					
+					// Add styles
+					const styles = `<style type="text/css">
+						#symplecticswitch {float: right; margin-bottom: 20px; height: 15em;}
+						#symplecticswitch p {border: 1px solid #603; background-color: #f7f7f7; padding: 5px;}
+					</style>`;
+					publicationsHeading.insertAdjacentHTML ('afterend', styles);
 					
 					// Add the HTML from the API
 					symplecticPublicationsDiv.innerHTML = symplecticpublicationsHtml;
@@ -78,13 +78,13 @@ const symplecticPublications = (function () {
 						symplecticSwitch.querySelector ('input[type="checkbox"]').checked = true;
 						
 						// Add helpful links
-						let helpfulLinks = '';
-						helpfulLinks += '<ul class="nobullet right spaced">';
-						helpfulLinks += '<li class="primaryaction"><a href="' + settings.website + '" title="Edit this list, by making changes in the University\'s publications database, Symplectic"><img src="/images/icons/pencil.png" /> Edit my publications</a></li>';
-						helpfulLinks += '<li class="primaryaction"><a href="' + settings.baseUrl + '/bookcover.html" title="Add a book cover"><img src="/images/icons/book_open.png" /> Add book cover(s)</a></li>';
-						helpfulLinks += '<li class="primaryaction"><a href="' + settings.baseUrl + '/quickstart.pdf?"><img src="/images/icons/page.png" /> Help guide (PDF)</a></li>';
-						helpfulLinks += '</ul>';
-						symplecticPublicationsDiv.insertAdjacentHTML ('beforebegin', helpfulLinks);
+						let symplecticTools = '';
+						symplecticTools += '<ul id="symplectictools" class="nobullet right spaced">';
+						symplecticTools += '<li class="primaryaction"><a href="' + settings.website + '" title="Edit this list, by making changes in the University\'s publications database, Symplectic"><img src="/images/icons/pencil.png" /> Edit my publications</a></li>';
+						symplecticTools += '<li class="primaryaction"><a href="' + settings.baseUrl + '/bookcover.html" title="Add a book cover"><img src="/images/icons/book_open.png" /> Add book cover(s)</a></li>';
+						symplecticTools += '<li class="primaryaction"><a href="' + settings.baseUrl + '/quickstart.pdf?"><img src="/images/icons/page.png" /> Help guide (PDF)</a></li>';
+						symplecticTools += '</ul>';
+						symplecticSwitch.insertAdjacentHTML ('beforeend', symplecticTools);
 						
 						// Toggle div blocks when checkbox is on
 						document.querySelector ('#symplectic').addEventListener ('click', function (e) {
