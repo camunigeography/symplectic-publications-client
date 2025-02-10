@@ -31,12 +31,12 @@ class symplecticPublicationsClient extends frontControllerApplication
 			'yearsConsideredRecentMainListing' => 2,
 			'hidingThreshold' => 5,
 			'canSplitIfTotal' => 10,
+			'additionalNameDefinitions' => array (),
 			'multisite' => false,	// Whether the user/group/member functions cover more than one organisation
 			'getUsersFunction' => NULL,
 			'getGroupsFunction' => NULL,
 			'getGroupMembers' => NULL,
 			'cronUsername' => NULL,
-			'corsDomains' => array (),
 			'bookcoversLocation' => 'bookcovers/',		// From baseUrl, or if starting with a slash, from DOCUMENT_ROOT
 			'bookcoversFormat' => 'png',
 			'bookcoversHeight' => 250,
