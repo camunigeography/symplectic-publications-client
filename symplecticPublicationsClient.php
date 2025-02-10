@@ -30,6 +30,7 @@ class symplecticPublicationsClient extends frontControllerApplication
 			'tabUlClass' => 'tabsflat',
 			'yearsConsideredRecent' => 5,
 			'yearsConsideredRecentMainListing' => 2,
+			'hidingThreshold' => 5,
 			'canSplitIfTotal' => 10,
 			'multisite' => false,	// Whether the user/group/member functions cover more than one organisation
 			'getUsersFunction' => NULL,
@@ -1828,6 +1829,10 @@ class symplecticPublicationsClient extends frontControllerApplication
 			'use strict';
 			
 			
+			const settings = {
+				hidingThreshold: {$this->settings['hidingThreshold']},
+			};
+			
 			oldYearExpandabilityDiv ();
 			oldYearExpandabilityUl ();
 			
@@ -1853,17 +1858,23 @@ class symplecticPublicationsClient extends frontControllerApplication
 					});
 				});
 			}
-
+			
 			// Show/hide link for each set of expandable publications type that has list items being hidden
 			function oldYearExpandabilityUl ()
 			{
-				// Hide all .oldyear li items
-				document.querySelectorAll ('li.oldyear').forEach (function (li) {
-					li.style.display = 'none';
-				});
-			
 				// Check each publications list ul
 				document.querySelectorAll ('ul.publicationslist').forEach (function (ul) {
+					
+					// Get the list items
+					const liItems = ul.querySelectorAll ('li.oldyear');
+					
+					// If only a small number of items, do not apply hiding
+					if (liItems.length < settings.hidingThreshold) {return;	/* i.e. continue */}
+					
+					// Hide all .oldyear li items
+					liItems.forEach (function (li) {
+						li.style.display = 'none';
+					});
 					
 					// End if no hiding required
 					const hiddenLis = ul.querySelectorAll ('li.oldyear');
