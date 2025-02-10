@@ -20,7 +20,6 @@ class symplecticPublicationsClient extends frontControllerApplication
 		$defaults = array (
 			'div' => strtolower (__CLASS__),
 			'applicationName' => 'Publications database',
-			'authentication' => true,
 			'database' => 'publications',
 			'table' => 'publications',
 			'website' => NULL,
