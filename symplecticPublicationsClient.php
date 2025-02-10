@@ -1,7 +1,6 @@
 <?php
 
 # Class to create a publications database, implementing the Symplectic API
-# Version 1.0.0
 
 # Licence: GPL
 # (c) Martin Lucas-Smith, University of Cambridge
@@ -55,8 +54,8 @@ class symplecticPublicationsClient extends frontControllerApplication
 	# Define the supported types and their labels
 	private $types = array (
 		'book'					=> 'Books',
-		'journal-article'		=> 'Journal articles',
 		'preprint'				=> 'Pre-prints',
+		'journal-article'		=> 'Journal articles',
 		'chapter'				=> 'Book chapters',
 		'conference'			=> 'Conference proceedings',
 		'internet-publication'	=> 'Internet publications',
