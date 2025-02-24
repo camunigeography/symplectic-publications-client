@@ -1532,7 +1532,7 @@ class symplecticPublicationsClient extends frontControllerApplication
 		if (!$xpathDom = $this->getData ('/publication/sources')) {return $sources;}
 		
 		# Loop through each entry in the data; see: https://stackoverflow.com/questions/11886176/ and https://stackoverflow.com/questions/5929263/
-		$entriesNode = $xpathDom->query ('/default:feed/default:entry');
+		$entriesNode = $xpathDom->query ('/api:response/api:result-list/api:result');
 		foreach ($entriesNode as $index => $entryNode) {
 			
 			# Obtain the properties
@@ -2068,14 +2068,14 @@ class symplecticPublicationsClient extends frontControllerApplication
 		
 		# Assemble the data
 		$data = array (
-			'id'			=> $this->XPath ($xpathDom, '//default:feed/default:entry/api:object/@id'),
+			'id'			=> $this->XPath ($xpathDom, '//api:response/api:result/api:object/@id'),
 			'username'		=> $username,
-			'is-academic'	=> $this->XPath ($xpathDom, '//default:feed/default:entry/api:object/api:is-academic'),
-			'title'			=> $this->XPath ($xpathDom, '//default:feed/default:entry/api:object/api:title'),
-			'surname'		=> $this->XPath ($xpathDom, '//default:feed/default:entry/api:object/api:last-name'),
-			'initials'		=> $this->XPath ($xpathDom, '//default:feed/default:entry/api:object/api:initials'),
-			'forename'		=> $this->XPath ($xpathDom, '//default:feed/default:entry/api:object/api:first-name'),
-			'email'			=> $this->XPath ($xpathDom, '//default:feed/default:entry/api:object/api:email-address'),
+			'is-academic'	=> $this->XPath ($xpathDom, '//api:response/api:result/api:object/api:is-academic'),
+			'title'			=> $this->XPath ($xpathDom, '//api:response/api:result/api:object/api:title'),
+			'surname'		=> $this->XPath ($xpathDom, '//api:response/api:result/api:object/api:last-name'),
+			'initials'		=> $this->XPath ($xpathDom, '//api:response/api:result/api:object/api:initials'),
+			'forename'		=> $this->XPath ($xpathDom, '//api:response/api:result/api:object/api:first-name'),
+			'email'			=> $this->XPath ($xpathDom, '//api:response/api:result/api:object/api:email-address'),
 		);
 		
 		# Add the display name as it appears in publications
@@ -2106,8 +2106,8 @@ class symplecticPublicationsClient extends frontControllerApplication
 			if (!$xpathDom = $this->getData ($resultsUrlPage, 'xpathDom', true)) {continue;}
 			
 			# Loop through each entry in the data; see: https://stackoverflow.com/questions/11886176/ and https://stackoverflow.com/questions/5929263/
-			$publicationsNode = $xpathDom->query ('/default:feed/default:entry');
-			foreach ($publicationsNode as $index => $publicationNode) {
+			$publicationsNodes = $xpathDom->query ('/api:response/api:result-list/api:result');
+			foreach ($publicationsNodes as $index => $publicationNode) {
 				
 				# Parse the publication, or skip if not visible (or other problem)
 				if (!$publication = $this->parsePublication ($publicationNode, $xpathDom, $sources, $user, $username, $id /* returned by reference */, $isFatalError /* returned by reference */, $errorHtml /* returned by reference */)) {continue;}
@@ -2117,7 +2117,7 @@ class symplecticPublicationsClient extends frontControllerApplication
 			}
 			
 			# Determine the next page, if any
-			$resultsUrlPage = $this->XPath ($xpathDom, "/default:feed/api:pagination/api:page[@position='next']/@href");
+			$resultsUrlPage = $this->XPath ($xpathDom, "/api:response/api:pagination/api:page[@position='next']/@href");
 		}
 		
 		# Return the array of publications
@@ -2129,7 +2129,7 @@ class symplecticPublicationsClient extends frontControllerApplication
 	private function parsePublication ($publicationNode, $xpathDom, $sources, $user, $username, &$id = false, &$isFatalError, &$errorHtml)
 	{
 		# Ensure the publication is set to be visible
-		$isVisible = ($this->XPath ($xpathDom, './api:relationship/api:is-visible', $publicationNode) == 'true');
+		$isVisible = ($this->XPath ($xpathDom, './api:relationship/api:privacy-level', $publicationNode) == 'Public');
 		if (!$isVisible) {return false;}
 		
 		# Get values which will be reused more than once in code below
@@ -2215,7 +2215,7 @@ class symplecticPublicationsClient extends frontControllerApplication
 				$relationshipsUrl = $this->XPath ($xpathDom, './api:relationship/api:related/api:object/api:relationships/@href', $publicationNode);
 				if ($relationshipsUrl) {
 					if ($xpathDomRelationships = $this->getData ($relationshipsUrl, 'xpathDom', true)) {
-						$usernameEditor = $this->XPath ($xpathDomRelationships, '/default:feed/default:entry/api:relationship[@type-id="9"]/api:related[@direction="to"]/api:object[@category="user"]/@username');	// "Relationship type 9 means "Edited by" in this context."
+						$usernameEditor = $this->XPath ($xpathDomRelationships, '/api:response/api:result-list/api:result/api:relationship[@type-id="9"]/api:related[@direction="to"]/api:object[@category="user"]/@username');	// "Relationship type 9 means "Edited by" in this context."
 						if (mb_strtolower ($usernameEditor) == $user['username']) {
 							$additionalEditor = $user['displayName'];
 						}
@@ -2516,7 +2516,7 @@ class symplecticPublicationsClient extends frontControllerApplication
 		
 		# For paginated results, create a link for the next page
 		$xpathDom = $this->getData (false, 'xpathDom', false, $data);
-		if ($next = $this->XPath ($xpathDom, "/default:feed/api:pagination/api:page[@position='next']/@href")) {
+		if ($next = $this->XPath ($xpathDom, "/api:response/api:pagination/api:page[@position='next']/@href")) {
 			$url = $this->baseUrl . '/' . $this->actions[$this->action]['url'] . '?url=' . urlencode (str_replace ($this->settings['apiUrl'], '', $next));
 			$html .= "\n<p class=\"alignright\"><a href=\"{$url}\">Next &raquo;</a></p>";
 		}
