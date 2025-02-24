@@ -2105,10 +2105,6 @@ class symplecticPublicationsClient extends frontControllerApplication
 			# Obtain the data or continue to next
 			if (!$xpathDom = $this->getData ($resultsUrlPage, 'xpathDom', true)) {continue;}
 			
-			# Extract the user's name
-			$personName = $this->XPath ($xpathDom, '/default:feed/default:title');
-			$personName = $this->extractPersonName ($personName);
-			
 			# Loop through each entry in the data; see: https://stackoverflow.com/questions/11886176/ and https://stackoverflow.com/questions/5929263/
 			$publicationsNode = $xpathDom->query ('/default:feed/default:entry');
 			foreach ($publicationsNode as $index => $publicationNode) {
@@ -2554,19 +2550,6 @@ class symplecticPublicationsClient extends frontControllerApplication
 		
 		# Return the HTML
 		return $html;
-	}
-	
-	
-	# Helper function to extract the person's name
-	private function extractPersonName ($personName)
-	{
-		# Remove prefix text
-		if (preg_match ('/^Publications related to the user: (.+)$/', $personName, $matches)) {
-			$personName = $matches[1];
-		}
-		
-		# Return string
-		return $personName;
 	}
 	
 	
