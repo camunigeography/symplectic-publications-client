@@ -1495,7 +1495,7 @@ class symplecticPublicationsClient extends frontControllerApplication
 		# Get the users from the config
 		$usersRaw = $this->getUsersUpstream ();
 		
-		# Ensure the users are nested by organisation (site1 => users1, site2, => users2, ...)
+		# Ensure the users are nested by organisation (site1 => users1, site2 => users2, [...])
 		if (!$this->settings['multisite']) {
 			$usersRaw = array ('global' => $usersRaw);
 		}
@@ -2228,8 +2228,8 @@ class symplecticPublicationsClient extends frontControllerApplication
 		$authorsNode = $xpathDom->query ('./api:field[@name="authors"]/api:people/api:person', $sourceNode);
 		list ($publication['authors'], $publication['nameAppearsAsAuthor']) = $this->processContributors ($authorsNode, $xpathDom, $user, $publication['id'], 'author', $sourceDisplayName, NULL, $errorHtml);
 		
-		# Get the editors
-		$editorsNode = $xpathDom->query ('./api:field[@name="editors"]/api:people/api:person', $sourceNode);
+		# Get the editors; note that display-name can be Editors or Supervisors (and possibly others), but supervisors should not appear
+		$editorsNode = $xpathDom->query ('./api:field[@name="editors"][@display-name="Editors"]/api:people/api:person', $sourceNode);
 		list ($publication['editors'], $publication['nameAppearsAsEditor']) = $this->processContributors ($editorsNode, $xpathDom, $user, $publication['id'], 'editor', $sourceDisplayName, $additionalEditor, $errorHtml);
 		
 		# Create a compiled HTML version; highlighting is not applied at this stage, as that has to be done at listing runtime depending on the listing context (person/group/all)
