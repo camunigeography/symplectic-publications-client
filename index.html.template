@@ -88,7 +88,7 @@ function getUsersUpstream ()
 function getGroupsUpstream ()
 {
 	/*	
-		Must return a datastructure like this:
+		Must return a datastructure, indexed by institution when in multisite mode, like this:
 		
 		return array (
 		    ['widgets'] => array (
@@ -118,8 +118,8 @@ function getGroupsUpstream ()
 }
 
 
-# Define the members callback function
-function getGroupMembersUpstream ($groupUrl)
+# Define the group members callback function
+function getGroupMembersUpstream ($moniker)
 {
 	/*	
 		Must return a datastructure like this:

@@ -691,7 +691,7 @@ class symplecticPublicationsClient extends frontControllerApplication
 		}
 		
 		# Get the members of the group
-		$usernames = $this->getGroupMembersUpstream ($group['url']);
+		$usernames = $this->getGroupMembersUpstream ($group['id']);
 		
 		# Get the publications for that user
 		$publications = $this->getPeoplePublications ($usernames);
@@ -1930,13 +1930,13 @@ class symplecticPublicationsClient extends frontControllerApplication
 	
 	
 	# Get the group members
-	#!# This is not ideal, because in multisite mode, the callback has to do string matching on the groupUrl; ideally supply the users up-front within getGroupsUpstream
+	#!# Ideally supply the users up-front within getGroupsUpstream
 	# NB The getGroupMembers callback function must return a datastructure like that defined in the index.html.template
-	private function getGroupMembersUpstream ($groupUrl)
+	private function getGroupMembersUpstream ($moniker)
 	{
 		# Run callback function
 		$function = $this->settings['getGroupMembers'];
-		return $function ($groupUrl);
+		return $function ($moniker);
 	}
 	
 	
