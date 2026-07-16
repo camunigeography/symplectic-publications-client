@@ -2126,7 +2126,7 @@ class symplecticPublicationsClient extends frontControllerApplication
 	
 	
 	# Function to parse a publication's data
-	private function parsePublication ($publicationNode, $xpathDom, $sources, $user, $username, &$id = false, &$isFatalError, &$errorHtml)
+	private function parsePublication ($publicationNode, $xpathDom, $sources, $user, $username, &$id = false, &$isFatalError = false, &$errorHtml = '')
 	{
 		# Ensure the publication is set to be visible
 		$isVisible = ($this->XPath ($xpathDom, './api:relationship/api:privacy-level', $publicationNode) == 'Public');
@@ -2262,7 +2262,7 @@ class symplecticPublicationsClient extends frontControllerApplication
 	
 	
 	# Helper function to process contributors (authors/editors)
-	private function processContributors ($contributorsNode, $xpathDom, $user, $publicationId, $type, $sourceDisplayName, $additionalPerson = false, &$errorHtml)
+	private function processContributors ($contributorsNode, $xpathDom, $user, $publicationId, $type, $sourceDisplayName, $additionalPerson = false, &$errorHtml = '')
 	{
 		# Start a list of contributors and how their name appears
 		$contributors = array ();
