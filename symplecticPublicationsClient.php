@@ -989,6 +989,11 @@ class symplecticPublicationsClient extends frontControllerApplication
 			}
 		}
 		
+		# Add timestamp, to enable easy most-recent-first sorting
+		foreach ($data as $id => $publication) {
+			$data[$id]['time'] = strtotime ($publication['publicationYear'] . '-' . str_pad ($publication['publicationMonth'], 2, '0', STR_PAD_LEFT) . '-' . str_pad ($publication['publicationDay'], 2, '0', STR_PAD_LEFT));
+		}
+		
 		// application::dumpData ($data);
 		
 		# Return the data
