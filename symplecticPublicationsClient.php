@@ -195,7 +195,7 @@ class symplecticPublicationsClient extends frontControllerApplication
 			
 			CREATE TABLE `instances` (
 			`id` int(11) NOT NULL AUTO_INCREMENT COMMENT 'Automatic key' PRIMARY KEY,
-			  `username` varchar(10) NOT NULL COMMENT 'Username',
+			  `username` varchar(255) NOT NULL COMMENT 'Username',
 			  `publicationId` int(11) NOT NULL COMMENT 'Publication ID',
 			  `nameAppearsAsAuthor` varchar(255) DEFAULT NULL COMMENT 'The string appearing in the data for the name of the author',
 			  `nameAppearsAsEditor` varchar(255) DEFAULT NULL COMMENT 'The string appearing in the data for the name of the editor',
@@ -239,7 +239,7 @@ class symplecticPublicationsClient extends frontControllerApplication
 			) ENGINE=InnoDB  DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='Table of organisations of each user';
 			
 			CREATE TABLE `users` (
-			  `id` varchar(10) NOT NULL COMMENT 'Username' PRIMARY KEY,
+			  `id` varchar(255) NOT NULL COMMENT 'Username' PRIMARY KEY,
 			  `forename` varchar(255) NOT NULL COMMENT 'Forename',
 			  `surname` varchar(255) NOT NULL COMMENT 'Surname',
 			  `savedAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Automatic timestamp'
