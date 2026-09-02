@@ -989,9 +989,9 @@ class symplecticPublicationsClient extends frontControllerApplication
 			}
 		}
 		
-		# Add publication timestamp, to enable easy most-recent-first sorting
+		# Add publication timestamp, to enable easy most-recent-first sorting, defaulting to zero if no timestamp
 		foreach ($data as $id => $publication) {
-			$data[$id]['time'] = strtotime ($publication['publicationYear'] . '-' . str_pad ($publication['publicationMonth'] ?: 1, 2, '0', STR_PAD_LEFT) . '-' . str_pad ($publication['publicationDay'] ?: 1, 2, '0', STR_PAD_LEFT));
+			$data[$id]['time'] = ($publication['publicationYear'] ? strtotime ($publication['publicationYear'] . '-' . str_pad ($publication['publicationMonth'] ?: 1, 2, '0', STR_PAD_LEFT) . '-' . str_pad ($publication['publicationDay'] ?: 1, 2, '0', STR_PAD_LEFT)) : 0);
 		}
 		
 		# Remove internal timestamp
